@@ -1,9 +1,9 @@
-from .rdb_type import RDBType
 from typing import List, Dict
+import logging
 from yaml import safe_load
 import sqlalchemy as sa
 from db_object_config import DBObjectConfig, DBDatatype
-import logging
+from .rdb_type import RDBType
 
 class MySQL(RDBType):
 
@@ -15,12 +15,12 @@ class MySQL(RDBType):
         password = config_dict.get("password")
         host = config_dict.get("host")
 
-        url = str("mysql://{0}:{1}@{2}/".format(username, password, host))
+        url = f"mysql://{username}:{password}@{host}/"
         engine = sa.create_engine(url, encoding = 'utf-8', echo = True)
-        create_statement = str("CREATE DATABASE IF NOT EXISTS {0};".format(schema_name))
+        create_statement = f"CREATE DATABASE IF NOT EXISTS {schema_name};"
         engine.execute(create_statement)
 
-        url2 = str("mysql://{0}:{1}@{2}/{3}".format(username, password, host, schema_name))
+        url2 = f"mysql://{username}:{password}@{host}/{schema_name}"
         engine2 = sa.create_engine(url2, encoding = 'utf-8', echo = True)
         self.engine = engine2
         self.metadata = sa.MetaData()
@@ -28,11 +28,11 @@ class MySQL(RDBType):
     def execute_sql_statement(self, statement: str):
         with self.engine.connect().execution_options(autocommit=True) as conn:
             result = conn.execute(sa.text(statement))
-        return(result)
+        return result
 
     def execute_sql_query(self, query: str):
         result = self.execute_sql_statement(query).fetchall()
-        return(result)
+        return result
 
     def add_table(self, table_id: str, table_config: DBObjectConfig):
         columns = []
@@ -63,16 +63,13 @@ class MySQL(RDBType):
         self.metadata.create_all(self.engine)
 
     def drop_table(self, table_id: str):
-        statement = str('DROP TABLE IF EXISTS {0};'.format(table_id))
-        self.execute_sql_statement(statement)
+        self.execute_sql_statement(f"DROP TABLE IF EXISTS {table_id};")
 
     def add_table_column(self, table_id: str, column_name: str, datatype: str):
-        statement = "ALTER TABLE {0} ADD {1} {2};".format(table_id, column_name, datatype)
-        self.execute_sql_statement(statement)
+        self.execute_sql_statement(f"ALTER TABLE {table_id} ADD {column_name} {datatype};")
 
     def drop_table_column(self, table_id: str, column_name: str):
-        statement = "ALTER TABLE {0} DROP {1};".format(table_id, column_name)
-        self.execute_sql_statement(statement)
+        self.execute_sql_statement(f"ALTER TABLE {table_id} DROP {column_name};")
 
     def insert_table_rows(self, table_id: str, rows: List[Dict]):
         table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
@@ -85,36 +82,43 @@ class MySQL(RDBType):
         with self.engine.connect().execution_options(autocommit=True) as conn:
             conn.execute(statement)
 
-    def update_table_rows(self, table_id: str):
-        pass
+    def update_table_rows(self, table_id: str, column: str, values: List[Dict]):
+        table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
+        statement = (
+            sa.update(table).where(table.c[column] ==
+            sa.bindparam('old')).values(string=sa.bindparam('new'))
+        )
+        with self.engine.begin() as conn:
+            conn.execute(
+                statement,
+                values
+            )
 
     def get_tables(self) -> List[str]:
         inspector = sa.inspect(self.engine)
-        return(inspector.get_table_names())
+        return inspector.get_table_names()
 
     def get_columns_from_table(self, table_id: str) -> List[str]:
         inspector = sa.inspect(self.engine)
-        return(inspector.get_columns(table_id))
+        return inspector.get_columns(table_id)
 
     def get_column_names_from_table(self, table_id: str) -> List[str]:
         columns = self.get_columns_from_table(table_id)
         names = [col.get("name") for col in columns]
-        return(names)
+        return names
 
     def _get_schemas(self) -> List[str]:
         inspector = sa.inspect(self.engine)
-        return(inspector.get_schema_names())
+        return inspector.get_schema_names()
 
     def _get_current_schema(self) -> str:
-        return(self.execute_sql_query("SELECT DATABASE();")[0][0])
+        return self.execute_sql_query("SELECT DATABASE();")[0][0]
 
     def _change_current_schema(self, schema_name):
-        self.execute_sql_statement("USE {0};".format(schema_name))
+        self.execute_sql_statement(f"USE {schema_name};")
 
     def _create_schema(self, schema_name):
-        statement = str("CREATE DATABASE IF NOT EXISTS {0};".format(schema_name))
-        self.execute_sql_statement(statement)
+        self.execute_sql_statement(f"CREATE DATABASE IF NOT EXISTS {schema_name};")
 
     def _drop_schema(self, schema_name):
-        statement = str("DROP DATABASE {0};".format(schema_name))
-        self.execute_sql_statement(statement)
+        self.execute_sql_statement(f"DROP DATABASE {schema_name};")

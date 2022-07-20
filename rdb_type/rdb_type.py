@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Dict
 from db_object_config import DBObjectConfig
 
 class RDBType(ABC):
@@ -29,15 +29,15 @@ class RDBType(ABC):
         pass
 
     @abstractmethod
-    def insert_table_rows(self, table_id: str):
+    def insert_table_rows(self, table_id: str, rows: List[Dict]):
         pass
 
     @abstractmethod
-    def delete_table_rows(self, table_id: str):
+    def delete_table_rows(self, table_id: str, column: str, values: List[str]):
         pass
 
     @abstractmethod
-    def update_table_rows(self, table_id: str):
+    def update_table_rows(self, table_id: str, column: str, values: List[Dict]):
         pass
 
     @abstractmethod

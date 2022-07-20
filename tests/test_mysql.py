@@ -1,4 +1,3 @@
-import logging
 import pytest
 from rdb_type import MySQL
 from db_object_config import DBObjectConfig, DBAttributeConfig, DBDatatype
@@ -62,6 +61,15 @@ def row_tuples():
         ("key1", "a", 1),
         ("key2", "b", 2),
         ("key3", "c", 3)
+    ]
+    yield row_tuples
+
+@pytest.fixture
+def row_tuples2():
+    row_tuples = [
+        ("key1", "x", 1),
+        ("key2", "y", 2),
+        ("key3", "z", 3)
     ]
     yield row_tuples
 
@@ -130,6 +138,29 @@ class TestMYSQL:
         assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [row_tuples[1]]
         mysql2.delete_table_rows("test_table2", "p_key", ["key2"])
         assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  []
+        mysql2.drop_table('test_table2')
+        assert mysql2.get_tables() == []
+
+    def test_update_table_rows(self, mysql2, table_config_one_primary_key, row_dicts, row_tuples, row_tuples2):
+        values1 = [
+            {'old':'a', 'new':'x'},
+            {'old':'b', 'new':'y'},
+            {'old':'c', 'new':'z'}
+            ]
+        values2 = [
+            {'old':'x', 'new':'a'},
+            {'old':'y', 'new':'b'},
+            {'old':'z', 'new':'c'}
+            ]
+        assert mysql2.get_tables() == []
+        mysql2.add_table("test_table2", table_config_one_primary_key)
+        assert mysql2.get_tables() == ["test_table2"]
+        mysql2.insert_table_rows("test_table2", row_dicts)
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  row_tuples
+        mysql2.update_table_rows("test_table2", "string", values1)
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  row_tuples2
+        mysql2.update_table_rows("test_table2", "string", values2)
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  row_tuples
         mysql2.drop_table('test_table2')
         assert mysql2.get_tables() == []
 

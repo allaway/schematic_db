@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "autoload",
+        "bindparam",
         "sqlalchemy"
     ]
 }
