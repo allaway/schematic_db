@@ -24,7 +24,10 @@ def mysql2():
 def table_config_no_keys():
     table_config = DBObjectConfig(
         name = "test_table1",
-        attributes = [DBAttributeConfig(name="description", datatype=DBDatatype.Text)],
+        attributes = [
+            DBAttributeConfig(name="string", datatype=DBDatatype.Text),
+            DBAttributeConfig(name="int", datatype=DBDatatype.Int)
+        ],
         primary_keys = [],
         foreign_keys = []
     )
@@ -35,13 +38,32 @@ def table_config_one_primary_key():
     table_config = DBObjectConfig(
         name = "test_table2",
         attributes = [
-            DBAttributeConfig(name="name", datatype=DBDatatype.Text),
-            DBAttributeConfig(name="description", datatype=DBDatatype.Text)
+            DBAttributeConfig(name="p_key", datatype=DBDatatype.Text),
+            DBAttributeConfig(name="string", datatype=DBDatatype.Text),
+            DBAttributeConfig(name="int", datatype=DBDatatype.Int)
         ],
-        primary_keys = ["name"],
+        primary_keys = ["p_key"],
         foreign_keys = []
     )
     yield table_config
+
+@pytest.fixture
+def row_dicts():
+    row_dicts = [
+        {"p_key": "key1", "string": "a", "int": 1},
+        {"p_key": "key2", "string": "b", "int": 2},
+        {"p_key": "key3", "string": "c", "int": 3}
+    ]
+    yield row_dicts
+
+@pytest.fixture
+def row_tuples():
+    row_tuples = [
+        ("key1", "a", 1),
+        ("key2", "b", 2),
+        ("key3", "c", 3)
+    ]
+    yield row_tuples
 
 
 class TestMYSQL:
@@ -78,33 +100,36 @@ class TestMYSQL:
     def test_add_drop_table_column(self, mysql2, table_config_no_keys):
         assert mysql2.get_tables() == []
         mysql2.add_table("test_table1", table_config_no_keys)
-        assert mysql2.get_column_names_from_table("test_table1") == ["description"]
+        assert mysql2.get_column_names_from_table("test_table1") == ["string", "int"]
         mysql2.add_table_column("test_table1", "name", "varchar(100)")
-        assert mysql2.get_column_names_from_table("test_table1") == ["description", "name"]
+        assert mysql2.get_column_names_from_table("test_table1") == ["string", "int", "name"]
         mysql2.drop_table_column("test_table1", "name")
-        assert mysql2.get_column_names_from_table("test_table1") == ["description"]
+        assert mysql2.get_column_names_from_table("test_table1") == ["string", "int"]
         mysql2.drop_table('test_table1')
         assert mysql2.get_tables() == []
 
-    def test_insert_table_rows(self, mysql2, table_config_one_primary_key):
+    def test_insert_table_rows(self, mysql2, table_config_one_primary_key, row_dicts, row_tuples):
         assert mysql2.get_tables() == []
         mysql2.add_table("test_table2", table_config_one_primary_key)
-        mysql2.insert_table_rows("test_table2", ["name", "description"], ["a", "b"])
-        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [('a', 'b')]
-        mysql2.insert_table_rows("test_table2", ["name", "description"], ["c", "d"])
-        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [('a', 'b'), ('c', 'd')]
+        mysql2.insert_table_rows("test_table2", [row_dicts[0], row_dicts[1]])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") == [row_tuples[0], row_tuples[1]]
+        mysql2.insert_table_rows("test_table2", [row_dicts[2]])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") == row_tuples
         mysql2.drop_table('test_table2')
         assert mysql2.get_tables() == []
 
-    def test_delete_table_rows(self, mysql2, table_config_one_primary_key):
+    def test_delete_table_rows(self, mysql2, table_config_one_primary_key, row_dicts, row_tuples):
         assert mysql2.get_tables() == []
         mysql2.add_table("test_table2", table_config_one_primary_key)
-        mysql2.insert_table_rows("test_table2", ["name", "description"], ["a", "b"])
-        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [('a', 'b')]
-        mysql2.insert_table_rows("test_table2", ["name", "description"], ["c", "d"])
-        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [('a', 'b'), ('c', 'd')]
-        mysql2.delete_table_rows("test_table2", "name", ["a"])
-        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [('c', 'd')]
+        assert mysql2.get_tables() == ["test_table2"]
+        mysql2.insert_table_rows("test_table2", [row_dicts[0]])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [row_tuples[0]]
+        mysql2.insert_table_rows("test_table2", [row_dicts[1]])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [row_tuples[0], row_tuples[1]]
+        mysql2.delete_table_rows("test_table2", "p_key", ["key1"])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [row_tuples[1]]
+        mysql2.delete_table_rows("test_table2", "p_key", ["key2"])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  []
         mysql2.drop_table('test_table2')
         assert mysql2.get_tables() == []
 

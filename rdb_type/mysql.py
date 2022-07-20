@@ -1,5 +1,5 @@
 from .rdb_type import RDBType
-from typing import List
+from typing import List, Dict
 from yaml import safe_load
 import sqlalchemy as sa
 from db_object_config import DBObjectConfig, DBDatatype
@@ -24,10 +24,10 @@ class MySQL(RDBType):
         engine2 = sa.create_engine(url2, encoding = 'utf-8', echo = True)
         self.engine = engine2
         self.metadata = sa.MetaData()
-        self.connection = self.engine.connect()
 
     def execute_sql_statement(self, statement: str):
-        result = self.connection.execute(sa.text(statement))
+        with self.engine.connect().execution_options(autocommit=True) as conn:
+            result = conn.execute(sa.text(statement))
         return(result)
 
     def execute_sql_query(self, query: str):
@@ -74,17 +74,16 @@ class MySQL(RDBType):
         statement = "ALTER TABLE {0} DROP {1};".format(table_id, column_name)
         self.execute_sql_statement(statement)
 
-    def insert_table_rows(self, table_id: str, columns: List[str], values: List[str]):
-        assert(len(columns) == len(values))
-        column_string = ",".join(columns)
-        value_string = ",".join(['"' + v + '"' for v in values])
-        statement = "INSERT INTO {0} ({1}) VALUES ({2});".format(table_id, column_string, value_string)
-        self.execute_sql_statement(statement)
+    def insert_table_rows(self, table_id: str, rows: List[Dict]):
+        table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
+        with self.engine.connect().execution_options(autocommit=True) as conn:
+            conn.execute(sa.insert(table), rows)
 
     def delete_table_rows(self, table_id: str, column: str, values: List[str]):
-        value_string = ",".join(['"' + v + '"' for v in values])
-        statement = "DELETE FROM {0} WHERE {1} IN ({2});".format(table_id, column, value_string)
-        self.execute_sql_statement(statement)
+        table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
+        statement = sa.delete(table).where(table.c[column].in_(values))
+        with self.engine.connect().execution_options(autocommit=True) as conn:
+            conn.execute(statement)
 
     def update_table_rows(self, table_id: str):
         pass
@@ -114,8 +113,8 @@ class MySQL(RDBType):
 
     def _create_schema(self, schema_name):
         statement = str("CREATE DATABASE IF NOT EXISTS {0};".format(schema_name))
-        self.connection.execute(statement)
+        self.execute_sql_statement(statement)
 
     def _drop_schema(self, schema_name):
         statement = str("DROP DATABASE {0};".format(schema_name))
-        self.connection.execute(statement)
+        self.execute_sql_statement(statement)
