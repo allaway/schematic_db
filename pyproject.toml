@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "rdb"
+name = "schematic_db"
 version = "0.1.0"
 description = ""
 authors = ["andrewelamb <andrewelamb@gmail.com>"]
@@ -10,6 +10,7 @@ SQLAlchemy = "^1.4.39"
 PyYAML = "^6.0"
 mysqlclient = "^2.1.1"
 SQLAlchemy-Utils = "^0.38.3"
+requests = "^2.28.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

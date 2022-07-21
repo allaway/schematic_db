@@ -1,3 +1,5 @@
+# adapted from : https://jacobian.org/til/github-actions-poetry/
+
 name: Test schematic_db mysql
 on: [push, pull_request]
 
