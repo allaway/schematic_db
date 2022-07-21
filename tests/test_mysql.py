@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name
 import pytest
 from rdb_type import MySQL
 from db_object_config import DBObjectConfig, DBAttributeConfig, DBDatatype
@@ -48,30 +49,30 @@ def table_config_one_primary_key():
 
 @pytest.fixture
 def row_dicts():
-    row_dicts = [
+    dicts = [
         {"p_key": "key1", "string": "a", "int": 1},
         {"p_key": "key2", "string": "b", "int": 2},
         {"p_key": "key3", "string": "c", "int": 3}
     ]
-    yield row_dicts
+    yield dicts
 
 @pytest.fixture
 def row_tuples():
-    row_tuples = [
+    tuples = [
         ("key1", "a", 1),
         ("key2", "b", 2),
         ("key3", "c", 3)
     ]
-    yield row_tuples
+    yield tuples
 
 @pytest.fixture
 def row_tuples2():
-    row_tuples = [
+    tuples = [
         ("key1", "x", 1),
         ("key2", "y", 2),
         ("key3", "z", 3)
     ]
-    yield row_tuples
+    yield tuples
 
 
 class TestMYSQL:
@@ -164,6 +165,31 @@ class TestMYSQL:
         mysql2.drop_table('test_table2')
         assert mysql2.get_tables() == []
 
+    def test_upsert_table_rows1(self, mysql2, table_config_one_primary_key, row_dicts, row_tuples, row_tuples2):
+        assert mysql2.get_tables() == []
+        mysql2.add_table("test_table2", table_config_one_primary_key)
+        mysql2.insert_table_rows("test_table2", [row_dicts[0]])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [row_tuples[0]]
+        mysql2.upsert_table_rows("test_table2", [row_dicts[0]])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [row_tuples[0]]
+        mysql2.upsert_table_rows("test_table2", [row_dicts[1]])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [row_tuples[0], row_tuples[1]]
+        mysql2.upsert_table_rows("test_table2", [{"p_key": "key1", "string": "x", "int": 1}])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [row_tuples2[0], row_tuples[1]]
+        mysql2.drop_table('test_table2')
+        assert mysql2.get_tables() == []
+
+    def test_upsert_table_rows2(self, mysql2, table_config_one_primary_key, row_dicts, row_tuples, row_tuples2):
+        assert mysql2.get_tables() == []
+        mysql2.add_table("test_table2", table_config_one_primary_key)
+        mysql2.insert_table_rows("test_table2", [row_dicts[0]])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [row_tuples[0]]
+        mysql2.upsert_table_rows("test_table2", [{"p_key": "key1", "string": "x", "int": 1}, row_dicts[1]])
+        assert mysql2.execute_sql_query("SELECT * FROM test_table2;") ==  [row_tuples2[0], row_tuples[1]]
+        mysql2.drop_table('test_table2')
+        assert mysql2.get_tables() == []
+
+
     def test_get_tables(self, mysql1):
         assert isinstance(mysql1.get_tables(), list)
 
@@ -178,14 +204,8 @@ class TestMYSQL:
         assert isinstance(names[0], str)
 
     def test_get_schemas(self, mysql1):
-        assert isinstance(mysql1._get_schemas(), list)
+        assert isinstance(mysql1.get_schemas(), list)
 
     def test_get_current_schema(self, mysql1):
-        assert mysql1._get_current_schema() == "mysql"
+        assert mysql1.get_current_schema() == "mysql"
 
-    def test_change_current_schema(self, mysql1):
-        assert mysql1._get_current_schema() == "mysql"
-        mysql1._change_current_schema("sys")
-        assert mysql1._get_current_schema() == "sys"
-        mysql1._change_current_schema("mysql")
-        assert mysql1._get_current_schema() == "mysql"

@@ -1,7 +1,9 @@
 from typing import List, Dict
 import logging
+from requests import delete
 from yaml import safe_load
 import sqlalchemy as sa
+from sqlalchemy.dialects.mysql import insert
 from db_object_config import DBObjectConfig, DBDatatype
 from .rdb_type import RDBType
 
@@ -74,7 +76,7 @@ class MySQL(RDBType):
     def insert_table_rows(self, table_id: str, rows: List[Dict]):
         table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
         with self.engine.connect().execution_options(autocommit=True) as conn:
-            conn.execute(sa.insert(table), rows)
+            conn.execute(insert(table), rows)
 
     def delete_table_rows(self, table_id: str, column: str, values: List[str]):
         table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
@@ -94,6 +96,14 @@ class MySQL(RDBType):
                 values
             )
 
+    def upsert_table_rows(self, table_id: str, rows: List[Dict]):
+        table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
+        for row in rows:
+            statement = insert(table).values(row).on_duplicate_key_update(**row)
+            with self.engine.connect().execution_options(autocommit=True) as conn:
+                conn.execute(statement)
+
+
     def get_tables(self) -> List[str]:
         inspector = sa.inspect(self.engine)
         return inspector.get_table_names()
@@ -107,11 +117,11 @@ class MySQL(RDBType):
         names = [col.get("name") for col in columns]
         return names
 
-    def _get_schemas(self) -> List[str]:
+    def get_schemas(self) -> List[str]:
         inspector = sa.inspect(self.engine)
         return inspector.get_schema_names()
 
-    def _get_current_schema(self) -> str:
+    def get_current_schema(self) -> str:
         return self.execute_sql_query("SELECT DATABASE();")[0][0]
 
     def _change_current_schema(self, schema_name):

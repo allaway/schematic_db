@@ -40,6 +40,9 @@ class RDBType(ABC):
     def update_table_rows(self, table_id: str, column: str, values: List[Dict]):
         pass
 
+    def upsert_table_rows(self, table_id: str, rows: List[Dict]):
+        pass
+
     @abstractmethod
     def get_tables(self) -> List[str]:
         pass
