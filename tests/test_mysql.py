@@ -1,12 +1,15 @@
 # pylint: disable=redefined-outer-name
 import pytest
 import os
+from os.path import exists
 from rdb_type import MySQL
 from db_object_config import DBObjectConfig, DBAttributeConfig, DBDatatype
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")
-CONFIG_PATH = os.path.join(DATA_DIR, "mysql_config.yml")
+CONFIG_PATH = os.path.join(DATA_DIR, "local_mysql_config.yml")
+if not exists(CONFIG_PATH):
+    CONFIG_PATH = os.path.join(DATA_DIR, "mysql_config.yml")
 
 @pytest.fixture
 def mysql():
