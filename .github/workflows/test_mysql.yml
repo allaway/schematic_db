@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DB_DATABASE: test_db
-      DB_USER: root
-      DB_PASSWORD: root
+      DB_USER: user
+      DB_PASSWORD: pass
     steps:
 
       - uses: actions/checkout@v2
