@@ -6,16 +6,16 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      DB_DATABASE: test_db
-      DB_USER: root
-      DB_PASSWORD: root
     steps:
 
       - uses: actions/checkout@v2
 
       # install mysql
       # use to create a database:
+      # env:
+      #   DB_DATABASE: test_db
+      #   DB_USER: root
+      #   DB_PASSWORD: root
       # mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
       - name: Set up MySQL
         run: |
