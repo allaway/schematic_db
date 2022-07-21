@@ -1,4 +1,4 @@
-username: "user"
-password: "pass"
+username: "root"
+password: "root"
 host: "localhost"
 schema: "test_schema"
