@@ -1,0 +1,21 @@
+name: Test schematic_db mysql
+
+on: [push, pull_request]
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+
+    steps:
+
+    - id: setup-mysql
+      uses: shogo82148/actions-setup-mysql@v1
+      with:
+        mysql-version: '8.0'
+        root-password: pass
+        user: user
+        password: pass
