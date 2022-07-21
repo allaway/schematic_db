@@ -7,6 +7,16 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+
+      # install mysql
+      - name: setup-mysql
+        uses: shogo82148/actions-setup-mysql@v1
+        with:
+          mysql-version: '8.0'
+          root-password: pass
+          user: user
+          password: pass
+
       - uses: actions/checkout@v2
 
       # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
