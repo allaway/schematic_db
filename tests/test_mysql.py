@@ -73,6 +73,7 @@ def row_tuples2():
 
 class TestMYSQL:
 
+    '''
     def test_init1(self):
         obj = MySQL(
             config_yaml_path="/home/alamb/schematic/sql_config.yml",
@@ -87,6 +88,7 @@ class TestMYSQL:
             config_yaml_path="/home/alamb/schematic/sql_config.yml",
             schema_name = "mysql"
         )
+    '''
 
     def test_execute_sql_query(self, mysql):
         result = mysql.execute_sql_query("SHOW DATABASES;")
