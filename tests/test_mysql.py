@@ -1,22 +1,27 @@
 # pylint: disable=redefined-outer-name
 import pytest
+import os
 from rdb_type import MySQL
 from db_object_config import DBObjectConfig, DBAttributeConfig, DBDatatype
+
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(TESTS_DIR, "data")
+CONFIG_PATH = os.path.join(DATA_DIR, "mysql_config.yml")
 
 
 @pytest.fixture
 def mysql1():
     obj = MySQL(
-            config_yaml_path="/home/alamb/schematic/sql_config.yml",
-            schema_name = "mysql"
+            config_yaml_path=CONFIG_PATH,
+            schema_name="mysql"
         )
     yield obj
 
 @pytest.fixture
 def mysql2():
     obj = MySQL(
-            config_yaml_path="/home/alamb/schematic/sql_config.yml",
-            schema_name = "test"
+            config_yaml_path=CONFIG_PATH,
+            schema_name="test"
         )
     yield obj
 
