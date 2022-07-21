@@ -9,20 +9,21 @@ from .rdb_type import RDBType
 
 class MySQL(RDBType):
 
-    def __init__(self, config_yaml_path: str, schema_name: str):
+    def __init__(self, config_yaml_path: str):
 
         with open(config_yaml_path, mode="rt", encoding="utf-8") as file:
             config_dict = safe_load(file)
         username = config_dict.get("username")
         password = config_dict.get("password")
         host = config_dict.get("host")
+        schema = config_dict.get("schema")
 
         url = f"mysql://{username}:{password}@{host}/"
         engine = sa.create_engine(url, encoding = 'utf-8', echo = True)
-        create_statement = f"CREATE DATABASE IF NOT EXISTS {schema_name};"
+        create_statement = f"CREATE DATABASE IF NOT EXISTS {schema};"
         engine.execute(create_statement)
 
-        url2 = f"mysql://{username}:{password}@{host}/{schema_name}"
+        url2 = f"mysql://{username}:{password}@{host}/{schema}"
         engine2 = sa.create_engine(url2, encoding = 'utf-8', echo = True)
         self.engine = engine2
         self.metadata = sa.MetaData()

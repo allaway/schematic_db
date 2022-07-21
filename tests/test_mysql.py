@@ -13,10 +13,7 @@ if not exists(CONFIG_PATH):
 
 @pytest.fixture
 def mysql():
-    obj = MySQL(
-            config_yaml_path=CONFIG_PATH,
-            schema_name="test"
-        )
+    obj = MySQL(config_yaml_path=CONFIG_PATH)
     yield obj
 
 @pytest.fixture
@@ -75,24 +72,6 @@ def row_tuples2():
 
 
 class TestMYSQL:
-
-    '''
-    def test_init1(self):
-        obj = MySQL(
-            config_yaml_path="/home/alamb/schematic/sql_config.yml",
-            schema_name = "test"
-        )
-        assert ("test",) in obj.engine.execute("SHOW DATABASES;").fetchall()
-        obj.engine.execute("DROP DATABASE test;")
-        assert ("test",) not in obj.engine.execute("SHOW DATABASES;").fetchall()
-
-    def test_init2(self):
-        MySQL(
-            config_yaml_path="/home/alamb/schematic/sql_config.yml",
-            schema_name = "mysql"
-        )
-    '''
-
     def test_execute_sql_query(self, mysql):
         result = mysql.execute_sql_query("SHOW DATABASES;")
         assert isinstance(result, list)
@@ -211,5 +190,5 @@ class TestMYSQL:
         assert isinstance(mysql.get_schemas(), list)
 
     def test_get_current_schema(self, mysql):
-        assert mysql.get_current_schema() == "test"
+        assert mysql.get_current_schema() == "test_schema"
 
