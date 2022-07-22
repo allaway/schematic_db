@@ -1,16 +1,39 @@
+"""MYSQL
+"""
 from typing import List, Dict
 import logging
-from requests import delete
 from yaml import safe_load
 import sqlalchemy as sa
+# insert has to be imported this way, possibly to avoid conflicts with import
+# functions form different SQL dialects
 from sqlalchemy.dialects.mysql import insert
 from db_object_config import DBObjectConfig, DBDatatype
 from .rdb_type import RDBType
 
 class MySQL(RDBType):
-
+    """MYSQL
+    - Represents a mysql database.
+    - Implements the RDBType interface.
+    - Handles MYSQL specific functionality.
+    """
     def __init__(self, config_yaml_path: str):
+        """Init
+        obj = MySQL(config_yaml_path="tests/data/mysql_config.yml")
 
+        The config_yaml should look like:
+            username: "root"
+            password: "root"
+            host: "localhost"
+            schema: "test_schema"
+
+        An initial connection is created to the database without the schema.
+        The schema will be created if it doesn't exist.
+        A second connection is created with the schema.
+        The second connection is used to create the sqlalchemy connection and metadata.
+
+        Args:
+            config_yaml_path (str): The path to the config yaml
+        """
         with open(config_yaml_path, mode="rt", encoding="utf-8") as file:
             config_dict = safe_load(file)
         username = config_dict.get("username")
@@ -30,7 +53,7 @@ class MySQL(RDBType):
 
     def execute_sql_statement(self, statement: str):
         with self.engine.connect().execution_options(autocommit=True) as conn:
-            result = conn.execute(sa.text(statement))
+            result = conn.execute(statement)
         return result
 
     def execute_sql_query(self, query: str):
@@ -85,18 +108,6 @@ class MySQL(RDBType):
         with self.engine.connect().execution_options(autocommit=True) as conn:
             conn.execute(statement)
 
-    def update_table_rows(self, table_id: str, column: str, values: List[Dict]):
-        table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
-        statement = (
-            sa.update(table).where(table.c[column] ==
-            sa.bindparam('old')).values(string=sa.bindparam('new'))
-        )
-        with self.engine.begin() as conn:
-            conn.execute(
-                statement,
-                values
-            )
-
     def upsert_table_rows(self, table_id: str, rows: List[Dict]):
         table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
         for row in rows:
@@ -104,32 +115,64 @@ class MySQL(RDBType):
             with self.engine.connect().execution_options(autocommit=True) as conn:
                 conn.execute(statement)
 
-
-    def get_tables(self) -> List[str]:
+    def get_table_names(self) -> List[str]:
         inspector = sa.inspect(self.engine)
         return inspector.get_table_names()
 
-    def get_columns_from_table(self, table_id: str) -> List[str]:
-        inspector = sa.inspect(self.engine)
-        return inspector.get_columns(table_id)
-
     def get_column_names_from_table(self, table_id: str) -> List[str]:
-        columns = self.get_columns_from_table(table_id)
+        columns = self._get_columns_from_table(table_id)
         names = [col.get("name") for col in columns]
         return names
 
-    def get_schemas(self) -> List[str]:
+    def _get_columns_from_table(self, table_id: str) -> List[Dict]:
+        """Gets the columns form the given table
+
+        Args:
+            table_id (str): The id(name) of the table the columns will be returned from
+
+        Returns:
+            List[Dict]: A list of columns in dict form
+        """
+        inspector = sa.inspect(self.engine)
+        return inspector.get_columns(table_id)
+
+    def _get_schemas(self) -> List[str]:
+        """Gets the database schemas
+
+        Returns:
+            List[str]: A list of names of the the schemas
+        """
         inspector = sa.inspect(self.engine)
         return inspector.get_schema_names()
 
-    def get_current_schema(self) -> str:
+    def _get_current_schema(self) -> str:
+        """Gets the current database schema
+
+        Returns:
+            str: The name of the current schema
+        """
         return self.execute_sql_query("SELECT DATABASE();")[0][0]
 
-    def _change_current_schema(self, schema_name):
+    def _change_current_schema(self, schema_name: str):
+        """Changes the current schema
+
+        Args:
+            schema_name (str): The name of the schema to change to
+        """
         self.execute_sql_statement(f"USE {schema_name};")
 
-    def _create_schema(self, schema_name):
+    def _create_schema(self, schema_name: str):
+        """Creates a schema
+
+        Args:
+            schema_name (str): The name of the schema to create
+        """
         self.execute_sql_statement(f"CREATE DATABASE IF NOT EXISTS {schema_name};")
 
-    def _drop_schema(self, schema_name):
+    def _drop_schema(self, schema_name: str):
+        """Drops a schema
+
+        Args:
+            schema_name (str): The name of the schema to drop
+        """
         self.execute_sql_statement(f"DROP DATABASE {schema_name};")

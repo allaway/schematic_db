@@ -11,13 +11,15 @@ schema: "test_schema"
 The schema should not exist on the database at the beginning of the test.
 This file is ignored by git.
 
-If the the config doesn't exist, the file at 'tests/data/local_mysql_config.yml'
+If the the config doesn't exist, the file at 'tests/data/mysql_config.yml'
 will be used.
 """
 # pylint: disable=redefined-outer-name
 # pylint: disable=too-many-arguments
+# pylint: disable=W0212
 import os
 import pytest
+import sqlalchemy as sa
 from rdb_type import MySQL
 from db_object_config import DBObjectConfig, DBAttributeConfig, DBDatatype
 
@@ -112,6 +114,13 @@ class TestMYSQL:
     """
     Testing for MYSQL
     """
+    def test_execute_sql_statement(self, mysql):
+        """
+        Testing for MYSQL.execute_sql_statement()
+        """
+        result = mysql.execute_sql_statement("SHOW DATABASES;")
+        assert isinstance(result, sa.engine.cursor.LegacyCursorResult)
+
     def test_execute_sql_query(self, mysql):
         """
         Testing for MYSQL.execute_sql_query()
@@ -119,18 +128,18 @@ class TestMYSQL:
         result = mysql.execute_sql_query("SHOW DATABASES;")
         assert isinstance(result, list)
 
-    def test_get_tables(self, mysql):
+    def test_get_table_names(self, mysql):
         """
-        Testing for MYSQL.get_tables()
+        Testing for MYSQL.get_table_names()
         """
-        assert isinstance(mysql.get_tables(), list)
+        assert isinstance(mysql.get_table_names(), list)
 
     def test_get_columns_from_table(self, mysql, table_config_one_primary_key):
         """
         Testing for MYSQL.get_columns_from_table()
         """
         mysql.add_table("test_table2", table_config_one_primary_key)
-        columns = mysql.get_columns_from_table(mysql.get_tables()[0])
+        columns = mysql._get_columns_from_table(mysql.get_table_names()[0])
         assert isinstance(columns, list)
         assert isinstance(columns[0], dict)
         mysql.drop_table('test_table2')
@@ -140,7 +149,7 @@ class TestMYSQL:
         Testing for MYSQL.get_column_names_from_table()
         """
         mysql.add_table("test_table2", table_config_one_primary_key)
-        names = mysql.get_column_names_from_table(mysql.get_tables()[0])
+        names = mysql.get_column_names_from_table(mysql.get_table_names()[0])
         assert isinstance(names, list)
         assert isinstance(names[0], str)
         mysql.drop_table('test_table2')
@@ -149,20 +158,20 @@ class TestMYSQL:
         """
         Testing for MYSQL.add_table(), and MYSQL.drop_table()
         """
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
         mysql.add_table("test_table1", table_config_no_keys)
-        assert mysql.get_tables() == ['test_table1']
+        assert mysql.get_table_names() == ['test_table1']
         mysql.add_table("test_table2", table_config_one_primary_key)
-        assert mysql.get_tables() == ['test_table1', 'test_table2']
+        assert mysql.get_table_names() == ['test_table1', 'test_table2']
         mysql.drop_table('test_table1')
         mysql.drop_table('test_table2')
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
 
     def test_add_drop_table_column(self, mysql, table_config_no_keys):
         """
         Testing for MYSQL.add_table_column(), and MYSQL.drop_table_column()
         """
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
         mysql.add_table("test_table1", table_config_no_keys)
         assert mysql.get_column_names_from_table("test_table1") == ["string", "int"]
         mysql.add_table_column("test_table1", "name", "varchar(100)")
@@ -170,13 +179,13 @@ class TestMYSQL:
         mysql.drop_table_column("test_table1", "name")
         assert mysql.get_column_names_from_table("test_table1") == ["string", "int"]
         mysql.drop_table('test_table1')
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
 
     def test_insert_table_rows(self, mysql, table_config_one_primary_key, row_dicts, row_tuples):
         """
         Testing for MYSQL.insert_table_rows()
         """
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
         mysql.add_table("test_table2", table_config_one_primary_key)
         mysql.insert_table_rows("test_table2", [row_dicts[0], row_dicts[1]])
         assert mysql.execute_sql_query("SELECT * FROM test_table2;") \
@@ -185,15 +194,15 @@ class TestMYSQL:
         assert mysql.execute_sql_query("SELECT * FROM test_table2;") \
             == row_tuples
         mysql.drop_table('test_table2')
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
 
     def test_delete_table_rows(self, mysql, table_config_one_primary_key, row_dicts, row_tuples):
         """
         Testing for MYSQL.delete_table_rows()
         """
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
         mysql.add_table("test_table2", table_config_one_primary_key)
-        assert mysql.get_tables() == ["test_table2"]
+        assert mysql.get_table_names() == ["test_table2"]
         mysql.insert_table_rows("test_table2", [row_dicts[0]])
         assert mysql.execute_sql_query("SELECT * FROM test_table2;") \
             ==  [row_tuples[0]]
@@ -207,41 +216,14 @@ class TestMYSQL:
         assert mysql.execute_sql_query("SELECT * FROM test_table2;") \
             ==  []
         mysql.drop_table('test_table2')
-        assert mysql.get_tables() == []
-
-    def test_update_table_rows(
-        self, mysql, table_config_one_primary_key, row_dicts, row_tuples, row_tuples2):
-        """
-        Testing for MYSQL.update_table_rows()
-        """
-        values1 = [
-            {'old':'a', 'new':'x'},
-            {'old':'b', 'new':'y'},
-            {'old':'c', 'new':'z'}
-            ]
-        values2 = [
-            {'old':'x', 'new':'a'},
-            {'old':'y', 'new':'b'},
-            {'old':'z', 'new':'c'}
-            ]
-        assert mysql.get_tables() == []
-        mysql.add_table("test_table2", table_config_one_primary_key)
-        assert mysql.get_tables() == ["test_table2"]
-        mysql.insert_table_rows("test_table2", row_dicts)
-        assert mysql.execute_sql_query("SELECT * FROM test_table2;") ==  row_tuples
-        mysql.update_table_rows("test_table2", "string", values1)
-        assert mysql.execute_sql_query("SELECT * FROM test_table2;") ==  row_tuples2
-        mysql.update_table_rows("test_table2", "string", values2)
-        assert mysql.execute_sql_query("SELECT * FROM test_table2;") ==  row_tuples
-        mysql.drop_table('test_table2')
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
 
     def test_upsert_table_rows1(
         self, mysql, table_config_one_primary_key, row_dicts, row_tuples, row_tuples2):
         """
         Testing for MYSQL.update_table_rows()
         """
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
         mysql.add_table("test_table2", table_config_one_primary_key)
         mysql.insert_table_rows("test_table2", [row_dicts[0]])
         assert mysql.execute_sql_query("SELECT * FROM test_table2;") \
@@ -256,14 +238,14 @@ class TestMYSQL:
         assert mysql.execute_sql_query("SELECT * FROM test_table2;") \
             ==  [row_tuples2[0], row_tuples[1]]
         mysql.drop_table('test_table2')
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
 
     def test_upsert_table_rows2(
         self, mysql, table_config_one_primary_key, row_dicts, row_tuples, row_tuples2):
         """
         Testing for MYSQL.update_table_rows()
         """
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
         mysql.add_table("test_table2", table_config_one_primary_key)
         mysql.insert_table_rows("test_table2", [row_dicts[0]])
         assert mysql.execute_sql_query("SELECT * FROM test_table2;") \
@@ -275,16 +257,16 @@ class TestMYSQL:
         assert mysql.execute_sql_query("SELECT * FROM test_table2;") \
             ==  [row_tuples2[0], row_tuples[1]]
         mysql.drop_table('test_table2')
-        assert mysql.get_tables() == []
+        assert mysql.get_table_names() == []
 
     def test_get_schemas(self, mysql):
         """
         Testing for MYSQL.get_schemas()
         """
-        assert isinstance(mysql.get_schemas(), list)
+        assert isinstance(mysql._get_schemas(), list)
 
     def test_get_current_schema(self, mysql):
         """
         Testing for MYSQL.get_current_schema()
         """
-        assert mysql.get_current_schema() == "test_schema"
+        assert mysql._get_current_schema() == "test_schema"
