@@ -1,12 +1,11 @@
 """MYSQL
 """
+# pylint: disable=E0401
 from typing import List, Dict
 import logging
 from yaml import safe_load
-import sqlalchemy as sa
-# insert has to be imported this way, possibly to avoid conflicts with import
-# functions form different SQL dialects
-from sqlalchemy.dialects.mysql import insert
+import sqlalchemy as sa # type: ignore
+from sqlalchemy.dialects.mysql import insert # type: ignore
 from db_object_config import DBObjectConfig, DBDatatype
 from .rdb_type import RDBType
 

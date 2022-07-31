@@ -17,9 +17,10 @@ will be used.
 # pylint: disable=redefined-outer-name
 # pylint: disable=too-many-arguments
 # pylint: disable=W0212
+# pylint: disable=E0401
 import os
-import pytest
-import sqlalchemy as sa
+import pytest # type: ignore
+import sqlalchemy as sa # type: ignore
 from rdb_type import MySQL
 from db_object_config import DBObjectConfig, DBAttributeConfig, DBDatatype
 
