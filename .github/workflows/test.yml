@@ -33,8 +33,8 @@ jobs:
             "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
             "project_id": "syn33832432"
           }
-          with open('tests/data/synapse_config.yml', 'w') as yaml:
-            yaml.dump(data, yaml)
+          with open('tests/data/synapse_config.yml', 'w') as f:
+            yaml.dump(f, yaml)
 
         shell: python
 
