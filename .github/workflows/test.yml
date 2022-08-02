@@ -29,9 +29,9 @@ jobs:
         run: |
           import yaml
           data = {
-            username: "${{secrets.SYNAPSE_LOGIN}}",
-            auth_token: "${{secrets.SYNAPSE_AUTH_TOKEN}}",
-            project_id: "syn33832432"
+            "username": "${{secrets.SYNAPSE_LOGIN}}",
+            "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
+            "project_id": "syn33832432"
           }
           with open('tests/data/synapse_config.yml', 'w') as yaml:
             yaml.dump(data, yaml)
