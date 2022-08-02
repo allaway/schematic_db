@@ -1,11 +1,14 @@
 # adapted from : https://jacobian.org/til/github-actions-poetry/
 
-name: Test schematic_db mysql
+name: Test schematic_db
 on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      SYNAPSE_LOGIN: ${{ secrets.SYNAPSE_LOGIN }}
+      SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
     steps:
 
       - uses: actions/checkout@v2
@@ -20,6 +23,20 @@ jobs:
       - name: Set up MySQL
         run: |
           sudo /etc/init.d/mysql start
+
+      # Create the synapse yaml config file
+      - name: create synapse config
+        run: |
+          import yaml
+          data = dict(
+            username: "${{secrets.SYNAPSE_LOGIN}}"
+            auth_token: "${{secrets.SYNAPSE_AUTH_TOKEN}}"
+            project_id: "syn33832432"
+          )
+          with open('tests/data/synapse_config.yml', 'w') as yaml:
+            yaml.dump(data, yaml)
+
+        shell: python
 
       # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
       # reference the matrix python version here.
