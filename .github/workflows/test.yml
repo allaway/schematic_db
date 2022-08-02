@@ -29,12 +29,12 @@ jobs:
         run: |
           import yaml
           data = {
-            "username": "test",
-            "auth_token": "test",
+            "username": "${{secrets.SYNAPSE_LOGIN}}",
+            "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
             "project_id": "syn33832432"
           }
-          with open('tests/data/synapse_config.yml', 'w', encoding="utf-8") as f:
-            yaml.dump(f, yaml)
+          #with open('tests/data/synapse_config.yml', 'w', encoding="utf-8") as f:
+          #  yaml.dump(f, yaml)
 
         shell: python
 
@@ -94,4 +94,4 @@ jobs:
 
       # And finally run tests. I'm using pytest and all my pytest config is in my `pyproject.toml`
       # so this line is super-simple. But it could be as complex as you need.
-      - run: poetry run pytest
+      - run: poetry run pytest tests/test_mysql.py
