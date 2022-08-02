@@ -1,7 +1,9 @@
 """RDBType
 """
+# pylint: disable=E0401
 from abc import ABC, abstractmethod
 from typing import List, Dict
+import pandas as pd # type: ignore
 from db_object_config import DBObjectConfig
 
 class RDBType(ABC):
@@ -90,21 +92,20 @@ class RDBType(ABC):
         """
 
     @abstractmethod
-    def insert_table_rows(self, table_id: str, rows: List[Dict]):
+    def insert_table_rows(self, table_id: str, data: pd.DataFrame):
         """Inserts rows to the given table
 
         mysql.insert_table_rows(
             "table_id",
-            [
-                {"p_key": "key1", "string": "a", "int": 1},
-                {"p_key": "key2", "string": "b", "int": 2}
-            ]
+            DataFrame({
+                "string_col": ["a","b","c"],
+                "int_col": [1,2,3]
+            })
         )
 
         Args:
             table_id (str): The id(name) of the table the rows will be added to
-            rows (List[Dict]): A list of rows in dictionary form where each key is a column name
-            and each value is is a value in that column
+            data (pd.DataFrame): A pandas.DataFrame
         """
 
     @abstractmethod

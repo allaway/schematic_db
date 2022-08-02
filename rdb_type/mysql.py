@@ -4,6 +4,7 @@
 from typing import List, Dict
 import logging
 from yaml import safe_load
+import pandas as pd # type: ignore
 import sqlalchemy as sa # type: ignore
 from sqlalchemy.dialects.mysql import insert # type: ignore
 from db_object_config import DBObjectConfig, DBDatatype
@@ -96,7 +97,8 @@ class MySQL(RDBType):
     def drop_table_column(self, table_id: str, column_name: str):
         self.execute_sql_statement(f"ALTER TABLE {table_id} DROP {column_name};")
 
-    def insert_table_rows(self, table_id: str, rows: List[Dict]):
+    def insert_table_rows(self, table_id: str, data: pd.DataFrame):
+        rows = data.to_dict("records")
         table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
         with self.engine.connect().execution_options(autocommit=True) as conn:
             conn.execute(insert(table), rows)
