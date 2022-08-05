@@ -2,9 +2,8 @@
 """
 # pylint: disable=E0401
 from typing import List, Dict
-import logging
-from yaml import safe_load
 import pandas as pd # type: ignore
+import numpy as np # type: ignore
 import sqlalchemy as sa # type: ignore
 from sqlalchemy.dialects.mysql import insert # type: ignore
 from db_object_config import DBObjectConfig, DBDatatype
@@ -16,15 +15,14 @@ class MySQL(RDBType):
     - Implements the RDBType interface.
     - Handles MYSQL specific functionality.
     """
-    def __init__(self, config_yaml_path: str):
+    def __init__(self, config_dict: dict):
         """Init
-        obj = MySQL(config_yaml_path="tests/data/mysql_config.yml")
-
-        The config_yaml should look like:
+        obj = MySQL({
             username: "root"
             password: "root"
             host: "localhost"
             schema: "test_schema"
+        })
 
         An initial connection is created to the database without the schema.
         The schema will be created if it doesn't exist.
@@ -32,10 +30,8 @@ class MySQL(RDBType):
         The second connection is used to create the sqlalchemy connection and metadata.
 
         Args:
-            config_yaml_path (str): The path to the config yaml
+            config_dict (dict): A dict with mysql specific fields
         """
-        with open(config_yaml_path, mode="rt", encoding="utf-8") as file:
-            config_dict = safe_load(file)
         username = config_dict.get("username")
         password = config_dict.get("password")
         host = config_dict.get("host")
@@ -51,16 +47,33 @@ class MySQL(RDBType):
         self.engine = engine2
         self.metadata = sa.MetaData()
 
+    def get_table_id_from_name(self, table_name: str) -> str:
+        return table_name
+
+    def get_table_name_from_id(self, table_id: str) -> str:
+        return table_id
+
     def execute_sql_statement(self, statement: str):
         with self.engine.connect().execution_options(autocommit=True) as conn:
             result = conn.execute(statement)
         return result
 
-    def execute_sql_query(self, query: str):
+    def execute_sql_query(self, query: str, table_config: DBObjectConfig) -> pd.DataFrame:
         result = self.execute_sql_statement(query).fetchall()
-        return result
+        table = pd.DataFrame(result)
+        for att in table_config.attributes:
+            if att.datatype == DBDatatype.Int:
+                table = table.astype({att.name: 'Int64'})
+            elif att.datatype == DBDatatype.Boolean:
+                table = table.astype({att.name: 'boolean'})
+        return table
 
-    def add_table(self, table_id: str, table_config: DBObjectConfig):
+    def query_table(self, table_name: str, table_config: DBObjectConfig) -> pd.DataFrame:
+        query = f"SELECT * FROM {table_name};"
+        table = self.execute_sql_query(query, table_config)
+        return table
+
+    def add_table(self, table_name: str, table_config: DBObjectConfig):
         columns = []
         for att in table_config.attributes:
             att_name = att.name
@@ -76,7 +89,6 @@ class MySQL(RDBType):
             elif att_datatype == DBDatatype.Boolean:
                 sql_datatype = sa.Boolean
             else:
-                logging.warning(att_datatype)
                 raise ValueError ()
             columns.append(sa.Column(att_name, sql_datatype))
 
@@ -85,32 +97,28 @@ class MySQL(RDBType):
         if table_config.foreign_keys != []:
             columns.append(sa.ForeignKeyConstraint(*table_config.foreign_keys))
 
-        sa.Table(table_id, self.metadata, *columns)
+        sa.Table(table_name, self.metadata, *columns)
         self.metadata.create_all(self.engine)
 
-    def drop_table(self, table_id: str):
-        self.execute_sql_statement(f"DROP TABLE IF EXISTS {table_id};")
+    def drop_table(self, table_name: str):
+        self.execute_sql_statement(f"DROP TABLE IF EXISTS {table_name};")
 
-    def add_table_column(self, table_id: str, column_name: str, datatype: str):
-        self.execute_sql_statement(f"ALTER TABLE {table_id} ADD {column_name} {datatype};")
+    def add_table_column(self, table_name: str, column_name: str, datatype: str):
+        self.execute_sql_statement(f"ALTER TABLE {table_name} ADD {column_name} {datatype};")
 
-    def drop_table_column(self, table_id: str, column_name: str):
-        self.execute_sql_statement(f"ALTER TABLE {table_id} DROP {column_name};")
+    def drop_table_column(self, table_name: str, column_name: str):
+        self.execute_sql_statement(f"ALTER TABLE {table_name} DROP {column_name};")
 
-    def insert_table_rows(self, table_id: str, data: pd.DataFrame):
-        rows = data.to_dict("records")
-        table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
-        with self.engine.connect().execution_options(autocommit=True) as conn:
-            conn.execute(insert(table), rows)
-
-    def delete_table_rows(self, table_id: str, column: str, values: List[str]):
-        table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
+    def delete_table_rows(self, table_name: str, column: str, values: List[str]):
+        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
         statement = sa.delete(table).where(table.c[column].in_(values))
         with self.engine.connect().execution_options(autocommit=True) as conn:
             conn.execute(statement)
 
-    def upsert_table_rows(self, table_id: str, rows: List[Dict]):
-        table = sa.Table(table_id, self.metadata, autoload_with=self.engine)
+    def upsert_table_rows(self, table_name: str, data: pd.DataFrame):
+        data = data.replace({np.nan: None})
+        rows = data.to_dict("records")
+        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
         for row in rows:
             statement = insert(table).values(row).on_duplicate_key_update(**row)
             with self.engine.connect().execution_options(autocommit=True) as conn:
@@ -120,22 +128,22 @@ class MySQL(RDBType):
         inspector = sa.inspect(self.engine)
         return inspector.get_table_names()
 
-    def get_column_names_from_table(self, table_id: str) -> List[str]:
-        columns = self._get_columns_from_table(table_id)
+    def get_column_names_from_table(self, table_name: str) -> List[str]:
+        columns = self._get_columns_from_table(table_name)
         names = [col.get("name") for col in columns]
         return names
 
-    def _get_columns_from_table(self, table_id: str) -> List[Dict]:
+    def _get_columns_from_table(self, table_name: str) -> List[Dict]:
         """Gets the columns form the given table
 
         Args:
-            table_id (str): The id(name) of the table the columns will be returned from
+            table_name (str): The id(name) of the table the columns will be returned from
 
         Returns:
             List[Dict]: A list of columns in dict form
         """
         inspector = sa.inspect(self.engine)
-        return inspector.get_columns(table_id)
+        return inspector.get_columns(table_name)
 
     def _get_schemas(self) -> List[str]:
         """Gets the database schemas
@@ -152,7 +160,7 @@ class MySQL(RDBType):
         Returns:
             str: The name of the current schema
         """
-        return self.execute_sql_query("SELECT DATABASE();")[0][0]
+        return self.execute_sql_statement("SELECT DATABASE();").fetchall()[0][0]
 
     def _change_current_schema(self, schema_name: str):
         """Changes the current schema

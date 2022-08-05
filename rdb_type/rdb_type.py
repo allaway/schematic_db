@@ -2,7 +2,7 @@
 """
 # pylint: disable=E0401
 from abc import ABC, abstractmethod
-from typing import List, Dict
+from typing import List
 import pandas as pd # type: ignore
 from db_object_config import DBObjectConfig
 
@@ -14,7 +14,7 @@ class RDBType(ABC):
     def execute_sql_statement(self, statement: str):
         """Executes a valid SQL statement
         Should be used when a result isn't expected.
-        mysql.execute_sql_statement("DROP TABLE IF EXISTS table_name;")
+        rdbtype.execute_sql_statement("DROP TABLE IF EXISTS table_name;")
 
         Args:
             statement (str): A SQL statement
@@ -24,79 +24,137 @@ class RDBType(ABC):
         """
 
     @abstractmethod
-    def execute_sql_query(self, query: str) -> List:
+    def execute_sql_query(self, query: str, table_config: DBObjectConfig) -> pd.DataFrame:
+
         """Executes a valid SQL statement
         Should be used when a result is expected.
-        mysql.execute_sql_query("SHOW DATABASES;")
+
+        rdbtype.execute_sql_query("SHOW DATABASES;")
 
         Args:
-            statement (str): A SQL statement
+            query (str): A SQL statement
+            table_config (DBObjectConfig): A generic representation of the table as a
+            DBObjectConfig object.
 
         Returns:
-            list: A SQL result
+            pd.DataFrame: The table
         """
 
     @abstractmethod
-    def add_table(self, table_id: str, table_config: DBObjectConfig):
+    def query_table(self, table_name: str, table_config: DBObjectConfig) -> pd.DataFrame:
+        """Queries the whole table
+
+        Args:
+            table_name (str): The name of the table
+            table_config (DBObjectConfig): A generic representation of the table as a
+            DBObjectConfig object.
+
+        Returns:
+            pd.DataFrame: The table
+        """
+
+    @abstractmethod
+    def get_table_id_from_name(self, table_name: str) -> str:
+        """Gets the tables id
+        In SQL databases  the id and name are the same. In some rdb types such as Synapse the
+        id will be different ie. the Synapse id.
+
+        Args:
+            table_name (str): The name of the table
+
+        Returns:
+            str: The id of the table
+        """
+
+    @abstractmethod
+    def get_table_name_from_id(self, table_id: str) -> str:
+        """Gets the tables name
+        The inverse of get_table_id_from_name
+
+        Args:
+            table_id (str): The id of the table
+
+        Returns:
+            str: The name of the table
+        """
+
+    @abstractmethod
+    def add_table(self, table_name: str, table_config: DBObjectConfig):
         """Adds a table to the schema
 
-        mysql.add_table(
-            "table_id",
+        rdbtype.add_table(
+            "table_name",
             DBObjectConfig(
-                name = "table_id",
+                name = "table_one",
                 attributes = [
-                    DBAttributeConfig(name="p_key", datatype=DBDatatype.Text),
-                    DBAttributeConfig(name="string", datatype=DBDatatype.Text),
-                    DBAttributeConfig(name="int", datatype=DBDatatype.Int)
+                    DBAttributeConfig(name="pk_col", datatype=DBDatatype.Text),
+                    DBAttributeConfig(name="string_col", datatype=DBDatatype.Text),
+                    DBAttributeConfig(name="int_col", datatype=DBDatatype.Int),
+                    DBAttributeConfig(name="double_col", datatype=DBDatatype.Float),
+                    DBAttributeConfig(name="date_col", datatype=DBDatatype.Date),
+                    DBAttributeConfig(name="bool_col", datatype=DBDatatype.Boolean)
                 ],
-                primary_keys = ["p_key"],
+                primary_keys = ["pk_col"],
                 foreign_keys = []
             )
         )
 
         Args:
-            table_id (str): The id(name) of the table to be added
+            table_name (str): The id(name) of the table to be added
             table_config (DBObjectConfig): A generic representation of the table as a
             DBObjectConfig object.
         """
 
     @abstractmethod
-    def drop_table(self, table_id: str):
+    def drop_table(self, table_name: str):
         """Drops a table from the schema
 
-        mysql.drop_table("table_id")
+        rdbtype.drop_table("table_name")
 
         Args:
-            table_id (str): The id(name) of the table to be dropped
+            table_name (str): The id(name) of the table to be dropped
         """
 
     @abstractmethod
-    def add_table_column(self, table_id: str, column_name: str, datatype: str):
+    def add_table_column(self, table_name: str, column_name: str, datatype: str):
         """Adds a column to the given table
 
-        mysql.add_table_column("table_id", "name", "varchar(100)")
+        rdbtype.add_table_column("table_name", "name", "varchar(100)")
 
         Args:
-            table_id (str): The id(name) of the table the column will be added to
+            table_name (str): The id(name) of the table the column will be added to
             column_name (str): The name of the column being added
             datatype (str): The SQL datatype of the column being added
         """
 
     @abstractmethod
-    def drop_table_column(self, table_id: str, column_name: str):
+    def drop_table_column(self, table_name: str, column_name: str):
         """Removes a column from the given table
 
         Args:
-            table_id (str): The id(name) of the table the column will be removed from
+            table_name (str): The id(name) of the table the column will be removed from
             column_name (str): The name of the column being removed
         """
 
     @abstractmethod
-    def insert_table_rows(self, table_id: str, data: pd.DataFrame):
-        """Inserts rows to the given table
+    def delete_table_rows(self, table_name: str, column: str, values: List[str]):
+        """Deletes rows from the given table
 
-        mysql.insert_table_rows(
-            "table_id",
+        rdbtype.delete_table_rows("table_name", "p_key", ["key1"])
+
+        Args:
+            table_name (str): The id(name) of the table the rows will be deleted from
+            column (str): The column name used to identify the rows
+            values (List[str]): A list of values. Rows with these values in the given column will
+            be deleted
+        """
+
+    @abstractmethod
+    def upsert_table_rows(self, table_name: str, data: pd.DataFrame):
+        """Updates or inserts rows into the given table
+
+        rdbtype.upsert_table_rows(
+            "table_name",
             DataFrame({
                 "string_col": ["a","b","c"],
                 "int_col": [1,2,3]
@@ -104,39 +162,8 @@ class RDBType(ABC):
         )
 
         Args:
-            table_id (str): The id(name) of the table the rows will be added to
+            table_name (str): The id(name) of the table the rows will be updated or added to
             data (pd.DataFrame): A pandas.DataFrame
-        """
-
-    @abstractmethod
-    def delete_table_rows(self, table_id: str, column: str, values: List[str]):
-        """Deletes rows from the given table
-
-        mysql.delete_table_rows("table_id", "p_key", ["key1"])
-
-        Args:
-            table_id (str): The id(name) of the table the rows will be deleted from
-            column (str): The column name used to identify the rows
-            values (List[str]): A list of values. Rows with these values in the given column will
-            be deleted
-        """
-
-    @abstractmethod
-    def upsert_table_rows(self, table_id: str, rows: List[Dict]):
-        """Updates or inserts rows into the given table
-
-        mysql.upsert_table_rows(
-            "table_id",
-            [
-                {"p_key": "key1", "string": "a", "int": 1},
-                {"p_key": "key2", "string": "b", "int": 2}
-            ]
-        )
-
-        Args:
-            table_id (str): The id(name) of the table the rows will be updated or added to
-            rows (List[Dict]): A list of rows in dictionary form where each key is a column name
-            and each value is is a value in that column
         """
 
     @abstractmethod
@@ -148,11 +175,11 @@ class RDBType(ABC):
         """
 
     @abstractmethod
-    def get_column_names_from_table(self, table_id: str) -> List[str]:
+    def get_column_names_from_table(self, table_name: str) -> List[str]:
         """Gets the names of the columns from the given table
 
         Args:
-            table_id (str): The id(name) of the table the columns will be returned from
+            table_name (str): The id(name) of the table the columns will be returned from
 
         Returns:
             List[str]: A list fo column names

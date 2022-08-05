@@ -21,8 +21,9 @@ will be used.
 import os
 import pytest # type: ignore
 import pandas as pd # type: ignore
+from yaml import safe_load
 from rdb_type import Synapse
-from db_object_config import DBObjectConfig, DBAttributeConfig, DBDatatype
+from db_object_config import DBDatatype
 
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -31,121 +32,100 @@ CONFIG_PATH = os.path.join(DATA_DIR, "local_synapse_config.yml")
 if not os.path.exists(CONFIG_PATH):
     CONFIG_PATH = os.path.join(DATA_DIR, "synapse_config.yml")
 
+@pytest.fixture
+def config_dict():
+    """
+    Yields a MYSQL config dict
+    """
+    with open(CONFIG_PATH, mode="rt", encoding="utf-8") as file:
+        config_dict = safe_load(file)
+    yield config_dict
 
 @pytest.fixture
-def synapse():
+def synapse(config_dict):
     """
     Yields a Synapse object
     """
-    obj = Synapse(config_yaml_path=CONFIG_PATH)
+    obj = Synapse(config_dict)
     yield obj
 
 @pytest.fixture
-def table_config_no_keys():
+def test_project_table_names():
     """
-    Yields a DBObjectConfig object with no primary or foreign keys
+    Yields a list of table names the testing project should start out with.
     """
-    table_config = DBObjectConfig(
-        name = "test_table1",
-        attributes = [
-            DBAttributeConfig(name="string_col", datatype=DBDatatype.Text),
-            DBAttributeConfig(name="int_col", datatype=DBDatatype.Int)
-        ],
-        primary_keys = [],
-        foreign_keys = []
-    )
-    yield table_config
+    yield ["test_table_one"]
 
-@pytest.fixture
-def table_config_one_primary_key():
+class TestSynapseIDs:
+    """Testing for  id methods
     """
-    Yields a DBObjectConfig object with one primary and no foreign keys
-    """
-    table_config = DBObjectConfig(
-        name = "test_table2",
-        attributes = [
-            DBAttributeConfig(name="p_key_col", datatype=DBDatatype.Text),
-            DBAttributeConfig(name="string_col", datatype=DBDatatype.Text),
-            DBAttributeConfig(name="int_col", datatype=DBDatatype.Int)
-        ],
-        primary_keys = ["p_key_col"],
-        foreign_keys = []
-    )
-    yield table_config
+    def test_get_table_id_from_name(self, synapse):
+        """Testing for Synapse.get_table_id_from_name()
+        """
+        assert synapse.get_table_id_from_name("test_table_one") == "syn34062240"
 
-@pytest.fixture
-def rows_df():
+    def test_get_table_name_from_id(self, synapse):
+        """Testing for Synapse.get_table_name_from_id()
+        """
+        assert synapse.get_table_name_from_id("syn34062240") == "test_table_one"
+
+class TestSynapseQueries:
+    """Testing for query methods
     """
-    Yields a pd.Dataframe.
-    These are used as inputs to update and upsert methods.
-    """
-    dataframe = pd.DataFrame({
-        "string_col": ["a","b","c"],
-        "int_col": [1,2,3]
-    })
-    yield dataframe
+
+    def test_execute_sql_query(self, synapse, table_one, table_one_config):
+        """Testing for synapse.execute_sql_query()
+        """
+        table_id = synapse.get_table_id_from_name("test_table_one")
+        result = synapse.execute_sql_query(f"SELECT * FROM {table_id}", table_one_config)
+        pd.testing.assert_frame_equal(result, table_one)
+
+    def test_query_table(self, synapse, table_one, table_one_config):
+        """Testing for synapse.query_table()
+        """
+        result = synapse.query_table("test_table_one", table_one_config)
+        pd.testing.assert_frame_equal(result, table_one)
 
 class TestSynapse:
     """
     Testing for synapse
     """
-    def test_init(self, synapse):
-        """Testing for Synapse.init()
-        """
-        assert synapse.project.properties.name == "Schematic DB Test Database"
 
-    def test_get_add_drop_table(self, synapse, table_config_no_keys):
+    def test_add_drop_table(self, synapse, table_one_config, test_project_table_names):
         """Testing for Synapse.add_table(), and Synapse.drop_table()
         """
-        assert synapse.get_table_names() == []
-        synapse.add_table("test_table1", table_config_no_keys)
-        assert synapse.get_table_names() == ['test_table1']
-        synapse.drop_table('test_table1')
-        assert synapse.get_table_names() == []
+        assert synapse.get_table_names() == test_project_table_names
+        synapse.add_table("table_one", table_one_config)
+        assert synapse.get_table_names() == ['table_one'] + test_project_table_names
+        synapse.drop_table("table_one")
+        assert synapse.get_table_names() == test_project_table_names
 
-    def test_add_table_column(self, synapse, table_config_no_keys):
-        """Testing for synapse.add_table_column()
+    def test_add_drop_table_column(
+        self, synapse, table_one, table_one_config, test_project_table_names
+    ):
+        """Testing for synapse.add_table_column() and synapse.drop_table_column()
         """
-        assert synapse.get_table_names() == []
-        synapse.add_table("test_table1", table_config_no_keys)
-        synapse.get_column_names_from_table("test_table1")
-        assert synapse.get_column_names_from_table("test_table1") == ["string_col", "int_col"]
-        synapse.add_table_column("test_table1", "float_col", DBDatatype.Float)
-        assert synapse.get_column_names_from_table("test_table1") == \
-            ["string_col", "int_col", "float_col"]
-        synapse.drop_table('test_table1')
-        assert synapse.get_table_names() == []
+        assert synapse.get_table_names() == test_project_table_names
+        synapse.add_table("table_one", table_one_config)
+        assert synapse.get_column_names_from_table("table_one") == list(table_one.columns)
+        synapse.add_table_column("table_one", "test_add_col", DBDatatype.Float)
+        assert synapse.get_column_names_from_table("table_one") == \
+            list(table_one.columns) + ["test_add_col"]
+        synapse.drop_table_column("table_one", "test_add_col")
+        assert synapse.get_column_names_from_table("table_one") == list(table_one.columns)
+        synapse.drop_table("table_one")
+        assert synapse.get_table_names() == test_project_table_names
 
-    def test_drop_table_column(self, synapse, table_config_no_keys):
-        """Testing for synapse.drop_table_column()
-        """
-        assert synapse.get_table_names() == []
-        synapse.add_table("test_table1", table_config_no_keys)
-        synapse.get_column_names_from_table("test_table1")
-        assert synapse.get_column_names_from_table("test_table1") == ["string_col", "int_col"]
-        synapse.drop_table_column("test_table1", "string_col")
-        assert synapse.get_column_names_from_table("test_table1") == ["int_col"]
-        synapse.drop_table('test_table1')
-        assert synapse.get_table_names() == []
-
-    def test_execute_sql_query(self, synapse, table_config_no_keys):
-        """Testing for synapse.execute_sql_query()
-        """
-        synapse.add_table("test_table1", table_config_no_keys)
-        table_id = synapse._get_table_synapse_id("test_table1")
-        result = synapse.execute_sql_query("SELECT * FROM " + table_id)
-        assert len(result.index) == 0
-        synapse.drop_table('test_table1')
-
-    def test_insert_delete_table_rows(self, synapse, table_config_no_keys, rows_df):
+    def test_insert_delete_table_rows(
+        self, synapse, table_one, table_one_config, test_project_table_names
+    ):
         """
         Testing for synapse.insert_table_rows() and synapse.delete_table_rows()
         """
-        assert synapse.get_table_names() == []
-        synapse.add_table("test_table1", table_config_no_keys)
-        synapse.insert_table_rows("test_table1", rows_df)
-        table_id = synapse._get_table_synapse_id("test_table1")
-        result1 = synapse.execute_sql_query("SELECT * FROM " + table_id, False)
-        pd.testing.assert_frame_equal(result1, rows_df)
-        synapse.drop_table('test_table1')
-        assert synapse.get_table_names() == []
+        assert synapse.get_table_names() == test_project_table_names
+        synapse.add_table("table_one", table_one_config)
+        synapse.insert_table_rows("table_one", table_one)
+        result = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result, table_one)
+        synapse.drop_table("table_one")
+        assert synapse.get_table_names() == test_project_table_names
