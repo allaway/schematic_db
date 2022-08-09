@@ -53,7 +53,7 @@ jobs:
                   "project_id": "syn33937311"
               },
               "database": {
-                  "type": mysql,
+                  "type": "mysql",
                   "username": "root",
                   "password": "root",
                   "host": "localhost",
