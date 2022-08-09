@@ -62,24 +62,16 @@ class TestSynapseIDs:
     def test_get_table_id_from_name(self, synapse):
         """Testing for Synapse.get_table_id_from_name()
         """
-        assert synapse.get_table_id_from_name("test_table_one") == "syn34062240"
+        assert synapse.get_table_id_from_name("test_table_one") == "syn34073419"
 
     def test_get_table_name_from_id(self, synapse):
         """Testing for Synapse.get_table_name_from_id()
         """
-        assert synapse.get_table_name_from_id("syn34062240") == "test_table_one"
+        assert synapse.get_table_name_from_id("syn34073419") == "test_table_one"
 
 class TestSynapseQueries:
     """Testing for query methods
     """
-
-    def test_execute_sql_query(self, synapse, table_one, table_one_config):
-        """Testing for synapse.execute_sql_query()
-        """
-        table_id = synapse.get_table_id_from_name("test_table_one")
-        result = synapse.execute_sql_query(f"SELECT * FROM {table_id}", table_one_config)
-        pd.testing.assert_frame_equal(result, table_one)
-
     def test_query_table(self, synapse, table_one, table_one_config):
         """Testing for synapse.query_table()
         """

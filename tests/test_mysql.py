@@ -18,8 +18,8 @@ will be used.
 # pylint: disable=too-many-arguments
 # pylint: disable=W0212
 # pylint: disable=E0401
-from datetime import date
 import os
+from datetime import datetime
 import pytest # type: ignore
 import sqlalchemy as sa # type: ignore
 import pandas as pd # type: ignore
@@ -86,17 +86,22 @@ class TestMYSQL:
         assert isinstance(names[0], str)
         mysql.drop_table('test_table2')
 
-    def test_get_add_drop_table(self, mysql, table_one_config):
+    def test_get_add_drop_table(self, mysql, table_one_config, table_two_config, table_three_config):
         """
         Testing for MYSQL.add_table(), and MYSQL.drop_table()
         """
         assert mysql.get_table_names() == []
-        mysql.add_table("test_table1", table_one_config)
-        assert mysql.get_table_names() == ['test_table1']
-        mysql.add_table("test_table2", table_one_config)
-        assert mysql.get_table_names() == ['test_table1', 'test_table2']
-        mysql.drop_table('test_table1')
-        mysql.drop_table('test_table2')
+        mysql.add_table("table_one", table_one_config)
+        assert mysql.get_table_names() == ["table_one"]
+        mysql.add_table("table_two", table_two_config)
+        assert mysql.get_table_names() == ["table_one", "table_two"]
+        mysql.add_table("table_three", table_three_config)
+        assert mysql.get_table_names() == ["table_one", "table_three", "table_two"]
+        mysql.drop_table("table_three")
+        assert mysql.get_table_names() == ["table_one", "table_two"]
+        mysql.drop_table("table_one")
+        assert mysql.get_table_names() == ["table_two"]
+        mysql.drop_table("table_two")
         assert mysql.get_table_names() == []
 
     def test_add_drop_table_column(self, mysql, table_one_config, table_one):
@@ -137,7 +142,7 @@ class TestMYSQLUpdateRows:
         assert mysql.get_table_names() == ["table_one"]
         mysql.upsert_table_rows("table_one", table_one)
         query_result = mysql.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(table_one, query_result)
+        pd.testing.assert_frame_equal(query_result, table_one)
         mysql.drop_table('table_one')
         assert mysql.get_table_names() == []
 
@@ -193,13 +198,14 @@ class TestMYSQLUpdateRows:
                     "string_col": ["x"],
                     "int_col": [3],
                     "double_col": [3.3],
-                    "date_col": [date.today()],
+                    "date_col": [datetime(2022, 8, 2)],
                     "bool_col": [True]
                 })
             ],
             ignore_index=True
             )
         new_table = new_table.astype({"int_col": "Int64", "bool_col": "boolean"})
+        new_table['date_col'] = pd.to_datetime(new_table['date_col']).dt.date
         pd.testing.assert_frame_equal(query_result, new_table)
 
         mysql.drop_table('table_one')
