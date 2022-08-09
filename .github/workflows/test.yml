@@ -29,23 +29,46 @@ jobs:
         run: |
           import yaml
 
-          dict_file = {
+          dict = {
               "username": "${{secrets.SYNAPSE_LOGIN}}",
               "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
               "project_id": "syn33832432"
           }
 
           with open('tests/data/synapse_config.yml', 'w') as file:
-              documents = yaml.dump(dict_file, file)
+              yaml.dump(dict, file)
 
-          #import yaml
-          #data = {
-          #  "username": "${{secrets.SYNAPSE_LOGIN}}",
-          #  "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
-          #  "project_id": "syn33832432"
-          #}
-          #with open('tests/data/synapse_config.yml', 'w', encoding="utf-8") as f:
-          #  yaml.dump(f, yaml)
+        shell: python
+
+      # Create the mysql yaml config file
+      - name: create mysql config
+        run: |
+          import yaml
+
+          dict = {
+              manifest_store: {
+                  type: "synapse"
+                  username: "${{secrets.SYNAPSE_LOGIN}}",
+                  auth_token: "${{secrets.SYNAPSE_AUTH_TOKEN}}",
+                  project_id: "syn33937311"
+              },
+              database: {
+                  type: mysql,
+                  username: "root"
+                  password: "root"
+                  host: "localhost"
+                  schema: "test_schema"
+              },
+              query_result_store: {
+                  type: "synapse"
+                  username: "${{secrets.SYNAPSE_LOGIN}}",
+                  auth_token: "${{secrets.SYNAPSE_AUTH_TOKEN}}",
+                  project_id: "syn34178981"
+              }
+          }
+
+          with open('tests/data/mysql_config.yml', 'w') as file:
+              yaml.dump(dict, file)
 
         shell: python
 
