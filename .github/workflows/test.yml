@@ -46,24 +46,24 @@ jobs:
           import yaml
 
           dict = {
-              manifest_store: {
-                  type: "synapse",
-                  username: "${{secrets.SYNAPSE_LOGIN}}",
-                  auth_token: "${{secrets.SYNAPSE_AUTH_TOKEN}}",
-                  project_id: "syn33937311"
+              "manifest_store": {
+                  "type": "synapse",
+                  "username": "${{secrets.SYNAPSE_LOGIN}}",
+                  "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
+                  "project_id": "syn33937311"
               },
               database: {
-                  type: mysql,
-                  username: "root",
-                  password: "root",
-                  host: "localhost",
-                  schema: "test_schema"
+                  "type": mysql,
+                  "username": "root",
+                  "password": "root",
+                  "host": "localhost",
+                  "schema": "test_schema"
               },
               query_result_store: {
-                  type: "synapse",
-                  username: "${{secrets.SYNAPSE_LOGIN}}",
-                  auth_token: "${{secrets.SYNAPSE_AUTH_TOKEN}}",
-                  project_id: "syn34178981"
+                  "type": "synapse",
+                  "username": "${{secrets.SYNAPSE_LOGIN}}",
+                  "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
+                  "project_id": "syn34178981"
               }
           }
 
