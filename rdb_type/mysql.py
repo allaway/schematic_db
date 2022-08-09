@@ -58,19 +58,19 @@ class MySQL(RDBType):
             result = conn.execute(statement)
         return result
 
-    def execute_sql_query(self, query: str, table_config: DBObjectConfig) -> pd.DataFrame:
+    def execute_sql_query(self, query: str) -> pd.DataFrame:
         result = self.execute_sql_statement(query).fetchall()
         table = pd.DataFrame(result)
+        return table
+
+    def query_table(self, table_name: str, table_config: DBObjectConfig) -> pd.DataFrame:
+        query = f"SELECT * FROM {table_name};"
+        table = self.execute_sql_query(query)
         for att in table_config.attributes:
             if att.datatype == DBDatatype.Int:
                 table = table.astype({att.name: 'Int64'})
             elif att.datatype == DBDatatype.Boolean:
                 table = table.astype({att.name: 'boolean'})
-        return table
-
-    def query_table(self, table_name: str, table_config: DBObjectConfig) -> pd.DataFrame:
-        query = f"SELECT * FROM {table_name};"
-        table = self.execute_sql_query(query, table_config)
         return table
 
     def add_table(self, table_name: str, table_config: DBObjectConfig):
@@ -90,12 +90,19 @@ class MySQL(RDBType):
                 sql_datatype = sa.Boolean
             else:
                 raise ValueError ()
-            columns.append(sa.Column(att_name, sql_datatype))
+            if att_name in table_config.foreign_keys.keys():
+                col = sa.Column(
+                    att_name,
+                    sql_datatype,
+                    sa.ForeignKey(table_config.foreign_keys.get(att_name)),
+                    nullable=False
+                )
+            else:
+                col = sa.Column(att_name, sql_datatype)
+            columns.append(col)
 
         if table_config.primary_keys != []:
             columns.append(sa.PrimaryKeyConstraint(*table_config.primary_keys))
-        if table_config.foreign_keys != []:
-            columns.append(sa.ForeignKeyConstraint(*table_config.foreign_keys))
 
         sa.Table(table_name, self.metadata, *columns)
         self.metadata.create_all(self.engine)

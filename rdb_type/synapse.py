@@ -70,6 +70,17 @@ class Synapse(RDBType):
         table = sc.Table(schema, values)
         table = self.syn.store(table)
 
+    def build_table(self, table_name:str, table: pd.DataFrame):
+        """Adds a table to the project based on the input table
+
+        Args:
+            table_name (str): The name fo the table
+            table (pd.DataFrame): A dataframe of the table
+        """
+        project = self.syn.get(self.project_id)
+        table = sc.table.build_table(table_name, project, table)
+        self.syn.store(table)
+
     def drop_table(self, table_name: str):
         synapse_id = self.get_table_id_from_name(table_name)
         self.syn.delete(synapse_id)
@@ -94,15 +105,15 @@ class Synapse(RDBType):
     def execute_sql_statement(self, statement: str, include_row_data: bool = False):
         return self.syn.tableQuery(statement, includeRowIdAndRowVersion = include_row_data)
 
-    def execute_sql_query(
-        self, query: str,
-        table_config: DBObjectConfig,
-        include_row_data: bool = False
-    ) -> pd.DataFrame:
-
+    def execute_sql_query(self, query: str, include_row_data: bool = False) -> pd.DataFrame:
         result = self.execute_sql_statement(query, include_row_data)
         table = pd.read_csv(result.filepath)
+        return table
 
+    def query_table(self, table_name: str, table_config: DBObjectConfig) -> pd.DataFrame:
+        table_id = self.get_table_id_from_name(table_name)
+        query = f"SELECT * FROM {table_id}"
+        table = self.execute_sql_query(query)
         for att in table_config.attributes:
             if att.datatype == DBDatatype.Int:
                 table = table.astype({att.name: 'Int64'})
@@ -110,13 +121,6 @@ class Synapse(RDBType):
                 table[att.name] = pd.to_datetime(table[att.name], unit='ms').dt.date
             elif att.datatype == DBDatatype.Boolean:
                 table = table.astype({att.name: 'boolean'})
-
-        return table
-
-    def query_table(self, table_name: str, table_config: DBObjectConfig) -> pd.DataFrame:
-        table_id = self.get_table_id_from_name(table_name)
-        query = f"SELECT * FROM {table_id}"
-        table = self.execute_sql_query(query, table_config)
         return table
 
     def insert_table_rows(self, table_name: str, data: pd.DataFrame):

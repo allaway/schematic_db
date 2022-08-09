@@ -24,7 +24,7 @@ class RDBType(ABC):
         """
 
     @abstractmethod
-    def execute_sql_query(self, query: str, table_config: DBObjectConfig) -> pd.DataFrame:
+    def execute_sql_query(self, query: str) -> pd.DataFrame:
 
         """Executes a valid SQL statement
         Should be used when a result is expected.
@@ -33,8 +33,6 @@ class RDBType(ABC):
 
         Args:
             query (str): A SQL statement
-            table_config (DBObjectConfig): A generic representation of the table as a
-            DBObjectConfig object.
 
         Returns:
             pd.DataFrame: The table
