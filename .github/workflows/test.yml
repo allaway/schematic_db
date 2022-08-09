@@ -29,11 +29,14 @@ jobs:
         run: |
           import yaml
 
-          dict_file = [{'sports' : ['soccer', 'football', 'basketball', 'cricket', 'hockey', 'table tennis']},
-          {'countries' : ['Pakistan', 'USA', 'India', 'China', 'Germany', 'France', 'Spain']}]
+          dict_file = {
+              "username": "${{secrets.SYNAPSE_LOGIN}}",
+              "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
+              "project_id": "syn33832432"
+          }
 
-          with open('file.yaml', 'w') as file:
-            documents = yaml.dump(dict_file, file)
+          with open('tests/data/synapse_config.yml', 'w') as file:
+              documents = yaml.dump(dict_file, file)
 
           #import yaml
           #data = {
