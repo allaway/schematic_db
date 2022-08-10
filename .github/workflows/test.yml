@@ -1,7 +1,7 @@
 # adapted from : https://jacobian.org/til/github-actions-poetry/
 
 name: Test schematic_db
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   test:
