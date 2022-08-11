@@ -32,7 +32,7 @@ CONFIG_PATH = os.path.join(DATA_DIR, "local_mysql_config.yml")
 if not os.path.exists(CONFIG_PATH):
     CONFIG_PATH = os.path.join(DATA_DIR, "mysql_config.yml")
 
-@pytest.fixture
+@pytest.fixture(scope = "module")
 def config_dict():
     """
     Yields a MYSQL config dict
@@ -41,13 +41,15 @@ def config_dict():
         config_dict = safe_load(file)
     yield config_dict
 
-@pytest.fixture
-def mysql(config_dict):
+@pytest.fixture(scope = "module")
+def mysql(config_dict, table_one_config):
     """
     Yields a MYSQL object
     """
     obj = MySQL(config_dict["database"])
+    obj.add_table("table_one", table_one_config)
     yield obj
+    obj.drop_table("table_one")
 
 class TestMYSQL:
     """
@@ -64,59 +66,25 @@ class TestMYSQL:
         """
         Testing for MYSQL.get_table_names()
         """
-        assert isinstance(mysql.get_table_names(), list)
+        assert mysql.get_table_names() == ["table_one"]
 
-    def test_get_columns_from_table(self, mysql, table_one_config):
+    def test_get_columns_from_table(self, mysql):
         """
         Testing for MYSQL.get_columns_from_table()
         """
-        mysql.add_table("test_table2", table_one_config)
-        columns = mysql._get_columns_from_table(mysql.get_table_names()[0])
+        assert mysql.get_table_names() == ["table_one"]
+        columns = mysql._get_columns_from_table("table_one")
         assert isinstance(columns, list)
         assert isinstance(columns[0], dict)
-        mysql.drop_table('test_table2')
 
-    def test_get_column_names_from_table(self, mysql, table_one_config):
+    def test_get_column_names_from_table(self, mysql):
         """
         Testing for MYSQL.get_column_names_from_table()
         """
-        mysql.add_table("test_table2", table_one_config)
-        names = mysql.get_column_names_from_table(mysql.get_table_names()[0])
+        assert mysql.get_table_names() == ["table_one"]
+        names = mysql.get_column_names_from_table("table_one")
         assert isinstance(names, list)
         assert isinstance(names[0], str)
-        mysql.drop_table('test_table2')
-
-    def test_get_add_drop_table(self, mysql, table_one_config, table_two_config, table_three_config):
-        """
-        Testing for MYSQL.add_table(), and MYSQL.drop_table()
-        """
-        assert mysql.get_table_names() == []
-        mysql.add_table("table_one", table_one_config)
-        assert mysql.get_table_names() == ["table_one"]
-        mysql.add_table("table_two", table_two_config)
-        assert mysql.get_table_names() == ["table_one", "table_two"]
-        mysql.add_table("table_three", table_three_config)
-        assert mysql.get_table_names() == ["table_one", "table_three", "table_two"]
-        mysql.drop_table("table_three")
-        assert mysql.get_table_names() == ["table_one", "table_two"]
-        mysql.drop_table("table_one")
-        assert mysql.get_table_names() == ["table_two"]
-        mysql.drop_table("table_two")
-        assert mysql.get_table_names() == []
-
-    def test_add_drop_table_column(self, mysql, table_one_config, table_one):
-        """
-        Testing for MYSQL.add_table_column(), and MYSQL.drop_table_column()
-        """
-        assert mysql.get_table_names() == []
-        mysql.add_table("test_table1", table_one_config)
-        assert mysql.get_column_names_from_table("test_table1") == list(table_one.columns)
-        mysql.add_table_column("test_table1", "name", "varchar(100)")
-        assert mysql.get_column_names_from_table("test_table1") == list(table_one.columns) + ["name"]
-        mysql.drop_table_column("test_table1", "name")
-        assert mysql.get_column_names_from_table("test_table1") == list(table_one.columns)
-        mysql.drop_table('test_table1')
-        assert mysql.get_table_names() == []
 
     def test_get_schemas(self, mysql):
         """
@@ -130,6 +98,44 @@ class TestMYSQL:
         """
         assert mysql._get_current_schema() == "test_schema"
 
+class TestMYSQLUpdateTables:
+    """Testing for MYSQL methods that update tables
+    """
+    def test_add_drop_table(self, mysql, table_two_config, table_three_config):
+        """
+        Testing for MYSQL.add_table(), and MYSQL.drop_table()
+        """
+        assert mysql.get_table_names() == ["table_one"]
+        mysql.add_table("table_two", table_two_config)
+        assert mysql.get_table_names() == ["table_one", "table_two"]
+        mysql.add_table("table_three", table_three_config)
+        assert mysql.get_table_names() == ["table_one", "table_three", "table_two"]
+
+    def test_drop_table(self, mysql):
+        """
+        Testing for MYSQL.add_table(), and MYSQL.drop_table()
+        """
+        assert mysql.get_table_names() == ["table_one", "table_three", "table_two"]
+        mysql.drop_table("table_three")
+        assert mysql.get_table_names() == ["table_one", "table_two"]
+        mysql.drop_table("table_two")
+        assert mysql.get_table_names() == ["table_one"]
+
+class TestMYSQLUpdateTableColumns:
+    """Testing for MYSQL methods that update table columns
+    """
+    def test_add_drop_table_column(self, mysql, table_one):
+        """
+        Testing for MYSQL.add_table_column(), and MYSQL.drop_table_column()
+        """
+        assert mysql.get_table_names() == ["table_one"]
+        assert mysql.get_column_names_from_table("table_one") == list(table_one.columns)
+        mysql.add_table_column("table_one", "name", "varchar(100)")
+        assert mysql.get_column_names_from_table("table_one") == \
+            list(table_one.columns) + ["name"]
+        mysql.drop_table_column("table_one", "name")
+        assert mysql.get_column_names_from_table("table_one") == list(table_one.columns)
+
 class TestMYSQLUpdateRows:
     """Testing for MYSQL methods that update rows
     """
@@ -137,21 +143,17 @@ class TestMYSQLUpdateRows:
         """  Testing for MYSQL.upsert_table_rows()
         Whole table at once
         """
-        assert mysql.get_table_names() == []
-        mysql.add_table("table_one", table_one_config)
         assert mysql.get_table_names() == ["table_one"]
         mysql.upsert_table_rows("table_one", table_one)
         query_result = mysql.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(query_result, table_one)
         mysql.drop_table('table_one')
-        assert mysql.get_table_names() == []
+        mysql.add_table("table_one", table_one_config)
 
     def test_upsert_table_rows2(self, mysql, table_one, table_one_config):
         """  Testing for MYSQL.upsert_table_rows()
         Whole table at once
         """
-        assert mysql.get_table_names() == []
-        mysql.add_table("table_one", table_one_config)
         assert mysql.get_table_names() == ["table_one"]
 
         mysql.upsert_table_rows("table_one", table_one.iloc[0:1, :])
@@ -167,14 +169,12 @@ class TestMYSQLUpdateRows:
         pd.testing.assert_frame_equal(table_one, query_result)
 
         mysql.drop_table('table_one')
-        assert mysql.get_table_names() == []
+        mysql.add_table("table_one", table_one_config)
 
     def test_upsert_table_rows3(self, mysql, table_one, table_one_config):
         """  Testing for MYSQL.upsert_table_rows()
         Updating a row
         """
-        assert mysql.get_table_names() == []
-        mysql.add_table("table_one", table_one_config)
         assert mysql.get_table_names() == ["table_one"]
 
         mysql.upsert_table_rows("table_one", table_one)
@@ -209,14 +209,12 @@ class TestMYSQLUpdateRows:
         pd.testing.assert_frame_equal(query_result, new_table)
 
         mysql.drop_table('table_one')
-        assert mysql.get_table_names() == []
+        mysql.add_table("table_one", table_one_config)
 
     def test_delete_table_rows(self, mysql, table_one_config, table_one):
         """
         Testing for MYSQL.delete_table_rows()
         """
-        assert mysql.get_table_names() == []
-        mysql.add_table("table_one", table_one_config)
         assert mysql.get_table_names() == ["table_one"]
         mysql.upsert_table_rows("table_one", table_one)
         query_result = mysql.query_table("table_one", table_one_config)
@@ -225,5 +223,6 @@ class TestMYSQLUpdateRows:
         mysql.delete_table_rows("table_one", "pk_col", ["key2"])
         result = mysql.query_table("table_one", table_one_config)
         assert len(result.index) == 1
+
         mysql.drop_table('table_one')
-        assert mysql.get_table_names() == []
+        mysql.add_table("table_one", table_one_config)

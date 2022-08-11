@@ -8,7 +8,7 @@ import numpy as np # type: ignore
 from db_object_config import DBObjectConfig, DBAttributeConfig, DBDatatype
 
 
-@pytest.fixture
+@pytest.fixture(scope = "session")
 def table_one():
     """
     Yields a pd.Dataframe.
@@ -25,41 +25,7 @@ def table_one():
     dataframe['date_col'] = pd.to_datetime(dataframe['date_col']).dt.date
     yield dataframe
 
-@pytest.fixture
-def table_one_x():
-    """
-    Yields a pd.Dataframe. Used for updating table one.
-    """
-    dataframe = pd.DataFrame({
-        "pk_col": ["key3", "key4"],
-        "string_col": [np.nan, "d"],
-        "int_col": [3, np.nan],
-        "double_col": [np.nan, 4.4],
-        "date_col": [datetime(2022, 8, 2), datetime(2022, 8, 5)],
-        "bool_col": [False, True]
-    })
-    dataframe = dataframe.astype({"int_col": "Int64", "bool_col": "boolean"})
-    dataframe['date_col'] = pd.to_datetime(dataframe['date_col']).dt.date
-    yield dataframe
-
-@pytest.fixture
-def table_one_y():
-    """
-    Yields a pd.Dataframe. The result of updating table one with table one x.
-    """
-    dataframe = pd.DataFrame({
-        "pk_col": ["key1", "key2", "key3", "key4"],
-        "string_col": ["a", "b", np.nan, "d"],
-        "int_col": [1, pd.NA, 3, np.nan],
-        "double_col": [1.1, 2.2, np.nan, 4.4],
-        "date_col": [datetime(2022, 8, 2), np.nan, datetime(2022, 8, 2), datetime(2022, 8, 5)],
-        "bool_col": [pd.NA, True, False, True]
-    })
-    dataframe = dataframe.astype({"int_col": "Int64", "bool_col": "boolean"})
-    dataframe['date_col'] = pd.to_datetime(dataframe['date_col']).dt.date
-    yield dataframe
-
-@pytest.fixture
+@pytest.fixture(scope = "session")
 def table_one_config():
     """
     Yields a DBObjectConfig object with one primary and no foreign keys
@@ -79,7 +45,7 @@ def table_one_config():
     )
     yield table_config
 
-@pytest.fixture
+@pytest.fixture(scope = "session")
 def table_two():
     """
     Yields a pd.Dataframe.
@@ -90,7 +56,7 @@ def table_two():
     })
     yield dataframe
 
-@pytest.fixture
+@pytest.fixture(scope = "session")
 def table_two_config():
     """
     Yields a DBObjectConfig object with one primary and no foreign keys
@@ -106,7 +72,7 @@ def table_two_config():
     )
     yield table_config
 
-@pytest.fixture
+@pytest.fixture(scope = "session")
 def table_three():
     """
     Yields a pd.Dataframe.
@@ -118,7 +84,7 @@ def table_three():
     })
     yield dataframe
 
-@pytest.fixture
+@pytest.fixture(scope = "session")
 def table_three_config():
     """
     Yields a DBObjectConfig object with two keys that are both primary and foreign

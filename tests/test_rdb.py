@@ -15,11 +15,19 @@ CONFIG_PATH = os.path.join(DATA_DIR, "local_mysql_config.yml")
 if not os.path.exists(CONFIG_PATH):
     CONFIG_PATH = os.path.join(DATA_DIR, "mysql_config.yml")
 
-@pytest.fixture
+@pytest.fixture(scope = 'module')
 def rdb_mysql():
     """Yields a RDB object
     """
-    yield RDB(config_yaml_path = CONFIG_PATH)
+    rdb = RDB(config_yaml_path = CONFIG_PATH)
+    assert rdb.rdb_type.get_table_names() == []
+    yield rdb
+    test_table_names = ["table_three", "table_one", "table_two"]
+    for table_name in test_table_names:
+        if table_name in rdb.rdb_type.get_table_names():
+            rdb.rdb_type.drop_table(table_name)
+    for table_name in rdb.query_result_store.get_table_names():
+        rdb.query_result_store.drop_table(table_name)
 
 class TestRDBMySQL:
     """Testing for RDB with MySQL database
@@ -38,9 +46,6 @@ class TestRDBMySQL:
         """Testing for RDB.update_database_table()
         """
         assert rdb_mysql.rdb_type.get_table_names() == []
-        rdb_mysql.update_database_table("table_one", table_one_config)
-        result = rdb_mysql.rdb_type.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result, table_one)
 
         rdb_mysql.update_database_table("table_one", table_one_config)
         result = rdb_mysql.rdb_type.query_table("table_one", table_one_config)
@@ -54,21 +59,9 @@ class TestRDBMySQL:
         result = rdb_mysql.rdb_type.query_table("table_three", table_three_config)
         pd.testing.assert_frame_equal(result, table_three)
 
-        rdb_mysql.rdb_type.drop_table("table_three")
-        rdb_mysql.rdb_type.drop_table("table_two")
-        rdb_mysql.rdb_type.drop_table("table_one")
-        assert rdb_mysql.rdb_type.get_table_names() == []
-
-
-    def test_store_query_result(
-        self, rdb_mysql, table_one_config, table_two_config, table_three_config
-        ):
+    def test_store_query_result(self, rdb_mysql):
         """Testing for RDB.store_query_result()
         """
-        assert rdb_mysql.rdb_type.get_table_names() == []
-        rdb_mysql.update_database_table("table_one", table_one_config)
-        rdb_mysql.update_database_table("table_two", table_two_config)
-        rdb_mysql.update_database_table("table_three", table_three_config)
         assert rdb_mysql.rdb_type.get_table_names() == ["table_one", "table_three", "table_two"]
         assert rdb_mysql.query_result_store.get_table_names() == []
 
@@ -80,35 +73,17 @@ class TestRDBMySQL:
             "ON one.pk_col = three.fk1_col;"
         )
 
-        rdb_mysql.store_query_result(query, "result_one")
-        assert rdb_mysql.query_result_store.get_table_names() == ["result_one"]
+        rdb_mysql.store_query_result(query, "result_zero")
+        assert rdb_mysql.query_result_store.get_table_names() == ["result_zero"]
 
-        rdb_mysql.rdb_type.drop_table("table_three")
-        rdb_mysql.rdb_type.drop_table("table_two")
-        rdb_mysql.rdb_type.drop_table("table_one")
-        assert rdb_mysql.rdb_type.get_table_names() == []
-
-        rdb_mysql.query_result_store.drop_table("result_one")
-        assert rdb_mysql.query_result_store.get_table_names() == []
-
-    def test_store_query_results(self, rdb_mysql, table_one_config, table_two_config):
+    def test_store_query_results(self, rdb_mysql):
         """Testing for RDB.store_query_results()
         """
-        assert rdb_mysql.rdb_type.get_table_names() == []
-        rdb_mysql.update_database_table("table_one", table_one_config)
-        rdb_mysql.update_database_table("table_two", table_two_config)
-        assert rdb_mysql.rdb_type.get_table_names() == ["table_one", "table_two"]
+        assert rdb_mysql.rdb_type.get_table_names() == ["table_one", "table_three", "table_two"]
+        assert rdb_mysql.query_result_store.get_table_names() == ["result_zero"]
 
-        assert rdb_mysql.query_result_store.get_table_names() == []
         csv_path = os.path.join(DATA_DIR, "queries.csv")
         rdb_mysql.store_query_results(csv_path)
-        assert rdb_mysql.query_result_store.get_table_names() == ["result_one", "result_two"]
-
-        rdb_mysql.rdb_type.drop_table("table_three")
-        rdb_mysql.rdb_type.drop_table("table_two")
-        rdb_mysql.rdb_type.drop_table("table_one")
-        assert rdb_mysql.rdb_type.get_table_names() == []
-
-        rdb_mysql.query_result_store.drop_table("result_one")
-        rdb_mysql.query_result_store.drop_table("result_two")
-        assert rdb_mysql.query_result_store.get_table_names() == []
+        assert rdb_mysql.query_result_store.get_table_names() == [
+            "result_one", "result_two", "result_zero"
+        ]
