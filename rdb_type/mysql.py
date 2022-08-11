@@ -109,6 +109,7 @@ class MySQL(RDBType):
 
     def drop_table(self, table_name: str):
         self.execute_sql_statement(f"DROP TABLE IF EXISTS {table_name};")
+        self.metadata.clear()
 
     def add_table_column(self, table_name: str, column_name: str, datatype: str):
         self.execute_sql_statement(f"ALTER TABLE {table_name} ADD {column_name} {datatype};")
