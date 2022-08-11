@@ -211,18 +211,17 @@ class TestMYSQLUpdateRows:
         mysql.drop_table('table_one')
         mysql.add_table("table_one", table_one_config)
 
-    def test_delete_table_rows(self, mysql, table_one_config, table_one):
-        """
-        Testing for MYSQL.delete_table_rows()
+    def test_delete_table_rows1(self, mysql, table_one_config, table_one):
+        """Testing for MYSQL.delete_table_rows()
         """
         assert mysql.get_table_names() == ["table_one"]
         mysql.upsert_table_rows("table_one", table_one)
-        query_result = mysql.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(table_one, query_result)
-        mysql.delete_table_rows("table_one", "pk_col", ["key1"])
-        mysql.delete_table_rows("table_one", "pk_col", ["key2"])
-        result = mysql.query_table("table_one", table_one_config)
-        assert len(result.index) == 1
+        result1 = mysql.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(table_one, result1)
+        mysql.delete_table_rows("table_one", table_one.iloc[0:2, :], table_one_config)
+        result_keys = mysql.query_table("table_one", table_one_config)['pk_col'].to_list()
+        correct_keys = table_one.iloc[2:, :]['pk_col'].to_list()
+        assert result_keys == correct_keys
 
         mysql.drop_table('table_one')
         mysql.add_table("table_one", table_one_config)

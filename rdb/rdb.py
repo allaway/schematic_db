@@ -113,3 +113,13 @@ class RDB():
         if table_name in self.query_result_store.get_table_names():
             self.query_result_store.drop_table(table_name)
         self.query_result_store.build_table(table_name, query_result)
+
+    def delete_table_rows(self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig):
+        """See RDBType.delete_table_rows()
+        """
+        self.rdb_type.delete_table_rows(table_name, data, table_config)
+
+    def drop_table(self, table_name: str):
+        """See RDBType.drop_table()
+        """
+        self.rdb_type.drop_table(table_name)

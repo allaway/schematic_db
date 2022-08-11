@@ -139,7 +139,7 @@ class Synapse(RDBType):
         """ Placeholder
         """
 
-    def delete_table_rows(self, table_name: str, column: str, values: List[str]):
+    def delete_table_rows(self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig):
         pass
 
     def upsert_table_rows(self, table_name: str, data: pd.DataFrame):

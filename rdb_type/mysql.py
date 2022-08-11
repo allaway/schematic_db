@@ -117,11 +117,18 @@ class MySQL(RDBType):
     def drop_table_column(self, table_name: str, column_name: str):
         self.execute_sql_statement(f"ALTER TABLE {table_name} DROP {column_name};")
 
-    def delete_table_rows(self, table_name: str, column: str, values: List[str]):
-        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
-        statement = sa.delete(table).where(table.c[column].in_(values))
-        with self.engine.connect().execution_options(autocommit=True) as conn:
-            conn.execute(statement)
+    def delete_table_rows(self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig):
+        primary_keys = table_config.primary_keys
+        for col in primary_keys:
+            if col not in list(data.columns):
+                raise ValueError(f"primary key: {col} missing from data")
+        data = data[primary_keys]
+        tuples = list(data.itertuples(index=False, name=None))
+        tuples = [(f"'{i}'" for i in tup) for tup in tuples]
+        tuple_strings = ["(" + ",".join(tup) + ")" for tup in tuples]
+        tuple_string = ",".join(tuple_strings)
+        statement = f"DELETE FROM {table_name} WHERE ({','.join(primary_keys)}) IN ({tuple_string})"
+        self.execute_sql_statement(statement)
 
     def upsert_table_rows(self, table_name: str, data: pd.DataFrame):
         data = data.replace({np.nan: None})

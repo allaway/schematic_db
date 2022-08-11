@@ -135,16 +135,14 @@ class RDBType(ABC):
         """
 
     @abstractmethod
-    def delete_table_rows(self, table_name: str, column: str, values: List[str]):
+    def delete_table_rows(self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig):
         """Deletes rows from the given table
 
-        rdbtype.delete_table_rows("table_name", "p_key", ["key1"])
-
         Args:
-            table_name (str): The id(name) of the table the rows will be deleted from
-            column (str): The column name used to identify the rows
-            values (List[str]): A list of values. Rows with these values in the given column will
-            be deleted
+            table_name (str): The name of the table the rows will be deleted from
+            data (pd.DataFrame): A pandas.DataFrame. It must contain the primary keys of the table
+            table_config (DBObjectConfig): A generic representation of the table as a
+            DBObjectConfig object.
         """
 
     @abstractmethod
