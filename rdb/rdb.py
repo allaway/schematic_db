@@ -42,22 +42,27 @@ class RDB():
         self.rdb_type = rdb_type
         self.query_result_store = query_result_store
 
-    def update_database_table(self, table_name: str, table_config: DBObjectConfig):
+    def update_database_table(self, manifest_table_name: str, table_config: DBObjectConfig):
         """Updates a table in the database based on the equivalent manifest
         If the table doesn't exist in the database it will be built with the table config.
 
         Args:
-            table_name (str): The name of the table in both the manifest store and database
+            manifest_table_name (str): The name of the table in the manifest store
+            table_config (DBObjectConfig): A generic representation of the table as a
+            DBObjectConfig object.
         """
         manifest_table_names = self.manifest_store.get_table_names()
-        if table_name not in manifest_table_names:
-            raise ValueError(f"table_name: {table_name} missing from manifest store")
-        table = self.manifest_store.query_table(table_name, table_config)
+        if manifest_table_name not in manifest_table_names:
+            raise ValueError(
+                f"manifest_table_name: {manifest_table_name} missing from manifest store"
+            )
+        manifest_table = self.manifest_store.query_table(manifest_table_name, table_config)
 
         database_table_names = self.rdb_type.get_table_names()
+        table_name = table_config.name
         if table_name not in database_table_names:
             self.rdb_type.add_table(table_name, table_config)
-        self.rdb_type.upsert_table_rows(table_name, table)
+        self.rdb_type.upsert_table_rows(table_name, manifest_table)
 
     def store_query_results(self, csv_path:str):
         """Stores the results of queries
