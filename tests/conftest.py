@@ -57,6 +57,17 @@ def table_two():
     yield dataframe
 
 @pytest.fixture(scope = "session")
+def table_two_b():
+    """
+    Yields a pd.Dataframe.
+    """
+    dataframe = pd.DataFrame({
+        "pk_col": ["key5", "key6", "key7", "key8"],
+        "string_col": ["a", "b", "c", "d"]
+    })
+    yield dataframe
+
+@pytest.fixture(scope = "session")
 def table_two_config():
     """
     Yields a DBObjectConfig object with one primary and no foreign keys

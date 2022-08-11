@@ -1,6 +1,7 @@
 """RDB
 """
 # pylint: disable=E0401
+from typing import List
 from yaml import safe_load
 import pandas as pd # type: ignore
 from db_object_config import DBObjectConfig
@@ -42,21 +43,46 @@ class RDB():
         self.rdb_type = rdb_type
         self.query_result_store = query_result_store
 
-    def update_database_table(self, manifest_table_name: str, table_config: DBObjectConfig):
-        """Updates a table in the database based on the equivalent manifest
+    def update_all_database_tables(
+        self,
+        manifest_table_names: List[List[str]],
+        table_configs: List[DBObjectConfig]
+    ):
+        """
+        Updates all tables in the list of table_configs
+
+        Args:
+            manifest_table_names (List[List[str]]): A list where each item is a list of the
+             names of tables in the manifest store
+            table_config (List[DBObjectConfig]): A list of generic representations of each
+             table as a DBObjectConfig object. The list must be in the correct order to
+             update in regards to relationships.
+        """
+        zipped_list = zip(manifest_table_names, table_configs)
+        for tup in zipped_list:
+            self.update_database_table(*tup)
+
+    def update_database_table(self, manifest_table_names: List[str], table_config: DBObjectConfig):
+        """
+        Updates a table in the database based on one or more manifests.
+        If any of the manifests don't exist an exception will be raised.
         If the table doesn't exist in the database it will be built with the table config.
 
         Args:
-            manifest_table_name (str): The name of the table in the manifest store
+            manifest_table_names (List[str]): A list of the names of tables in the manifest store
             table_config (DBObjectConfig): A generic representation of the table as a
             DBObjectConfig object.
         """
-        manifest_table_names = self.manifest_store.get_table_names()
-        if manifest_table_name not in manifest_table_names:
-            raise ValueError(
-                f"manifest_table_name: {manifest_table_name} missing from manifest store"
-            )
-        manifest_table = self.manifest_store.query_table(manifest_table_name, table_config)
+        manifest_store_table_names = self.manifest_store.get_table_names()
+        manifest_tables = []
+        for name in manifest_table_names:
+            if name not in manifest_store_table_names:
+                raise ValueError(
+                    f"manifest_table_name: {name} missing from manifest store"
+                )
+            table = self.manifest_store.query_table(name, table_config)
+            manifest_tables.append(table)
+        manifest_table = pd.concat(manifest_tables)
 
         database_table_names = self.rdb_type.get_table_names()
         table_name = table_config.name
