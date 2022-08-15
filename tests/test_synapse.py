@@ -65,12 +65,12 @@ class TestSynapseIDs:
     def test_get_table_id_from_name(self, synapse):
         """Testing for Synapse.get_table_id_from_name()
         """
-        assert synapse.get_table_id_from_name("test_table_one") == "syn34073419"
+        assert synapse.get_table_id_from_name("test_table_one") == "syn34532191"
 
     def test_get_table_name_from_id(self, synapse):
         """Testing for Synapse.get_table_name_from_id()
         """
-        assert synapse.get_table_name_from_id("syn34073419") == "test_table_one"
+        assert synapse.get_table_name_from_id("syn34532191") == "test_table_one"
 
 class TestSynapseQueries:
     """Testing for query methods
@@ -95,18 +95,27 @@ class TestSynapse:
         synapse.add_table("table_one", table_one_config)
         assert synapse.get_table_names() == ['table_one'] + test_project_table_names
 
-    def test_add_drop_table_column(
+    def test_add_table_column(
         self, synapse, table_one, table_one_config, test_project_table_names
     ):
-        """Testing for synapse.add_table_column() and synapse.drop_table_column()
+        """Testing for synapse.add_table_column()
         """
         assert synapse.get_table_names() == ['table_one'] + test_project_table_names
         assert synapse.get_column_names_from_table("table_one") == list(table_one.columns)
+
         synapse.add_table_column("table_one", "test_add_col", DBDatatype.Float)
         assert synapse.get_column_names_from_table("table_one") == \
             list(table_one.columns) + ["test_add_col"]
+
+        synapse.drop_table("table_one")
+        synapse.add_table("table_one", table_one_config)
+
+    def test_drop_table_column(self, synapse, table_one, table_one_config):
+        """Testing for synapse.drop_table_column()
+        """
         synapse.drop_table_column("table_one", "test_add_col")
         assert synapse.get_column_names_from_table("table_one") == list(table_one.columns)
+
         synapse.drop_table("table_one")
         synapse.add_table("table_one", table_one_config)
 

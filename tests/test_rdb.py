@@ -104,13 +104,12 @@ class TestRDBMySQL:
         assert rdb_mysql.query_result_store.get_table_names() == []
 
         query = (
-            "SELECT * FROM " +\
-            "(SELECT pk_col, int_col FROM table_one) AS one " +\
+            "SELECT one.pk_one_col, one.int_one_col, three.string_three_col FROM " +\
+            "(SELECT pk_one_col, int_one_col FROM table_one) AS one " +\
             "INNER JOIN " +\
-            "(SELECT fk1_col, string_col FROM table_three) AS three "+\
-            "ON one.pk_col = three.fk1_col;"
+            "(SELECT pk_one_col, string_three_col FROM table_three) AS three "+\
+            "ON one.pk_one_col = three.pk_one_col;"
         )
-
         rdb_mysql.store_query_result(query, "result_zero")
         assert rdb_mysql.query_result_store.get_table_names() == ["result_zero"]
 

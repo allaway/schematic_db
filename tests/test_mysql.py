@@ -97,9 +97,9 @@ class TestMYSQL:
 class TestMYSQLUpdateTables:
     """Testing for MYSQL methods that update tables
     """
-    def test_add_drop_table(self, mysql, table_two_config, table_three_config):
+    def test_add_table(self, mysql, table_two_config, table_three_config):
         """
-        Testing for MYSQL.add_table(), and MYSQL.drop_table()
+        Testing for MYSQL.add_table()
         """
         assert mysql.get_table_names() == ["table_one"]
         mysql.add_table("table_two", table_two_config)
@@ -179,29 +179,29 @@ class TestMYSQLUpdateRows:
 
         mysql.upsert_table_rows(
             "table_one",
-            pd.DataFrame({"pk_col": ["key3"], "string_col": ["x"]})
+            pd.DataFrame({"pk_one_col": ["key3"], "string_one_col": ["x"]})
         )
         mysql.upsert_table_rows(
             "table_one",
-            pd.DataFrame({"pk_col": ["key3"], "double_col": [3.3], "bool_col": [True]})
+            pd.DataFrame({"pk_one_col": ["key3"], "double_one_col": [3.3], "bool_one_col": [True]})
         )
         query_result = mysql.query_table("table_one", table_one_config)
         new_table = pd.concat(
             [
                 table_one.iloc[0:2, :],
                 pd.DataFrame({
-                    "pk_col": ["key3"],
-                    "string_col": ["x"],
-                    "int_col": [3],
-                    "double_col": [3.3],
-                    "date_col": [datetime(2022, 8, 2)],
-                    "bool_col": [True]
+                    "pk_one_col": ["key3"],
+                    "string_one_col": ["x"],
+                    "int_one_col": [3],
+                    "double_one_col": [3.3],
+                    "date_one_col": [datetime(2022, 8, 2)],
+                    "bool_one_col": [True]
                 })
             ],
             ignore_index=True
             )
-        new_table = new_table.astype({"int_col": "Int64", "bool_col": "boolean"})
-        new_table['date_col'] = pd.to_datetime(new_table['date_col']).dt.date
+        new_table = new_table.astype({"int_one_col": "Int64", "bool_one_col": "boolean"})
+        new_table['date_one_col'] = pd.to_datetime(new_table['date_one_col']).dt.date
         pd.testing.assert_frame_equal(query_result, new_table)
 
         mysql.drop_table('table_one')
@@ -215,8 +215,8 @@ class TestMYSQLUpdateRows:
         result1 = mysql.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(table_one, result1)
         mysql.delete_table_rows("table_one", table_one.iloc[0:2, :], table_one_config)
-        result_keys = mysql.query_table("table_one", table_one_config)['pk_col'].to_list()
-        correct_keys = table_one.iloc[2:, :]['pk_col'].to_list()
+        result_keys = mysql.query_table("table_one", table_one_config)['pk_one_col'].to_list()
+        correct_keys = table_one.iloc[2:, :]['pk_one_col'].to_list()
         assert result_keys == correct_keys
 
         mysql.drop_table('table_one')

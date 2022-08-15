@@ -111,6 +111,8 @@ class RDB():
             table_name (str): The name of the table the result will be stored as
         """
         query_result = self.rdb_type.execute_sql_query(query)
+        import logging
+        logging.warning(query_result)
         if table_name in self.query_result_store.get_table_names():
             self.query_result_store.drop_table(table_name)
         self.query_result_store.build_table(table_name, query_result)
