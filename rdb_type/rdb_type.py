@@ -79,27 +79,31 @@ class RDBType(ABC):
     def add_table(self, table_name: str, table_config: DBObjectConfig):
         """Adds a table to the schema
 
-        rdbtype.add_table(
-            "table_name",
-            DBObjectConfig(
-                name = "table_one",
-                attributes = [
-                    DBAttributeConfig(name="pk_col", datatype=DBDatatype.Text),
-                    DBAttributeConfig(name="string_col", datatype=DBDatatype.Text),
-                    DBAttributeConfig(name="int_col", datatype=DBDatatype.Int),
-                    DBAttributeConfig(name="double_col", datatype=DBDatatype.Float),
-                    DBAttributeConfig(name="date_col", datatype=DBDatatype.Date),
-                    DBAttributeConfig(name="bool_col", datatype=DBDatatype.Boolean)
-                ],
-                primary_keys = ["pk_col"],
-                foreign_keys = []
-            )
-        )
+        Example:
+            ::
+
+
+                    rdbtype.add_table(
+                        "table_name",
+                        DBObjectConfig(
+                            name = "table_one",
+                            attributes = [
+                                DBAttributeConfig(name="pk_col", datatype=DBDatatype.Text),
+                                DBAttributeConfig(name="string_col", datatype=DBDatatype.Text),
+                                DBAttributeConfig(name="int_col", datatype=DBDatatype.Int),
+                                DBAttributeConfig(name="double_col", datatype=DBDatatype.Float),
+                                DBAttributeConfig(name="date_col", datatype=DBDatatype.Date),
+                                DBAttributeConfig(name="bool_col", datatype=DBDatatype.Boolean)
+                            ],
+                            primary_keys = ["pk_col"],
+                            foreign_keys = []
+                        )
+                    )
 
         Args:
             table_name (str): The id(name) of the table to be added
-            table_config (DBObjectConfig): A generic representation of the table as a
-            DBObjectConfig object.
+            table_config (DBObjectConfig): A generic representation of the table as a 
+                DBObjectConfig object.
         """
 
     @abstractmethod
