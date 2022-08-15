@@ -4,6 +4,7 @@ import os
 import pytest
 import pandas as pd
 from rdb import RDB
+from rdb import normalize_table
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")
@@ -24,6 +25,15 @@ def fixture_rdb_mysql():
             rdb.rdb_type.drop_table(table_name)
     for table_name in rdb.query_result_store.get_table_names():
         rdb.query_result_store.drop_table(table_name)
+
+class TestUtils:
+    """Testing for rdb utils
+    """
+    def test_normalize_table1(self, table_one, table_one_config):
+        """ Tests an already normalized table
+        """
+        result = normalize_table(table_one, table_one_config)
+        pd.testing.assert_frame_equal(result, table_one, check_like = True)
 
 class TestRDBMySQL:
     """Testing for RDB with MySQL database
