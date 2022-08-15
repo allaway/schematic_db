@@ -4,6 +4,7 @@ import os
 import pytest
 import pandas as pd
 from rdb import RDB
+from rdb import normalize_table
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")
@@ -24,6 +25,45 @@ def fixture_rdb_mysql():
             rdb.rdb_type.drop_table(table_name)
     for table_name in rdb.query_result_store.get_table_names():
         rdb.query_result_store.drop_table(table_name)
+
+class TestUtils:
+    """Testing for rdb utils
+    """
+    def test_normalize_table1(self, table_one, table_one_config):
+        """ Tests an already normalized table
+        """
+        result = normalize_table(table_one, table_one_config)
+        pd.testing.assert_frame_equal(result, table_one, check_like = True)
+
+    def test_normalize_table2(self, table_123_unormalized, table_one_config):
+        """ Tests a denormalized table
+        """
+        result = normalize_table(table_123_unormalized, table_one_config)
+        correct_result = pd.DataFrame({
+            "pk_one_col": ["key1", "key2"],
+            "string_one_col": ["a","b"]
+        })
+        pd.testing.assert_frame_equal(result, correct_result, check_like = True)
+
+    def test_normalize_table3(self, table_123_unormalized, table_two_config):
+        """ Tests a denormalized table
+        """
+        result = normalize_table(table_123_unormalized, table_two_config)
+        correct_result = pd.DataFrame({
+            "pk_two_col": ["key1", "key2"]
+        })
+        pd.testing.assert_frame_equal(result, correct_result, check_like = True)
+
+    def test_normalize_table4(self, table_123_unormalized, table_three_config):
+        """ Tests a denormalized table
+        """
+        result = normalize_table(table_123_unormalized, table_three_config)
+        correct_result = pd.DataFrame({
+            "pk_one_col": ["key1", "key1", "key2", "key2"],
+            "pk_two_col": ["key1", "key2", "key1", "key2"],
+            "string_three_col": ["a", "b", "c", "d"]
+        })
+        pd.testing.assert_frame_equal(result, correct_result, check_like = True)
 
 class TestRDBMySQL:
     """Testing for RDB with MySQL database
@@ -94,13 +134,12 @@ class TestRDBMySQL:
         assert rdb_mysql.query_result_store.get_table_names() == []
 
         query = (
-            "SELECT * FROM " +\
-            "(SELECT pk_col, int_col FROM table_one) AS one " +\
+            "SELECT one.pk_one_col, one.int_one_col, three.string_three_col FROM " +\
+            "(SELECT pk_one_col, int_one_col FROM table_one) AS one " +\
             "INNER JOIN " +\
-            "(SELECT fk1_col, string_col FROM table_three) AS three "+\
-            "ON one.pk_col = three.fk1_col;"
+            "(SELECT pk_one_col, string_three_col FROM table_three) AS three "+\
+            "ON one.pk_one_col = three.pk_one_col;"
         )
-
         rdb_mysql.store_query_result(query, "result_zero")
         assert rdb_mysql.query_result_store.get_table_names() == ["result_zero"]
 

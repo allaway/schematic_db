@@ -5,6 +5,7 @@ from yaml import safe_load
 import pandas as pd
 from db_object_config import DBObjectConfig
 from rdb_type import MySQL, Synapse
+from .utils import normalize_table
 
 
 class RDB():
@@ -82,6 +83,7 @@ class RDB():
             table = self.manifest_store.query_table(name, table_config)
             manifest_tables.append(table)
         manifest_table = pd.concat(manifest_tables)
+        manifest_table = normalize_table(manifest_table, table_config)
 
         database_table_names = self.rdb_type.get_table_names()
         table_name = table_config.name
@@ -109,6 +111,8 @@ class RDB():
             table_name (str): The name of the table the result will be stored as
         """
         query_result = self.rdb_type.execute_sql_query(query)
+        import logging
+        logging.warning(query_result)
         if table_name in self.query_result_store.get_table_names():
             self.query_result_store.drop_table(table_name)
         self.query_result_store.build_table(table_name, query_result)
