@@ -73,4 +73,18 @@ syn.store(
         })
     )
 )
+
+syn.store(
+    sc.table.build_table(
+        "table_123_unormalized",
+        MANIFEST_STORE_ID,
+        pd.DataFrame({
+            "pk_one_col": ["key1", "key1", "key2", "key2"],
+            "pk_two_col": ["key1", "key2", "key1", "key2"],
+            "string_three_col": ["a", "b", "c", "d"],
+            "string_one_col": ["a","a", "b", "a"]
+        })
+    )
+)
+
 '''

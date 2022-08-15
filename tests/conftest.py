@@ -110,3 +110,17 @@ def table_three_config():
         foreign_keys = {"pk_one_col": "table_one.pk_one_col", "pk_two_col": "table_two.pk_two_col"}
     )
     yield table_config
+
+@pytest.fixture(scope = "session")
+def table_123_unormalized():
+    """
+    Yields a pd.Dataframe. This is what a merged table might look like.
+    """
+    dataframe = pd.DataFrame({
+        "pk_one_col": ["key1", "key1", "key2", "key2"],
+        "pk_two_col": ["key1", "key2", "key1", "key2"],
+        "string_three_col": ["a", "b", "c", "d"],
+        "string_one_col": ["a","a", "b", "a"]
+    })
+
+    yield dataframe

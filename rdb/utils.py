@@ -18,8 +18,7 @@ def normalize_table(table: pd.DataFrame, table_config: DBObjectConfig) -> pd.Dat
         raise ValueError(f"Manifest missing primary keys: [{', '.join(missing_primary_keys)}]")
 
     table = table[normalized_column_names]
-    table = table.reset_index()
     table = table.drop_duplicates(subset=table_config.primary_keys)
-    table = table.drop(columns=["index"])
+    table.reset_index(inplace=True, drop=True)
 
     return table

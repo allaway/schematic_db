@@ -35,6 +35,36 @@ class TestUtils:
         result = normalize_table(table_one, table_one_config)
         pd.testing.assert_frame_equal(result, table_one, check_like = True)
 
+    def test_normalize_table2(self, table_123_unormalized, table_one_config):
+        """ Tests a denormalized table
+        """
+        result = normalize_table(table_123_unormalized, table_one_config)
+        correct_result = pd.DataFrame({
+            "pk_one_col": ["key1", "key2"],
+            "string_one_col": ["a","b"]
+        })
+        pd.testing.assert_frame_equal(result, correct_result, check_like = True)
+
+    def test_normalize_table3(self, table_123_unormalized, table_two_config):
+        """ Tests a denormalized table
+        """
+        result = normalize_table(table_123_unormalized, table_two_config)
+        correct_result = pd.DataFrame({
+            "pk_two_col": ["key1", "key2"]
+        })
+        pd.testing.assert_frame_equal(result, correct_result, check_like = True)
+
+    def test_normalize_table4(self, table_123_unormalized, table_three_config):
+        """ Tests a denormalized table
+        """
+        result = normalize_table(table_123_unormalized, table_three_config)
+        correct_result = pd.DataFrame({
+            "pk_one_col": ["key1", "key1", "key2", "key2"],
+            "pk_two_col": ["key1", "key2", "key1", "key2"],
+            "string_three_col": ["a", "b", "c", "d"]
+        })
+        pd.testing.assert_frame_equal(result, correct_result, check_like = True)
+
 class TestRDBMySQL:
     """Testing for RDB with MySQL database
     """
