@@ -5,9 +5,9 @@ from typing import List
 import pandas as pd
 from db_object_config import DBObjectConfig
 
+
 class RDBType(ABC):
-    """ An interface for relational database types
-    """
+    """An interface for relational database types"""
 
     @abstractmethod
     def execute_sql_statement(self, statement: str):
@@ -35,7 +35,9 @@ class RDBType(ABC):
         """
 
     @abstractmethod
-    def query_table(self, table_name: str, table_config: DBObjectConfig) -> pd.DataFrame:
+    def query_table(
+        self, table_name: str, table_config: DBObjectConfig
+    ) -> pd.DataFrame:
         """Queries the whole table
 
         Args:
@@ -77,7 +79,7 @@ class RDBType(ABC):
         """Adds a table to the schema
         Args:
             table_name (str): The id(name) of the table to be added
-            table_config (DBObjectConfig): A generic representation of the table as a 
+            table_config (DBObjectConfig): A generic representation of the table as a
                 DBObjectConfig object.
         """
 
@@ -107,7 +109,9 @@ class RDBType(ABC):
         """
 
     @abstractmethod
-    def delete_table_rows(self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig):
+    def delete_table_rows(
+        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
+    ):
         """Deletes rows from the given table
 
         Args:

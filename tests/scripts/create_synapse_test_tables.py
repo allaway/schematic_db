@@ -11,20 +11,22 @@ DATABASE_ID = "syn33832432"
 syn = sc.Synapse()
 syn.login()
 
-df_one = pd.DataFrame({
-    "pk_one_col": ["key1", "key2", "key3"],
-    "string_one_col": ["a","b", np.nan],
-    "int_one_col": [1,pd.NA,3],
-    "double_one_col": [1.1,2.2,np.nan],
-    "date_one_col": [datetime(2022, 8, 2), np.nan, datetime(2022, 8, 2)],
-    "bool_one_col": [pd.NA, True, False]
-})
+df_one = pd.DataFrame(
+    {
+        "pk_one_col": ["key1", "key2", "key3"],
+        "string_one_col": ["a", "b", np.nan],
+        "int_one_col": [1, pd.NA, 3],
+        "double_one_col": [1.1, 2.2, np.nan],
+        "date_one_col": [datetime(2022, 8, 2), np.nan, datetime(2022, 8, 2)],
+        "bool_one_col": [pd.NA, True, False],
+    }
+)
 table_one = sc.table.build_table("table_one", MANIFEST_STORE_ID, df_one)
-#syn.store(table_one)
+# syn.store(table_one)
 db_table_one = sc.table.build_table("test_table_one", DATABASE_ID, df_one)
-#syn.store(db_table_one)
+# syn.store(db_table_one)
 
-'''
+"""
 syn.store(
     sc.table.build_table(
         "table_one",
@@ -87,4 +89,4 @@ syn.store(
     )
 )
 
-'''
+"""

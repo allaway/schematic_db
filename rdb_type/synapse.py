@@ -6,6 +6,7 @@ import pandas as pd
 from db_object_config import DBObjectConfig, DBDatatype
 from .rdb_type import RDBType
 
+
 class Synapse(RDBType):
     """Synapse
     - Represents:
@@ -15,6 +16,7 @@ class Synapse(RDBType):
     - Implements the RDBType interface.
     - Handles Synapse specific functionality.
     """
+
     def __init__(self, config_dict: dict):
         """Init
         obj = MySQL({
@@ -38,24 +40,24 @@ class Synapse(RDBType):
 
     def get_table_names(self) -> List[str]:
         tables = self._get_tables()
-        return [table['name'] for table in tables]
+        return [table["name"] for table in tables]
 
     def get_table_id_from_name(self, table_name: str) -> str:
         tables = self._get_tables()
-        matching_tables = [table for table in tables if table['name'] == table_name]
+        matching_tables = [table for table in tables if table["name"] == table_name]
         if len(matching_tables) == 0:
             raise ValueError(f"No matching tables with name {table_name}")
         if len(matching_tables) > 1:
             raise ValueError(f"Multiple matching tables with name {table_name}")
-        return matching_tables[0]['id']
+        return matching_tables[0]["id"]
 
     def get_table_name_from_id(self, table_id: str) -> str:
         tables = self._get_tables()
-        return [table['name'] for table in tables if table['id'] == table_id][0]
+        return [table["name"] for table in tables if table["id"] == table_id][0]
 
     def get_column_names_from_table(self, table_name: str) -> List[str]:
         columns = self._get_columns_from_table(table_name)
-        return [column['name'] for column in columns]
+        return [column["name"] for column in columns]
 
     def add_table(self, table_name: str, table_config: DBObjectConfig):
         columns = []
@@ -69,7 +71,7 @@ class Synapse(RDBType):
         table = sc.Table(schema, values)
         table = self.syn.store(table)
 
-    def build_table(self, table_name:str, table: pd.DataFrame):
+    def build_table(self, table_name: str, table: pd.DataFrame):
         """Adds a table to the project based on the input table
 
         Args:
@@ -102,24 +104,30 @@ class Synapse(RDBType):
         table = self.syn.store(table)
 
     def execute_sql_statement(self, statement: str, include_row_data: bool = False):
-        return self.syn.tableQuery(statement, includeRowIdAndRowVersion = include_row_data)
+        return self.syn.tableQuery(
+            statement, includeRowIdAndRowVersion=include_row_data
+        )
 
-    def execute_sql_query(self, query: str, include_row_data: bool = False) -> pd.DataFrame:
+    def execute_sql_query(
+        self, query: str, include_row_data: bool = False
+    ) -> pd.DataFrame:
         result = self.execute_sql_statement(query, include_row_data)
         table = pd.read_csv(result.filepath)
         return table
 
-    def query_table(self, table_name: str, table_config: DBObjectConfig) -> pd.DataFrame:
+    def query_table(
+        self, table_name: str, table_config: DBObjectConfig
+    ) -> pd.DataFrame:
         table_id = self.get_table_id_from_name(table_name)
         query = f"SELECT * FROM {table_id}"
         table = self.execute_sql_query(query)
         for att in table_config.attributes:
             if att.datatype == DBDatatype.Int:
-                table = table.astype({att.name: 'Int64'})
+                table = table.astype({att.name: "Int64"})
             elif att.datatype == DBDatatype.Date:
-                table[att.name] = pd.to_datetime(table[att.name], unit='ms').dt.date
+                table[att.name] = pd.to_datetime(table[att.name], unit="ms").dt.date
             elif att.datatype == DBDatatype.Boolean:
-                table = table.astype({att.name: 'boolean'})
+                table = table.astype({att.name: "boolean"})
         return table
 
     def insert_table_rows(self, table_name: str, data: pd.DataFrame):
@@ -135,10 +143,11 @@ class Synapse(RDBType):
 
     # Need to figure out the best way of doing deletes and updates.
     def update_table_rows(self, table_name: str, data: pd.DataFrame):
-        """ Placeholder
-        """
+        """Placeholder"""
 
-    def delete_table_rows(self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig):
+    def delete_table_rows(
+        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
+    ):
         pass
 
     def upsert_table_rows(self, table_name: str, data: pd.DataFrame):
@@ -146,7 +155,7 @@ class Synapse(RDBType):
 
     def _get_tables(self) -> List:
         project = self.syn.get(self.project_id)
-        return list(self.syn.getChildren(project, includeTypes=['table']))
+        return list(self.syn.getChildren(project, includeTypes=["table"]))
 
     def _get_columns_from_table(self, table_name: str) -> List[sc.Column]:
         synapse_id = self.get_table_id_from_name(table_name)
@@ -154,15 +163,15 @@ class Synapse(RDBType):
 
     def _create_synapse_column(self, name: str, datatype: str) -> sc.Column:
         if datatype == DBDatatype.Text:
-            syn_column = sc.Column(name=name, columnType='STRING', maximumSize=100)
+            syn_column = sc.Column(name=name, columnType="STRING", maximumSize=100)
         elif datatype == DBDatatype.Date:
-            syn_column = sc.Column(name=name, columnType='DATE')
+            syn_column = sc.Column(name=name, columnType="DATE")
         elif datatype == DBDatatype.Int:
-            syn_column =  sc.Column(name=name, columnType='INTEGER')
+            syn_column = sc.Column(name=name, columnType="INTEGER")
         elif datatype == DBDatatype.Float:
-            syn_column = sc.Column(name=name, columnType='DOUBLE')
+            syn_column = sc.Column(name=name, columnType="DOUBLE")
         elif datatype == DBDatatype.Boolean:
-            syn_column= sc.Column(name=name, columnType='BOOLEAN')
+            syn_column = sc.Column(name=name, columnType="BOOLEAN")
         else:
-            raise ValueError ()
+            raise ValueError()
         return syn_column

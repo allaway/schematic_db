@@ -28,7 +28,8 @@ CONFIG_PATH = os.path.join(DATA_DIR, "local_mysql_config.yml")
 if not os.path.exists(CONFIG_PATH):
     CONFIG_PATH = os.path.join(DATA_DIR, "mysql_config.yml")
 
-@pytest.fixture(scope = "module", name = "config_dict")
+
+@pytest.fixture(scope="module", name="config_dict")
 def fixture_config_dict():
     """
     Yields a MYSQL config dict
@@ -37,7 +38,8 @@ def fixture_config_dict():
         config = safe_load(file)
     yield config
 
-@pytest.fixture(scope = "module", name = "mysql")
+
+@pytest.fixture(scope="module", name="mysql")
 def fixture_mysql(config_dict, table_one_config):
     """
     Yields a MYSQL object
@@ -47,10 +49,12 @@ def fixture_mysql(config_dict, table_one_config):
     yield obj
     obj.drop_table("table_one")
 
+
 class TestMYSQL:
     """
     Testing for MYSQL
     """
+
     def test_execute_sql_statement(self, mysql):
         """
         Testing for MYSQL.execute_sql_statement()
@@ -94,9 +98,10 @@ class TestMYSQL:
         """
         assert mysql.get_current_schema() == "test_schema"
 
+
 class TestMYSQLUpdateTables:
-    """Testing for MYSQL methods that update tables
-    """
+    """Testing for MYSQL methods that update tables"""
+
     def test_add_table(self, mysql, table_two_config, table_three_config):
         """
         Testing for MYSQL.add_table()
@@ -117,9 +122,10 @@ class TestMYSQLUpdateTables:
         mysql.drop_table("table_two")
         assert mysql.get_table_names() == ["table_one"]
 
+
 class TestMYSQLUpdateTableColumns:
-    """Testing for MYSQL methods that update table columns
-    """
+    """Testing for MYSQL methods that update table columns"""
+
     def test_add_drop_table_column(self, mysql, table_one):
         """
         Testing for MYSQL.add_table_column(), and MYSQL.drop_table_column()
@@ -127,27 +133,29 @@ class TestMYSQLUpdateTableColumns:
         assert mysql.get_table_names() == ["table_one"]
         assert mysql.get_column_names_from_table("table_one") == list(table_one.columns)
         mysql.add_table_column("table_one", "name", "varchar(100)")
-        assert mysql.get_column_names_from_table("table_one") == \
-            list(table_one.columns) + ["name"]
+        assert mysql.get_column_names_from_table("table_one") == list(
+            table_one.columns
+        ) + ["name"]
         mysql.drop_table_column("table_one", "name")
         assert mysql.get_column_names_from_table("table_one") == list(table_one.columns)
 
+
 class TestMYSQLUpdateRows:
-    """Testing for MYSQL methods that update rows
-    """
+    """Testing for MYSQL methods that update rows"""
+
     def test_upsert_table_rows1(self, mysql, table_one, table_one_config):
-        """  Testing for MYSQL.upsert_table_rows()
+        """Testing for MYSQL.upsert_table_rows()
         Whole table at once
         """
         assert mysql.get_table_names() == ["table_one"]
         mysql.upsert_table_rows("table_one", table_one)
         query_result = mysql.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(query_result, table_one)
-        mysql.drop_table('table_one')
+        mysql.drop_table("table_one")
         mysql.add_table("table_one", table_one_config)
 
     def test_upsert_table_rows2(self, mysql, table_one, table_one_config):
-        """  Testing for MYSQL.upsert_table_rows()
+        """Testing for MYSQL.upsert_table_rows()
         Whole table at once
         """
         assert mysql.get_table_names() == ["table_one"]
@@ -164,11 +172,11 @@ class TestMYSQLUpdateRows:
         query_result = mysql.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(table_one, query_result)
 
-        mysql.drop_table('table_one')
+        mysql.drop_table("table_one")
         mysql.add_table("table_one", table_one_config)
 
     def test_upsert_table_rows3(self, mysql, table_one, table_one_config):
-        """  Testing for MYSQL.upsert_table_rows()
+        """Testing for MYSQL.upsert_table_rows()
         Updating a row
         """
         assert mysql.get_table_names() == ["table_one"]
@@ -178,46 +186,56 @@ class TestMYSQLUpdateRows:
         pd.testing.assert_frame_equal(table_one, query_result)
 
         mysql.upsert_table_rows(
-            "table_one",
-            pd.DataFrame({"pk_one_col": ["key3"], "string_one_col": ["x"]})
+            "table_one", pd.DataFrame({"pk_one_col": ["key3"], "string_one_col": ["x"]})
         )
         mysql.upsert_table_rows(
             "table_one",
-            pd.DataFrame({"pk_one_col": ["key3"], "double_one_col": [3.3], "bool_one_col": [True]})
+            pd.DataFrame(
+                {
+                    "pk_one_col": ["key3"],
+                    "double_one_col": [3.3],
+                    "bool_one_col": [True],
+                }
+            ),
         )
         query_result = mysql.query_table("table_one", table_one_config)
         new_table = pd.concat(
             [
                 table_one.iloc[0:2, :],
-                pd.DataFrame({
-                    "pk_one_col": ["key3"],
-                    "string_one_col": ["x"],
-                    "int_one_col": [3],
-                    "double_one_col": [3.3],
-                    "date_one_col": [datetime(2022, 8, 2)],
-                    "bool_one_col": [True]
-                })
+                pd.DataFrame(
+                    {
+                        "pk_one_col": ["key3"],
+                        "string_one_col": ["x"],
+                        "int_one_col": [3],
+                        "double_one_col": [3.3],
+                        "date_one_col": [datetime(2022, 8, 2)],
+                        "bool_one_col": [True],
+                    }
+                ),
             ],
-            ignore_index=True
-            )
-        new_table = new_table.astype({"int_one_col": "Int64", "bool_one_col": "boolean"})
-        new_table['date_one_col'] = pd.to_datetime(new_table['date_one_col']).dt.date
+            ignore_index=True,
+        )
+        new_table = new_table.astype(
+            {"int_one_col": "Int64", "bool_one_col": "boolean"}
+        )
+        new_table["date_one_col"] = pd.to_datetime(new_table["date_one_col"]).dt.date
         pd.testing.assert_frame_equal(query_result, new_table)
 
-        mysql.drop_table('table_one')
+        mysql.drop_table("table_one")
         mysql.add_table("table_one", table_one_config)
 
     def test_delete_table_rows1(self, mysql, table_one_config, table_one):
-        """Testing for MYSQL.delete_table_rows()
-        """
+        """Testing for MYSQL.delete_table_rows()"""
         assert mysql.get_table_names() == ["table_one"]
         mysql.upsert_table_rows("table_one", table_one)
         result1 = mysql.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(table_one, result1)
         mysql.delete_table_rows("table_one", table_one.iloc[0:2, :], table_one_config)
-        result_keys = mysql.query_table("table_one", table_one_config)['pk_one_col'].to_list()
-        correct_keys = table_one.iloc[2:, :]['pk_one_col'].to_list()
+        result_keys = mysql.query_table("table_one", table_one_config)[
+            "pk_one_col"
+        ].to_list()
+        correct_keys = table_one.iloc[2:, :]["pk_one_col"].to_list()
         assert result_keys == correct_keys
 
-        mysql.drop_table('table_one')
+        mysql.drop_table("table_one")
         mysql.add_table("table_one", table_one_config)

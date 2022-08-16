@@ -8,12 +8,14 @@ from sqlalchemy.dialects.mysql import insert
 from db_object_config import DBObjectConfig, DBDatatype
 from .rdb_type import RDBType
 
+
 class MySQL(RDBType):
     """MYSQL
     - Represents a mysql database.
     - Implements the RDBType interface.
     - Handles MYSQL specific functionality.
     """
+
     def __init__(self, config_dict: dict):
         """Init
         obj = MySQL({
@@ -37,12 +39,12 @@ class MySQL(RDBType):
         schema = config_dict.get("schema")
 
         url = f"mysql://{username}:{password}@{host}/"
-        engine = sa.create_engine(url, encoding = 'utf-8', echo = True)
+        engine = sa.create_engine(url, encoding="utf-8", echo=True)
         create_statement = f"CREATE DATABASE IF NOT EXISTS {schema};"
         engine.execute(create_statement)
 
         url2 = f"mysql://{username}:{password}@{host}/{schema}"
-        engine2 = sa.create_engine(url2, encoding = 'utf-8', echo = True)
+        engine2 = sa.create_engine(url2, encoding="utf-8", echo=True)
         self.engine = engine2
         self.metadata = sa.MetaData()
 
@@ -62,14 +64,16 @@ class MySQL(RDBType):
         table = pd.DataFrame(result)
         return table
 
-    def query_table(self, table_name: str, table_config: DBObjectConfig) -> pd.DataFrame:
+    def query_table(
+        self, table_name: str, table_config: DBObjectConfig
+    ) -> pd.DataFrame:
         query = f"SELECT * FROM {table_name};"
         table = self.execute_sql_query(query)
         for att in table_config.attributes:
             if att.datatype == DBDatatype.Int:
-                table = table.astype({att.name: 'Int64'})
+                table = table.astype({att.name: "Int64"})
             elif att.datatype == DBDatatype.Boolean:
-                table = table.astype({att.name: 'boolean'})
+                table = table.astype({att.name: "boolean"})
         return table
 
     def add_table(self, table_name: str, table_config: DBObjectConfig):
@@ -88,13 +92,13 @@ class MySQL(RDBType):
             elif att_datatype == DBDatatype.Boolean:
                 sql_datatype = sa.Boolean
             else:
-                raise ValueError ()
+                raise ValueError()
             if att_name in table_config.foreign_keys.keys():
                 col = sa.Column(
                     att_name,
                     sql_datatype,
                     sa.ForeignKey(table_config.foreign_keys.get(att_name)),
-                    nullable=False
+                    nullable=False,
                 )
             else:
                 col = sa.Column(att_name, sql_datatype)
@@ -111,12 +115,16 @@ class MySQL(RDBType):
         self.metadata.clear()
 
     def add_table_column(self, table_name: str, column_name: str, datatype: str):
-        self.execute_sql_statement(f"ALTER TABLE {table_name} ADD {column_name} {datatype};")
+        self.execute_sql_statement(
+            f"ALTER TABLE {table_name} ADD {column_name} {datatype};"
+        )
 
     def drop_table_column(self, table_name: str, column_name: str):
         self.execute_sql_statement(f"ALTER TABLE {table_name} DROP {column_name};")
 
-    def delete_table_rows(self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig):
+    def delete_table_rows(
+        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
+    ):
         primary_keys = table_config.primary_keys
         for col in primary_keys:
             if col not in list(data.columns):

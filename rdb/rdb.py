@@ -8,10 +8,11 @@ from rdb_type import RDBType, MySQL, Synapse
 from .utils import normalize_table
 
 
-class RDB():
+class RDB:
     """RDB
     Represents a relational database.
     """
+
     def __init__(self, config_yaml_path: str):
         """init
 
@@ -54,9 +55,7 @@ class RDB():
         self.query_result_store = query_result_store
 
     def update_all_database_tables(
-        self,
-        manifest_table_names: List[List[str]],
-        table_configs: List[DBObjectConfig]
+        self, manifest_table_names: List[List[str]], table_configs: List[DBObjectConfig]
     ):
         """
         Updates all tables in the list of table_configs
@@ -72,7 +71,9 @@ class RDB():
         for tup in zipped_list:
             self.update_database_table(*tup)
 
-    def update_database_table(self, manifest_table_names: List[str], table_config: DBObjectConfig):
+    def update_database_table(
+        self, manifest_table_names: List[str], table_config: DBObjectConfig
+    ):
         """
         Updates a table in the database based on one or more manifests.
         If any of the manifests don't exist an exception will be raised.
@@ -101,7 +102,7 @@ class RDB():
             self.rdb_type.add_table(table_name, table_config)
         self.rdb_type.upsert_table_rows(table_name, manifest_table)
 
-    def store_query_results(self, csv_path:str):
+    def store_query_results(self, csv_path: str):
         """Stores the results of queries
         Takes a csv file with two columns named "query" and "table_name", and runs each query,
         storing the result in the query_result_store as a table.
@@ -111,9 +112,9 @@ class RDB():
         """
         csv = pd.read_csv(csv_path)
         for _, row in csv.iterrows():
-            self.store_query_result(row['query'], row['table_name'])
+            self.store_query_result(row["query"], row["table_name"])
 
-    def store_query_result(self, query:str, table_name: str):
+    def store_query_result(self, query: str, table_name: str):
         """Stores the result of a query
 
         Args:
@@ -125,14 +126,16 @@ class RDB():
             self.query_result_store.drop_table(table_name)
         self.query_result_store.build_table(table_name, query_result)
 
-    def delete_table_rows(self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig):
-        #pylint: disable=missing-function-docstring
+    def delete_table_rows(
+        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
+    ):
+        # pylint: disable=missing-function-docstring
         self.rdb_type.delete_table_rows(table_name, data, table_config)
 
     delete_table_rows.__doc__ = RDBType.drop_table.__doc__
 
     def drop_table(self, table_name: str):
-        #pylint: disable=missing-function-docstring
+        # pylint: disable=missing-function-docstring
         self.rdb_type.drop_table(table_name)
 
     drop_table.__doc__ = RDBType.drop_table.__doc__
