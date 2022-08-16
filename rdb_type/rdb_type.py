@@ -13,7 +13,6 @@ class RDBType(ABC):
     def execute_sql_statement(self, statement: str):
         """Executes a valid SQL statement
         Should be used when a result isn't expected.
-        rdbtype.execute_sql_statement("DROP TABLE IF EXISTS table_name;")
 
         Args:
             statement (str): A SQL statement
@@ -24,11 +23,9 @@ class RDBType(ABC):
 
     @abstractmethod
     def execute_sql_query(self, query: str) -> pd.DataFrame:
-
         """Executes a valid SQL statement
         Should be used when a result is expected.
 
-        rdbtype.execute_sql_query("SHOW DATABASES;")
 
         Args:
             query (str): A SQL statement
@@ -44,7 +41,7 @@ class RDBType(ABC):
         Args:
             table_name (str): The name of the table
             table_config (DBObjectConfig): A generic representation of the table as a
-            DBObjectConfig object.
+                DBObjectConfig object.
 
         Returns:
             pd.DataFrame: The table
@@ -78,28 +75,6 @@ class RDBType(ABC):
     @abstractmethod
     def add_table(self, table_name: str, table_config: DBObjectConfig):
         """Adds a table to the schema
-
-        Example:
-            ::
-
-
-                    rdbtype.add_table(
-                        "table_name",
-                        DBObjectConfig(
-                            name = "table_one",
-                            attributes = [
-                                DBAttributeConfig(name="pk_col", datatype=DBDatatype.Text),
-                                DBAttributeConfig(name="string_col", datatype=DBDatatype.Text),
-                                DBAttributeConfig(name="int_col", datatype=DBDatatype.Int),
-                                DBAttributeConfig(name="double_col", datatype=DBDatatype.Float),
-                                DBAttributeConfig(name="date_col", datatype=DBDatatype.Date),
-                                DBAttributeConfig(name="bool_col", datatype=DBDatatype.Boolean)
-                            ],
-                            primary_keys = ["pk_col"],
-                            foreign_keys = []
-                        )
-                    )
-
         Args:
             table_name (str): The id(name) of the table to be added
             table_config (DBObjectConfig): A generic representation of the table as a 
@@ -109,9 +84,6 @@ class RDBType(ABC):
     @abstractmethod
     def drop_table(self, table_name: str):
         """Drops a table from the schema
-
-        rdbtype.drop_table("table_name")
-
         Args:
             table_name (str): The id(name) of the table to be dropped
         """
@@ -119,9 +91,6 @@ class RDBType(ABC):
     @abstractmethod
     def add_table_column(self, table_name: str, column_name: str, datatype: str):
         """Adds a column to the given table
-
-        rdbtype.add_table_column("table_name", "name", "varchar(100)")
-
         Args:
             table_name (str): The id(name) of the table the column will be added to
             column_name (str): The name of the column being added
@@ -145,21 +114,12 @@ class RDBType(ABC):
             table_name (str): The name of the table the rows will be deleted from
             data (pd.DataFrame): A pandas.DataFrame. It must contain the primary keys of the table
             table_config (DBObjectConfig): A generic representation of the table as a
-            DBObjectConfig object.
+                DBObjectConfig object.
         """
 
     @abstractmethod
     def upsert_table_rows(self, table_name: str, data: pd.DataFrame):
         """Updates or inserts rows into the given table
-
-        rdbtype.upsert_table_rows(
-            "table_name",
-            DataFrame({
-                "string_col": ["a","b","c"],
-                "int_col": [1,2,3]
-            })
-        )
-
         Args:
             table_name (str): The id(name) of the table the rows will be updated or added to
             data (pd.DataFrame): A pandas.DataFrame
@@ -181,5 +141,5 @@ class RDBType(ABC):
             table_name (str): The id(name) of the table the columns will be returned from
 
         Returns:
-            List[str]: A list fo column names
+            List[str]: A list of column names
         """

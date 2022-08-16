@@ -4,15 +4,25 @@ from typing import List
 from yaml import safe_load
 import pandas as pd
 from db_object_config import DBObjectConfig
-from rdb_type import MySQL, Synapse
+from rdb_type import RDBType, MySQL, Synapse
 from .utils import normalize_table
 
 
 class RDB():
     """RDB
-    - Represents a relational database.
+    Represents a relational database.
     """
     def __init__(self, config_yaml_path: str):
+        """init
+
+        Args:
+            config_yaml_path (str): A path to the config file
+
+        Raises:
+            ValueError: If config_dict["manifest_store"]["type"] not one of ["synapse"]
+            ValueError: If config_dict["database"]["type"] not one of ["mysql"]
+            ValueError: If config_dict["query_result_store"]["type"] not one of ["synapse"]
+        """
         with open(config_yaml_path, mode="rt", encoding="utf-8") as file:
             config_dict = safe_load(file)
 
@@ -53,10 +63,10 @@ class RDB():
 
         Args:
             manifest_table_names (List[List[str]]): A list where each item is a list of the
-             names of tables in the manifest store
+                names of tables in the manifest store
             table_config (List[DBObjectConfig]): A list of generic representations of each
-             table as a DBObjectConfig object. The list must be in the correct order to
-             update in regards to relationships.
+                table as a DBObjectConfig object. The list must be in the correct order to
+                update in regards to relationships.
         """
         zipped_list = zip(manifest_table_names, table_configs)
         for tup in zipped_list:
@@ -71,7 +81,7 @@ class RDB():
         Args:
             manifest_table_names (List[str]): A list of the names of tables in the manifest store
             table_config (DBObjectConfig): A generic representation of the table as a
-            DBObjectConfig object.
+                DBObjectConfig object.
         """
         manifest_store_table_names = self.manifest_store.get_table_names()
         manifest_tables = []
@@ -111,18 +121,18 @@ class RDB():
             table_name (str): The name of the table the result will be stored as
         """
         query_result = self.rdb_type.execute_sql_query(query)
-        import logging
-        logging.warning(query_result)
         if table_name in self.query_result_store.get_table_names():
             self.query_result_store.drop_table(table_name)
         self.query_result_store.build_table(table_name, query_result)
 
     def delete_table_rows(self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig):
-        """See RDBType.delete_table_rows()
-        """
+        #pylint: disable=missing-function-docstring
         self.rdb_type.delete_table_rows(table_name, data, table_config)
 
+    delete_table_rows.__doc__ = RDBType.drop_table.__doc__
+
     def drop_table(self, table_name: str):
-        """See RDBType.drop_table()
-        """
+        #pylint: disable=missing-function-docstring
         self.rdb_type.drop_table(table_name)
+
+    drop_table.__doc__ = RDBType.drop_table.__doc__
