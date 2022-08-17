@@ -1,4 +1,4 @@
-"""Fixtures for all tests
+"""Fixtures for all testsDBDatatype.TEXT
 """
 from datetime import datetime
 import pytest
@@ -35,12 +35,12 @@ def table_one_config():
     table_config = DBObjectConfig(
         name="table_one",
         attributes=[
-            DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.Text),
-            DBAttributeConfig(name="string_one_col", datatype=DBDatatype.Text),
-            DBAttributeConfig(name="int_one_col", datatype=DBDatatype.Int),
-            DBAttributeConfig(name="double_one_col", datatype=DBDatatype.Float),
-            DBAttributeConfig(name="date_one_col", datatype=DBDatatype.Date),
-            DBAttributeConfig(name="bool_one_col", datatype=DBDatatype.Boolean),
+            DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="string_one_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="int_one_col", datatype=DBDatatype.INT),
+            DBAttributeConfig(name="double_one_col", datatype=DBDatatype.FLOAT),
+            DBAttributeConfig(name="date_one_col", datatype=DBDatatype.DATE),
+            DBAttributeConfig(name="bool_one_col", datatype=DBDatatype.BOOLEAN),
         ],
         primary_keys=["pk_one_col"],
         foreign_keys={},
@@ -84,8 +84,8 @@ def table_two_config():
     table_config = DBObjectConfig(
         name="table_two",
         attributes=[
-            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.Text),
-            DBAttributeConfig(name="string_two_col", datatype=DBDatatype.Text),
+            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
         ],
         primary_keys=["pk_two_col"],
         foreign_keys={},
@@ -116,9 +116,9 @@ def table_three_config():
     table_config = DBObjectConfig(
         name="table_three",
         attributes=[
-            DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.Text),
-            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.Text),
-            DBAttributeConfig(name="string_three_col", datatype=DBDatatype.Text),
+            DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="string_three_col", datatype=DBDatatype.TEXT),
         ],
         primary_keys=["pk_one_col", "pk_two_col"],
         foreign_keys={

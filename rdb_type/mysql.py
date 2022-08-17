@@ -70,9 +70,9 @@ class MySQL(RDBType):
         query = f"SELECT * FROM {table_name};"
         table = self.execute_sql_query(query)
         for att in table_config.attributes:
-            if att.datatype == DBDatatype.Int:
+            if att.datatype == DBDatatype.INT:
                 table = table.astype({att.name: "Int64"})
-            elif att.datatype == DBDatatype.Boolean:
+            elif att.datatype == DBDatatype.BOOLEAN:
                 table = table.astype({att.name: "boolean"})
         return table
 
@@ -81,15 +81,15 @@ class MySQL(RDBType):
         for att in table_config.attributes:
             att_name = att.name
             att_datatype = att.datatype
-            if att_datatype == DBDatatype.Text:
+            if att_datatype == DBDatatype.TEXT:
                 sql_datatype = sa.String(100)
-            elif att_datatype == DBDatatype.Date:
+            elif att_datatype == DBDatatype.DATE:
                 sql_datatype = sa.Date
-            elif att_datatype == DBDatatype.Int:
+            elif att_datatype == DBDatatype.INT:
                 sql_datatype = sa.Integer
-            elif att_datatype == DBDatatype.Float:
+            elif att_datatype == DBDatatype.FLOAT:
                 sql_datatype = sa.Float
-            elif att_datatype == DBDatatype.Boolean:
+            elif att_datatype == DBDatatype.BOOLEAN:
                 sql_datatype = sa.Boolean
             else:
                 raise ValueError()

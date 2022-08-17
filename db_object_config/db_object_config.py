@@ -1,7 +1,6 @@
 """Table config objects
 These are a set of object for defining a database table in a dialect agnostic way.
 """
-# pylint: disable=C0103
 from dataclasses import dataclass
 from typing import List
 from enum import Enum
@@ -10,11 +9,11 @@ from enum import Enum
 class DBDatatype(Enum):
     """A generic datatype that should be supported by all database types."""
 
-    Text = "1"
-    Date = "2"
-    Int = "3"
-    Float = "4"
-    Boolean = "5"
+    TEXT = "text"
+    DATE = "date"
+    INT = "int"
+    FLOAT = "float"
+    BOOLEAN = "boolean"
 
 
 @dataclass

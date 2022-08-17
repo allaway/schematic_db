@@ -106,7 +106,7 @@ class TestSynapse:
             table_one.columns
         )
 
-        synapse.add_table_column("table_one", "test_add_col", DBDatatype.Float)
+        synapse.add_table_column("table_one", "test_add_col", DBDatatype.FLOAT)
         assert synapse.get_column_names_from_table("table_one") == list(
             table_one.columns
         ) + ["test_add_col"]

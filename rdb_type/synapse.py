@@ -122,11 +122,11 @@ class Synapse(RDBType):
         query = f"SELECT * FROM {table_id}"
         table = self.execute_sql_query(query)
         for att in table_config.attributes:
-            if att.datatype == DBDatatype.Int:
+            if att.datatype == DBDatatype.INT:
                 table = table.astype({att.name: "Int64"})
-            elif att.datatype == DBDatatype.Date:
+            elif att.datatype == DBDatatype.DATE:
                 table[att.name] = pd.to_datetime(table[att.name], unit="ms").dt.date
-            elif att.datatype == DBDatatype.Boolean:
+            elif att.datatype == DBDatatype.BOOLEAN:
                 table = table.astype({att.name: "boolean"})
         return table
 
@@ -162,15 +162,15 @@ class Synapse(RDBType):
         return list(self.syn.getColumns(x=synapse_id))
 
     def _create_synapse_column(self, name: str, datatype: str) -> sc.Column:
-        if datatype == DBDatatype.Text:
+        if datatype == DBDatatype.TEXT:
             syn_column = sc.Column(name=name, columnType="STRING", maximumSize=100)
-        elif datatype == DBDatatype.Date:
+        elif datatype == DBDatatype.DATE:
             syn_column = sc.Column(name=name, columnType="DATE")
-        elif datatype == DBDatatype.Int:
+        elif datatype == DBDatatype.INT:
             syn_column = sc.Column(name=name, columnType="INTEGER")
-        elif datatype == DBDatatype.Float:
+        elif datatype == DBDatatype.FLOAT:
             syn_column = sc.Column(name=name, columnType="DOUBLE")
-        elif datatype == DBDatatype.Boolean:
+        elif datatype == DBDatatype.BOOLEAN:
             syn_column = sc.Column(name=name, columnType="BOOLEAN")
         else:
             raise ValueError()
