@@ -4,8 +4,13 @@ from datetime import datetime
 import pytest
 import pandas as pd
 import numpy as np
-from db_object_config import DBObjectConfigList, DBObjectConfig, \
-    DBAttributeConfig, DBDatatype, DBForeignKey
+from db_object_config import (
+    DBObjectConfigList,
+    DBObjectConfig,
+    DBAttributeConfig,
+    DBDatatype,
+    DBForeignKey,
+)
 
 
 @pytest.fixture(scope="session")
@@ -28,7 +33,7 @@ def table_one():
     yield dataframe
 
 
-@pytest.fixture(scope="session", name = "table_one_config")
+@pytest.fixture(scope="session", name="table_one_config")
 def fixture_table_one_config():
     """
     Yields a DBObjectConfig object with one primary and no foreign keys
@@ -77,7 +82,7 @@ def table_two_b():
     yield dataframe
 
 
-@pytest.fixture(scope="session", name = "table_two_config")
+@pytest.fixture(scope="session", name="table_two_config")
 def fixture_table_two_config():
     """
     Yields a DBObjectConfig object with one primary and no foreign keys
@@ -109,7 +114,7 @@ def table_three():
     yield dataframe
 
 
-@pytest.fixture(scope="session", name = "table_three_config")
+@pytest.fixture(scope="session", name="table_three_config")
 def fixture_table_three_config():
     """
     Yields a DBObjectConfig object with two keys that are both primary and foreign
@@ -126,14 +131,14 @@ def fixture_table_three_config():
             DBForeignKey(
                 name="pk_one_col",
                 foreign_object_name="table_one",
-                foreign_attribute_name="pk_one_col"
+                foreign_attribute_name="pk_one_col",
             ),
             DBForeignKey(
                 name="pk_two_col",
                 foreign_object_name="table_two",
-                foreign_attribute_name="pk_two_col"
-            )
-        ]
+                foreign_attribute_name="pk_two_col",
+            ),
+        ],
     )
     yield table_config
 
@@ -154,8 +159,8 @@ def table_123_unormalized():
 
     yield dataframe
 
+
 @pytest.fixture(scope="session")
 def table_configs(table_one_config, table_two_config, table_three_config):
-    """Yields a DBObjectConfigList
-    """
+    """Yields a DBObjectConfigList"""
     yield DBObjectConfigList([table_one_config, table_two_config, table_three_config])

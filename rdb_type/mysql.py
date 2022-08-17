@@ -98,7 +98,9 @@ class MySQL(RDBType):
                 col = sa.Column(
                     att_name,
                     sql_datatype,
-                    sa.ForeignKey(f"{key.foreign_object_name}.{key.foreign_attribute_name}"),
+                    sa.ForeignKey(
+                        f"{key.foreign_object_name}.{key.foreign_attribute_name}"
+                    ),
                     nullable=False,
                 )
             else:

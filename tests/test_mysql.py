@@ -123,7 +123,6 @@ class TestMYSQLUpdateTables:
         assert mysql.get_table_names() == ["table_one"]
 
 
-
 class TestMYSQLUpdateTableColumns:
     """Testing for MYSQL methods that update table columns"""
 
