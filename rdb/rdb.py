@@ -3,7 +3,7 @@
 from typing import List
 from yaml import safe_load
 import pandas as pd
-from db_object_config import DBObjectConfig
+from db_object_config import DBObjectConfigList, DBObjectConfig
 from rdb_type import RDBType, MySQL, Synapse
 from .utils import normalize_table
 
@@ -55,7 +55,7 @@ class RDB:
         self.query_result_store = query_result_store
 
     def update_all_database_tables(
-        self, manifest_table_names: List[List[str]], table_configs: List[DBObjectConfig]
+        self, manifest_table_names: List[List[str]], table_configs: DBObjectConfigList
     ):
         """
         Updates all tables in the list of table_configs
@@ -63,11 +63,11 @@ class RDB:
         Args:
             manifest_table_names (List[List[str]]): A list where each item is a list of the
                 names of tables in the manifest store
-            table_config (List[DBObjectConfig]): A list of generic representations of each
+            table_configs (DBObjectConfigList): A list of generic representations of each
                 table as a DBObjectConfig object. The list must be in the correct order to
                 update in regards to relationships.
         """
-        zipped_list = zip(manifest_table_names, table_configs)
+        zipped_list = zip(manifest_table_names, table_configs.configs)
         for tup in zipped_list:
             self.update_database_table(*tup)
 

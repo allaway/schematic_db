@@ -93,11 +93,12 @@ class MySQL(RDBType):
                 sql_datatype = sa.Boolean
             else:
                 raise ValueError()
-            if att_name in table_config.foreign_keys.keys():
+            if att_name in table_config.get_foreign_key_names():
+                key = table_config.get_foreign_key_by_name(att_name)
                 col = sa.Column(
                     att_name,
                     sql_datatype,
-                    sa.ForeignKey(table_config.foreign_keys.get(att_name)),
+                    sa.ForeignKey(f"{key.foreign_object_name}.{key.foreign_attribute_name}"),
                     nullable=False,
                 )
             else:

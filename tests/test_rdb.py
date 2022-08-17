@@ -96,28 +96,35 @@ class TestRDBMySQL:
         self,
         rdb_mysql,
         table_one,
-        table_one_config,
         table_two,
-        table_two_config,
         table_three,
-        table_three_config,
+        table_configs
     ):
         """Testing for update_all_database_tables()"""
         assert rdb_mysql.rdb_type.get_table_names() == ["table_one", "table_two"]
         rdb_mysql.update_all_database_tables(
             [["table_one"], ["table_two"], ["table_three"]],
-            [table_one_config, table_two_config, table_three_config],
+            table_configs
         )
         assert rdb_mysql.rdb_type.get_table_names() == [
             "table_one",
             "table_three",
             "table_two",
         ]
-        result1 = rdb_mysql.rdb_type.query_table("table_one", table_one_config)
+        result1 = rdb_mysql.rdb_type.query_table(
+            "table_one",
+            table_configs.get_config_by_name("table_one")
+        )
         pd.testing.assert_frame_equal(result1, table_one)
-        result2 = rdb_mysql.rdb_type.query_table("table_two", table_two_config)
+        result2 = rdb_mysql.rdb_type.query_table(
+            "table_two",
+            table_configs.get_config_by_name("table_two")
+        )
         pd.testing.assert_frame_equal(result2, table_two)
-        result3 = rdb_mysql.rdb_type.query_table("table_three", table_three_config)
+        result3 = rdb_mysql.rdb_type.query_table(
+            "table_three",
+            table_configs.get_config_by_name("table_three")
+        )
         pd.testing.assert_frame_equal(result3, table_three)
         assert rdb_mysql.rdb_type.get_table_names() == [
             "table_one",
@@ -126,12 +133,12 @@ class TestRDBMySQL:
         ]
 
     def test_store_query_result(
-        self, rdb_mysql, table_one_config, table_two_config, table_three_config
+        self, rdb_mysql, table_configs
     ):
         """Testing for RDB.store_query_result()"""
         rdb_mysql.update_all_database_tables(
             [["table_one"], ["table_two"], ["table_three"]],
-            [table_one_config, table_two_config, table_three_config],
+            table_configs
         )
         assert rdb_mysql.rdb_type.get_table_names() == [
             "table_one",
@@ -150,13 +157,11 @@ class TestRDBMySQL:
         rdb_mysql.store_query_result(query, "result_zero")
         assert rdb_mysql.query_result_store.get_table_names() == ["result_zero"]
 
-    def test_store_query_results(
-        self, rdb_mysql, table_one_config, table_two_config, table_three_config
-    ):
+    def test_store_query_results(self, rdb_mysql, table_configs):
         """Testing for RDB.store_query_results()"""
         rdb_mysql.update_all_database_tables(
             [["table_one"], ["table_two"], ["table_three"]],
-            [table_one_config, table_two_config, table_three_config],
+            table_configs
         )
         assert rdb_mysql.rdb_type.get_table_names() == [
             "table_one",
