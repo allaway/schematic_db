@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v3
 
       - run: pip install -r requirements.txt
-      - run: pdoc --docformat google -o docs/ rdb/rdb.py rdb_type/mysql.py rdb_type/synapse.py
+      - run: pdoc --docformat google -o docs/ rdb/rdb.py rdb_type/mysql.py rdb_type/synapse.py db_object_config/db_object_config.py
 
       - uses: actions/upload-pages-artifact@v1
         with:
