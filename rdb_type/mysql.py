@@ -8,6 +8,16 @@ from sqlalchemy.dialects.mysql import insert
 from db_object_config import DBObjectConfig, DBDatatype
 from .rdb_type import RDBType
 
+MYSQL_DATATYPES = {
+    DBDatatype.TEXT: sa.String(100),
+    DBDatatype.DATE: sa.Date,
+    DBDatatype.INT: sa.Integer,
+    DBDatatype.FLOAT: sa.Float,
+    DBDatatype.BOOLEAN: sa.Boolean,
+}
+
+PANDAS_DATATYPES = {DBDatatype.INT: "Int64", DBDatatype.BOOLEAN: "boolean"}
+
 
 class MySQL(RDBType):
     """MYSQL
@@ -70,29 +80,22 @@ class MySQL(RDBType):
         query = f"SELECT * FROM {table_name};"
         table = self.execute_sql_query(query)
         for att in table_config.attributes:
-            if att.datatype == DBDatatype.INT:
-                table = table.astype({att.name: "Int64"})
-            elif att.datatype == DBDatatype.BOOLEAN:
-                table = table.astype({att.name: "boolean"})
+            pandas_value = PANDAS_DATATYPES.get(att.datatype, None)
+            if pandas_value is not None:
+                table = table.astype({att.name: pandas_value})
         return table
 
     def add_table(self, table_name: str, table_config: DBObjectConfig):
+        columns = self._create_columns(table_config)
+        sa.Table(table_name, self.metadata, *columns)
+        self.metadata.create_all(self.engine)
+
+    def _create_columns(self, table_config: DBObjectConfig) -> List[sa.Column]:
         columns = []
         for att in table_config.attributes:
             att_name = att.name
             att_datatype = att.datatype
-            if att_datatype == DBDatatype.TEXT:
-                sql_datatype = sa.String(100)
-            elif att_datatype == DBDatatype.DATE:
-                sql_datatype = sa.Date
-            elif att_datatype == DBDatatype.INT:
-                sql_datatype = sa.Integer
-            elif att_datatype == DBDatatype.FLOAT:
-                sql_datatype = sa.Float
-            elif att_datatype == DBDatatype.BOOLEAN:
-                sql_datatype = sa.Boolean
-            else:
-                raise ValueError()
+            sql_datatype = MYSQL_DATATYPES.get(att_datatype)
             if att_name in table_config.get_foreign_key_names():
                 key = table_config.get_foreign_key_by_name(att_name)
                 col = sa.Column(
@@ -109,9 +112,7 @@ class MySQL(RDBType):
 
         if table_config.primary_keys != []:
             columns.append(sa.PrimaryKeyConstraint(*table_config.primary_keys))
-
-        sa.Table(table_name, self.metadata, *columns)
-        self.metadata.create_all(self.engine)
+        return columns
 
     def drop_table(self, table_name: str):
         self.execute_sql_statement(f"DROP TABLE IF EXISTS {table_name};")

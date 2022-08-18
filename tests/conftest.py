@@ -1,9 +1,11 @@
 """Fixtures for all testsDBDatatype.TEXT
 """
+import os
 from datetime import datetime
 import pytest
 import pandas as pd
 import numpy as np
+from yaml import safe_load
 from db_object_config import (
     DBObjectConfigList,
     DBObjectConfig,
@@ -11,6 +13,55 @@ from db_object_config import (
     DBDatatype,
     DBForeignKey,
 )
+from rdb_type import MySQL
+from rdb import RDB
+
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(TESTS_DIR, "data")
+CONFIG_PATH = os.path.join(DATA_DIR, "local_mysql_config.yml")
+if not os.path.exists(CONFIG_PATH):
+    CONFIG_PATH = os.path.join(DATA_DIR, "mysql_config.yml")
+
+
+@pytest.fixture(scope="session", name="config_dict")
+def fixture_config_dict():
+    """
+    Yields a MYSQL config dict
+    """
+    with open(CONFIG_PATH, mode="rt", encoding="utf-8") as file:
+        config = safe_load(file)
+    yield config
+
+
+@pytest.fixture(scope="session", name="query_csv_path")
+def fixture_query_csv_path():
+    """
+    Yields a MYSQL config dict
+    """
+    path = os.path.join(DATA_DIR, "queries.csv")
+    yield path
+
+
+@pytest.fixture(scope="session", name="mysql")
+def fixture_mysql(config_dict):
+    """
+    Yields a MYSQL object
+    """
+    obj = MySQL(config_dict["database"])
+    yield obj
+    test_table_names = ["table_three", "table_one", "table_two"]
+    for table_name in test_table_names:
+        if table_name in obj.get_table_names():
+            obj.drop_table(table_name)
+    assert obj.get_table_names() == []
+
+
+@pytest.fixture(scope="module", name="rdb_mysql")
+def fixture_rdb_mysql(config_dict):
+    """Yields a RDB object"""
+    mysql = MySQL(config_dict["database"])
+    rdb = RDB(rdb_type=mysql, config_yaml_path=CONFIG_PATH)
+    yield rdb
 
 
 @pytest.fixture(scope="session")

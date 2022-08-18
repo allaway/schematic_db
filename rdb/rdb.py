@@ -4,7 +4,7 @@ from typing import List
 from yaml import safe_load
 import pandas as pd
 from db_object_config import DBObjectConfigList, DBObjectConfig
-from rdb_type import RDBType, MySQL, Synapse
+from rdb_type import RDBType, Synapse
 from .utils import normalize_table
 
 
@@ -13,7 +13,7 @@ class RDB:
     Represents a relational database.
     """
 
-    def __init__(self, config_yaml_path: str):
+    def __init__(self, rdb_type: RDBType, config_yaml_path: str):
         """init
 
         Args:
@@ -21,7 +21,6 @@ class RDB:
 
         Raises:
             ValueError: If config_dict["manifest_store"]["type"] not one of ["synapse"]
-            ValueError: If config_dict["database"]["type"] not one of ["mysql"]
             ValueError: If config_dict["query_result_store"]["type"] not one of ["synapse"]
         """
         with open(config_yaml_path, mode="rt", encoding="utf-8") as file:
@@ -33,15 +32,6 @@ class RDB:
             manifest_store = Synapse(manifest_store_config)
         else:
             raise ValueError("manifest_store_type must be one of ['synapse']")
-
-        database_config = config_dict.get("database")
-        database_type = database_config.get("type")
-        if database_type == "mysql":
-            rdb_type = MySQL(database_config)
-        elif database_type == "synapse":
-            rdb_type = Synapse(database_config)
-        else:
-            raise ValueError("database_type must be one of ['mysql']")
 
         query_result_store_config = config_dict.get("query_result_store")
         query_result_store_type = query_result_store_config.get("type")
