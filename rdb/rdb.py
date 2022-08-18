@@ -1,7 +1,6 @@
 """RDB
 """
 from typing import List
-from yaml import safe_load
 import pandas as pd
 from db_object_config import DBObjectConfigList, DBObjectConfig
 from rdb_type import RDBType, Synapse
@@ -13,33 +12,9 @@ class RDB:
     Represents a relational database.
     """
 
-    def __init__(self, rdb_type: RDBType, config_yaml_path: str):
-        """init
-
-        Args:
-            config_yaml_path (str): A path to the config file
-
-        Raises:
-            ValueError: If config_dict["manifest_store"]["type"] not one of ["synapse"]
-            ValueError: If config_dict["query_result_store"]["type"] not one of ["synapse"]
-        """
-        with open(config_yaml_path, mode="rt", encoding="utf-8") as file:
-            config_dict = safe_load(file)
-
-        manifest_store_config = config_dict.get("manifest_store")
-        manifest_store_type = manifest_store_config.get("type")
-        if manifest_store_type == "synapse":
-            manifest_store = Synapse(manifest_store_config)
-        else:
-            raise ValueError("manifest_store_type must be one of ['synapse']")
-
-        query_result_store_config = config_dict.get("query_result_store")
-        query_result_store_type = query_result_store_config.get("type")
-        if query_result_store_type == "synapse":
-            query_result_store = Synapse(query_result_store_config)
-        else:
-            raise ValueError("query_result_store_type must be one of ['synapse']")
-
+    def __init__(
+        self, rdb_type: RDBType, manifest_store: Synapse, query_result_store: Synapse
+    ):
         self.manifest_store = manifest_store
         self.rdb_type = rdb_type
         self.query_result_store = query_result_store

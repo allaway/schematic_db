@@ -13,7 +13,7 @@ from db_object_config import (
     DBDatatype,
     DBForeignKey,
 )
-from rdb_type import MySQL
+from rdb_type import MySQL, Synapse
 from rdb import RDB
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -56,11 +56,37 @@ def fixture_mysql(config_dict):
     assert obj.get_table_names() == []
 
 
+@pytest.fixture(scope="session", name="synapse_manifest_store")
+def fixture_synapse_manifest_store(config_dict):
+    """
+    Yields a Synapse Manifest Store
+    """
+    obj = Synapse(config_dict["manifest_store"])
+    yield obj
+
+
+@pytest.fixture(scope="session", name="synapse_query_result_store")
+def fixture_synapse_query_result_store(config_dict):
+    """
+    Yields a Synapse Manifest Store
+    """
+    obj = Synapse(config_dict["query_result_store"])
+    assert obj.get_table_names() == []
+    yield obj
+    for name in obj.get_table_names():
+        obj.drop_table(name)
+    assert obj.get_table_names() == []
+
+
 @pytest.fixture(scope="module", name="rdb_mysql")
-def fixture_rdb_mysql(config_dict):
+def fixture_rdb_mysql(config_dict, synapse_manifest_store, synapse_query_result_store):
     """Yields a RDB object"""
     mysql = MySQL(config_dict["database"])
-    rdb = RDB(rdb_type=mysql, config_yaml_path=CONFIG_PATH)
+    rdb = RDB(
+        rdb_type=mysql,
+        manifest_store=synapse_manifest_store,
+        query_result_store=synapse_query_result_store,
+    )
     yield rdb
 
 
