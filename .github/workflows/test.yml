@@ -59,7 +59,7 @@ jobs:
                   "host": "localhost",
                   "schema": "test_schema"
               },
-              "query_result_store": {
+              "query_store": {
                   "type": "synapse",
                   "username": "${{secrets.SYNAPSE_LOGIN}}",
                   "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
