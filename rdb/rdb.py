@@ -3,7 +3,9 @@
 from typing import List
 import pandas as pd
 from db_object_config import DBObjectConfigList, DBObjectConfig
-from rdb_type import RDBType, Synapse
+from rdb_type import RDBType
+from manifest_store import ManifestStore
+from query_store import QueryStore
 from .utils import normalize_table
 
 
@@ -28,16 +30,14 @@ class ManifestError(Exception):
 
 
 class RDB:
-    """RDB
-    Represents a relational database.
-    """
+    """Represents a relational database."""
 
     def __init__(
-        self, rdb_type: RDBType, manifest_store: Synapse, query_result_store: Synapse
+        self, rdb_type: RDBType, manifest_store: ManifestStore, query_store: QueryStore
     ):
         self.manifest_store = manifest_store
         self.rdb_type = rdb_type
-        self.query_result_store = query_result_store
+        self.query_store = query_store
 
     def update_all_database_tables(
         self, manifest_table_names: List[List[str]], table_configs: DBObjectConfigList
@@ -76,12 +76,9 @@ class RDB:
             table_config (DBObjectConfig): A generic representation of the table as a
                 DBObjectConfig object.
         """
-        manifest_store_table_names = self.manifest_store.get_table_names()
         manifest_tables = []
         for name in manifest_table_names:
-            if name not in manifest_store_table_names:
-                raise ManifestError("Manifest missing from store.", name)
-            table = self.manifest_store.query_table(name, table_config)
+            table = self.manifest_store.get_manifest_table(name, table_config)
             manifest_tables.append(table)
         manifest_table = pd.concat(manifest_tables)
         manifest_table = normalize_table(manifest_table, table_config)
@@ -112,9 +109,7 @@ class RDB:
             table_name (str): The name of the table the result will be stored as
         """
         query_result = self.rdb_type.execute_sql_query(query)
-        if table_name in self.query_result_store.get_table_names():
-            self.query_result_store.drop_table(table_name)
-        self.query_result_store.build_table(table_name, query_result)
+        self.query_store.build_table(table_name, query_result)
 
     def delete_table_rows(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig

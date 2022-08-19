@@ -65,12 +65,12 @@ def fixture_synapse_manifest_store(config_dict):
     yield obj
 
 
-@pytest.fixture(scope="session", name="synapse_query_result_store")
-def fixture_synapse_query_result_store(config_dict):
+@pytest.fixture(scope="session", name="synapse_query_store")
+def fixture_synapse_query_store(config_dict):
     """
-    Yields a Synapse Manifest Store
+    Yields a Synapse Query Store
     """
-    obj = Synapse(config_dict["query_result_store"])
+    obj = Synapse(config_dict["query_store"])
     assert obj.get_table_names() == []
     yield obj
     for name in obj.get_table_names():
@@ -79,13 +79,13 @@ def fixture_synapse_query_result_store(config_dict):
 
 
 @pytest.fixture(scope="module", name="rdb_mysql")
-def fixture_rdb_mysql(config_dict, synapse_manifest_store, synapse_query_result_store):
+def fixture_rdb_mysql(config_dict, synapse_manifest_store, synapse_query_store):
     """Yields a RDB object"""
     mysql = MySQL(config_dict["database"])
     rdb = RDB(
         rdb_type=mysql,
         manifest_store=synapse_manifest_store,
-        query_result_store=synapse_query_result_store,
+        query_store=synapse_query_store,
     )
     yield rdb
 

@@ -41,7 +41,7 @@ class TestUtils:
         pd.testing.assert_frame_equal(result, correct_result, check_like=True)
 
 
-class TestRDBMySQL:
+class TestRDBMySQLUpdate:
     """Testing for RDB with MySQL database"""
 
     def test_init(self, rdb_mysql):
@@ -116,11 +116,15 @@ class TestRDBMySQL:
         ):
             rdb_mysql.update_all_database_tables([["table_one"]], table_configs)
 
+
+class TestRDBMySQLQueries:
+    """Testing for RDB with MySQL database"""
+
     def test_store_query_result(self, rdb_mysql, table_configs):
         """Testing for RDB.store_query_result()"""
 
         assert rdb_mysql.rdb_type.get_table_names() == []
-        assert rdb_mysql.query_result_store.get_table_names() == []
+        assert rdb_mysql.query_store.get_table_names() == []
 
         rdb_mysql.update_all_database_tables(
             [["table_one"], ["table_two"], ["table_three"]], table_configs
@@ -139,20 +143,20 @@ class TestRDBMySQL:
             + "ON one.pk_one_col = three.pk_one_col;"
         )
         rdb_mysql.store_query_result(query, "result_zero")
-        assert rdb_mysql.query_result_store.get_table_names() == ["result_zero"]
+        assert rdb_mysql.query_store.get_table_names() == ["result_zero"]
 
-        rdb_mysql.query_result_store.drop_table("result_zero")
+        rdb_mysql.query_store.drop_table("result_zero")
         rdb_mysql.drop_table("table_three")
         rdb_mysql.drop_table("table_two")
         rdb_mysql.drop_table("table_one")
         assert rdb_mysql.rdb_type.get_table_names() == []
-        assert rdb_mysql.query_result_store.get_table_names() == []
+        assert rdb_mysql.query_store.get_table_names() == []
 
     def test_store_query_results(self, rdb_mysql, table_configs, query_csv_path):
         """Testing for RDB.store_query_results()"""
 
         assert rdb_mysql.rdb_type.get_table_names() == []
-        assert rdb_mysql.query_result_store.get_table_names() == []
+        assert rdb_mysql.query_store.get_table_names() == []
 
         rdb_mysql.update_all_database_tables(
             [["table_one"], ["table_two"], ["table_three"]], table_configs
@@ -164,15 +168,15 @@ class TestRDBMySQL:
         ]
 
         rdb_mysql.store_query_results(query_csv_path)
-        assert rdb_mysql.query_result_store.get_table_names() == [
+        assert rdb_mysql.query_store.get_table_names() == [
             "result_one",
             "result_two",
         ]
 
-        rdb_mysql.query_result_store.drop_table("result_one")
-        rdb_mysql.query_result_store.drop_table("result_two")
+        rdb_mysql.query_store.drop_table("result_one")
+        rdb_mysql.query_store.drop_table("result_two")
         rdb_mysql.drop_table("table_three")
         rdb_mysql.drop_table("table_two")
         rdb_mysql.drop_table("table_one")
         assert rdb_mysql.rdb_type.get_table_names() == []
-        assert rdb_mysql.query_result_store.get_table_names() == []
+        assert rdb_mysql.query_store.get_table_names() == []

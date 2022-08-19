@@ -4,10 +4,12 @@ from typing import List
 import synapseclient as sc
 import pandas as pd
 from db_object_config import DBObjectConfig, DBDatatype
+from manifest_store import ManifestStore
+from query_store import QueryStore
 from .rdb_type import RDBType
 
 
-class Synapse(RDBType):
+class Synapse(RDBType, ManifestStore, QueryStore):
     """Synapse
     - Represents:
       - A database stored as Synapse tables
@@ -82,6 +84,11 @@ class Synapse(RDBType):
         table = sc.table.build_table(table_name, project, table)
         self.syn.store(table)
 
+    def store_query_result(self, table_name: str, table: pd.DataFrame):
+        if table_name in self.get_table_names():
+            self.drop_table(table_name)
+        self.build_table(table_name, table)
+
     def drop_table(self, table_name: str):
         synapse_id = self.get_table_id_from_name(table_name)
         self.syn.delete(synapse_id)
@@ -129,6 +136,11 @@ class Synapse(RDBType):
             elif att.datatype == DBDatatype.BOOLEAN:
                 table = table.astype({att.name: "boolean"})
         return table
+
+    def get_manifest_table(
+        self, manifest_name: str, table_config: DBObjectConfig
+    ) -> pd.DataFrame:
+        return self.query_table(manifest_name, table_config)
 
     def insert_table_rows(self, table_name: str, data: pd.DataFrame):
         """Insert table rows
