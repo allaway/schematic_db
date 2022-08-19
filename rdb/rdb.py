@@ -7,6 +7,26 @@ from rdb_type import RDBType, Synapse
 from .utils import normalize_table
 
 
+class UpdateDatabaseError(Exception):
+    """UpdateDatabaseError"""
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
+class ManifestError(Exception):
+    """ManifestError"""
+
+    def __init__(self, message, name):
+        self.message = message
+        self.name = name
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"{self.message}:{self.name}"
+
+
 class RDB:
     """RDB
     Represents a relational database.
@@ -32,6 +52,13 @@ class RDB:
                 table as a DBObjectConfig object. The list must be in the correct order to
                 update in regards to relationships.
         """
+        if len(manifest_table_names) != len(table_configs.configs):
+            raise UpdateDatabaseError(
+                (
+                    "Length of param manifest_table_names is not equal "
+                    "to length of param table_configs.configs"
+                )
+            )
         zipped_list = zip(manifest_table_names, table_configs.configs)
         for tup in zipped_list:
             self.update_database_table(*tup)
@@ -53,9 +80,7 @@ class RDB:
         manifest_tables = []
         for name in manifest_table_names:
             if name not in manifest_store_table_names:
-                raise ValueError(
-                    f"manifest_table_name: {name} missing from manifest store"
-                )
+                raise ManifestError("Manifest missing from store.", name)
             table = self.manifest_store.query_table(name, table_config)
             manifest_tables.append(table)
         manifest_table = pd.concat(manifest_tables)

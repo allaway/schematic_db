@@ -1,8 +1,8 @@
 """Testing for RDB.
 """
-import os
+import pytest
 import pandas as pd
-from rdb import RDB
+from rdb import RDB, UpdateDatabaseError
 from rdb import normalize_table
 
 
@@ -73,7 +73,7 @@ class TestRDBMySQL:
         rdb_mysql.drop_table("table_two")
         assert rdb_mysql.rdb_type.get_table_names() == []
 
-    def update_all_database_tables(
+    def test_update_all_database_tables1(
         self, rdb_mysql, table_one, table_two, table_three, table_configs
     ):
         """Testing for update_all_database_tables()"""
@@ -108,6 +108,13 @@ class TestRDBMySQL:
         rdb_mysql.drop_table("table_two")
         rdb_mysql.drop_table("table_one")
         assert rdb_mysql.rdb_type.get_table_names() == []
+
+    def test_update_all_database_tables2(self, rdb_mysql, table_configs):
+        """Testing for update_all_database_tables() exceptions"""
+        with pytest.raises(
+            UpdateDatabaseError, match="Length of param manifest_table_names"
+        ):
+            rdb_mysql.update_all_database_tables([["table_one"]], table_configs)
 
     def test_store_query_result(self, rdb_mysql, table_configs):
         """Testing for RDB.store_query_result()"""
