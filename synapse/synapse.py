@@ -24,20 +24,14 @@ class Synapse:
       - A database stored as Synapse tables
       - A source of manifest tables in Synapse
       - A destination of queries in Synapse
-    - Implements the RDBType interface.
     - Handles Synapse specific functionality.
     """
 
-    def __init__(self, config_dict: dict):
+    def __init__(self, config_dict: dict) -> None:
         """Init
-        obj = MySQL({
-            username: "firstname.lastname@sagebase.org"
-            auth_token: "xxx"
-            project_id: "syn1"
-        })
 
         Args:
-            config_dict (dict): A dict with synapse specific fields
+            config_dict (dict): A dict with fields ["username", "auth_token", "project_id"]
         """
         username = config_dict.get("username")
         auth_token = config_dict.get("auth_token")
@@ -50,10 +44,27 @@ class Synapse:
         self.project_id = project_id
 
     def get_table_names(self) -> list[str]:
+        """Gets the names of the tables in the schema
+
+        Returns:
+            list[str]: A list of table names
+        """
         tables = self._get_tables()
         return [table["name"] for table in tables]
 
-    def get_table_id_from_name(self, table_name: str) -> str:
+    def get_synapse_id_from_table_name(self, table_name: str) -> str:
+        """Gets the synapse id from the table name
+
+        Args:
+            table_name (str): The name of the table
+
+        Raises:
+            ValueError: When no tables match the name
+            ValueError: When multiple tables match the name
+
+        Returns:
+            str: A synapse id
+        """
         tables = self._get_tables()
         matching_tables = [table for table in tables if table["name"] == table_name]
         if len(matching_tables) == 0:
@@ -62,11 +73,30 @@ class Synapse:
             raise ValueError(f"Multiple matching tables with name {table_name}")
         return matching_tables[0]["id"]
 
-    def get_table_name_from_id(self, table_id: str) -> str:
-        tables = self._get_tables()
-        return [table["name"] for table in tables if table["id"] == table_id][0]
+    def get_table_name_from_synapse_id(self, synapse_id: str) -> str:
+        """Gets the table name from the synapse id
 
-    def execute_sql_statement(self, statement: str, include_row_data: bool = False):
+        Args:
+            synapse_id (str): A synapse id
+
+        Returns:
+            str: The name of the table with the synapse id
+        """
+        tables = self._get_tables()
+        return [table["name"] for table in tables if table["id"] == synapse_id][0]
+
+    def execute_sql_statement(
+        self, statement: str, include_row_data: bool = False
+    ) -> str:
+        """Execute a SQL statement
+
+        Args:
+            statement (str): A SQL statement that can be run by Synapse
+            include_row_data (bool, optional): Include row_id and row_etag. Defaults to False.
+
+        Returns:
+            str: A path to a csv file containing the query
+        """
         return self.syn.tableQuery(
             statement, includeRowIdAndRowVersion=include_row_data
         )
@@ -89,7 +119,16 @@ class Synapse:
     def query_table(
         self, table_name: str, table_config: DBObjectConfig
     ) -> pd.DataFrame:
-        table_id = self.get_table_id_from_name(table_name)
+        """Queries a whole table
+
+        Args:
+            table_name (str): The name of the table to query
+            table_config (DBObjectConfig): The config for the table
+
+        Returns:
+            pd.DataFrame: The queried table
+        """
+        table_id = self.get_synapse_id_from_table_name(table_name)
         query = f"SELECT * FROM {table_id}"
         table = self.execute_sql_query(query)
         for att in table_config.attributes:
@@ -104,11 +143,26 @@ class Synapse:
     def execute_sql_query(
         self, query: str, include_row_data: bool = False
     ) -> pd.DataFrame:
+        """Execute a Sql query
+
+        Args:
+            query (str): A SQL statement that can be run by Synapse
+            include_row_data (bool, optional): Include row_id and row_etag. Defaults to False.
+
+        Returns:
+            pd.DataFrame: The queried table
+        """
         result = self.execute_sql_statement(query, include_row_data)
         table = pd.read_csv(result.filepath)
         return table
 
-    def add_table(self, table_name: str, table_config: DBObjectConfig):
+    def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
+        """Adds a synapse table
+
+        Args:
+            table_name (str): The name of the table to be added
+            table_config (DBObjectConfig): The config the table to be added
+        """
         columns = []
         values = {}
         for att in table_config.attributes:
@@ -120,8 +174,13 @@ class Synapse:
         table = sc.Table(schema, values)
         table = self.syn.store(table)
 
-    def drop_table(self, table_name: str):
-        synapse_id = self.get_table_id_from_name(table_name)
+    def drop_table(self, table_name: str) -> None:
+        """Drops a Synapse table
+
+        Args:
+            table_name (str): The name of the table to be dropped
+        """
+        synapse_id = self.get_synapse_id_from_table_name(table_name)
         self.syn.delete(synapse_id)
 
     def _create_synapse_column(self, name: str, datatype: str) -> sc.Column:

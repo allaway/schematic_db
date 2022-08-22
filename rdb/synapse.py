@@ -1,5 +1,4 @@
-"""Synapse
-"""
+"""SynapseDatabase"""
 import pandas as pd
 from db_object_config import DBObjectConfig
 from synapse import Synapse
@@ -7,14 +6,7 @@ from .rdb import RelationalDatabase
 
 
 class SynapseDatabase(RelationalDatabase):
-    """Synapse
-    - Represents:
-      - A database stored as Synapse tables
-      - A source of manifest tables in Synapse
-      - A destination of queries in Synapse
-    - Implements the RDBType interface.
-    - Handles Synapse specific functionality.
-    """
+    """Represents a database stored as Synapse tables"""
 
     def __init__(self, config_dict: dict):
         """Init

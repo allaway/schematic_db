@@ -1,3 +1,3 @@
-""" Import all rdb type classes
+""" Import all classes
 """
 from .rdb_updater import *

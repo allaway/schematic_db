@@ -1,11 +1,9 @@
-"""RDB
-"""
+"""RDBUpdater"""
 from typing import List
 import pandas as pd
 from db_object_config import DBObjectConfigList, DBObjectConfig
 from rdb import RelationalDatabase
 from manifest_store import ManifestStore
-from query_store import QueryStore
 from .utils import normalize_table
 
 
@@ -30,7 +28,7 @@ class ManifestError(Exception):
 
 
 class RDBUpdater:
-    """Represents a relational database."""
+    """An for updating a database."""
 
     def __init__(self, rdb: RelationalDatabase, manifest_store: ManifestStore):
         self.manifest_store = manifest_store

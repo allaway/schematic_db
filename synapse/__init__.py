@@ -1,3 +1,3 @@
-""" Import all synapse classes
+""" Import all classes
 """
 from .synapse import *

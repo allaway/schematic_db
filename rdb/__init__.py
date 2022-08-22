@@ -1,4 +1,3 @@
-""" Import all rdb type classes
-"""
+"""Import Database classes"""
 from .mysql import *
 from .synapse import *

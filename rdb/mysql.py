@@ -1,5 +1,4 @@
-"""MYSQL
-"""
+"""MySQLDatabase"""
 import pandas as pd
 import numpy as np
 import sqlalchemy as sa
@@ -19,28 +18,21 @@ PANDAS_DATATYPES = {DBDatatype.INT: "Int64", DBDatatype.BOOLEAN: "boolean"}
 
 
 class MySQLDatabase(RelationalDatabase):
-    """MYSQL
+    """MySQLDatabase
     - Represents a mysql database.
-    - Implements the RDBType interface.
+    - Implements the RelationalDatabase interface.
     - Handles MYSQL specific functionality.
     """
 
     def __init__(self, config_dict: dict):
         """Init
-        obj = MySQL({
-            username: "root"
-            password: "root"
-            host: "localhost"
-            schema: "test_schema"
-        })
-
         An initial connection is created to the database without the schema.
         The schema will be created if it doesn't exist.
         A second connection is created with the schema.
         The second connection is used to create the sqlalchemy connection and metadata.
 
         Args:
-            config_dict (dict): A dict with mysql specific fields
+            config_dict (dict): A dict with fields ["username", "password", "host", "schema"]
         """
         username = config_dict.get("username")
         password = config_dict.get("password")
@@ -58,14 +50,9 @@ class MySQLDatabase(RelationalDatabase):
         self.metadata = sa.MetaData()
 
     def execute_sql_query(self, query: str) -> pd.DataFrame:
-        result = self.execute_sql_statement(query).fetchall()
+        result = self._execute_sql_statement(query).fetchall()
         table = pd.DataFrame(result)
         return table
-
-    def execute_sql_statement(self, statement: str):
-        with self.engine.connect().execution_options(autocommit=True) as conn:
-            result = conn.execute(statement)
-        return result
 
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig):
         table_names = self.get_table_names()
@@ -74,26 +61,8 @@ class MySQLDatabase(RelationalDatabase):
             self.add_table(table_name, table_config)
         self.upsert_table_rows(table_name, data)
 
-    def get_table_names(self) -> list[str]:
-        inspector = sa.inspect(self.engine)
-        return inspector.get_table_names()
-
-    def add_table(self, table_name: str, table_config: DBObjectConfig):
-        columns = self._create_columns(table_config)
-        sa.Table(table_name, self.metadata, *columns)
-        self.metadata.create_all(self.engine)
-
-    def upsert_table_rows(self, table_name: str, data: pd.DataFrame):
-        data = data.replace({np.nan: None})
-        rows = data.to_dict("records")
-        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
-        for row in rows:
-            statement = insert(table).values(row).on_duplicate_key_update(**row)
-            with self.engine.connect().execution_options(autocommit=True) as conn:
-                conn.execute(statement)
-
     def drop_table(self, table_name: str):
-        self.execute_sql_statement(f"DROP TABLE IF EXISTS {table_name};")
+        self._execute_sql_statement(f"DROP TABLE IF EXISTS {table_name};")
         self.metadata.clear()
 
     def delete_table_rows(
@@ -109,11 +78,55 @@ class MySQLDatabase(RelationalDatabase):
         tuple_strings = ["(" + ",".join(tup) + ")" for tup in tuples]
         tuple_string = ",".join(tuple_strings)
         statement = f"DELETE FROM {table_name} WHERE ({','.join(primary_keys)}) IN ({tuple_string})"
-        self.execute_sql_statement(statement)
+        self._execute_sql_statement(statement)
+
+    def get_table_names(self) -> list[str]:
+        """Gets the names of the tables in the schema
+
+        Returns:
+            list[str]: A list of table names
+        """
+        inspector = sa.inspect(self.engine)
+        return inspector.get_table_names()
+
+    def add_table(self, table_name: str, table_config: DBObjectConfig):
+        """Adds a table to the schema
+
+        Args:
+            table_name (str): The name of the table
+            table_config (DBObjectConfig): The config for the table to be added
+        """
+        columns = self._create_columns(table_config)
+        sa.Table(table_name, self.metadata, *columns)
+        self.metadata.create_all(self.engine)
+
+    def upsert_table_rows(self, table_name: str, data: pd.DataFrame):
+        """Inserts and/or updates the rows of the table
+
+        Args:
+            table_name (str): _The name of the table to be upserted
+            data (pd.DataFrame): The rows to be upserted
+        """
+        data = data.replace({np.nan: None})
+        rows = data.to_dict("records")
+        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
+        for row in rows:
+            statement = insert(table).values(row).on_duplicate_key_update(**row)
+            with self.engine.connect().execution_options(autocommit=True) as conn:
+                conn.execute(statement)
 
     def query_table(
         self, table_name: str, table_config: DBObjectConfig
     ) -> pd.DataFrame:
+        """Queries an entire table
+
+        Args:
+            table_name (str): The table to be queried
+            table_config (DBObjectConfig): The config for the table to be queried
+
+        Returns:
+            pd.DataFrame: The query result
+        """
         query = f"SELECT * FROM {table_name};"
         table = self.execute_sql_query(query)
         for att in table_config.attributes:
@@ -121,6 +134,11 @@ class MySQLDatabase(RelationalDatabase):
             if pandas_value is not None:
                 table = table.astype({att.name: pandas_value})
         return table
+
+    def _execute_sql_statement(self, statement: str):
+        with self.engine.connect().execution_options(autocommit=True) as conn:
+            result = conn.execute(statement)
+        return result
 
     def _create_columns(self, table_config: DBObjectConfig) -> list[sa.Column]:
         columns = []

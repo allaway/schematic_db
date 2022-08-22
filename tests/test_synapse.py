@@ -67,11 +67,11 @@ class TestSynapseIDs:
 
     def test_get_table_id_from_name(self, synapse):
         """Testing for Synapse.get_table_id_from_name()"""
-        assert synapse.get_table_id_from_name("test_table_one") == "syn34532191"
+        assert synapse.get_synapse_id_from_table_name("test_table_one") == "syn34532191"
 
     def test_get_table_name_from_id(self, synapse):
         """Testing for Synapse.get_table_name_from_id()"""
-        assert synapse.get_table_name_from_id("syn34532191") == "test_table_one"
+        assert synapse.get_table_name_from_synapse_id("syn34532191") == "test_table_one"
 
 
 class TestSynapseQueries:

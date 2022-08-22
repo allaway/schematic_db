@@ -1,12 +1,11 @@
-"""RDB Queryer
-"""
+"""RDB Queryer"""
 import pandas as pd
 from rdb import RelationalDatabase
 from query_store import QueryStore
 
 
 class RDBQueryer:
-    """Represents a relational database."""
+    """Represents queries a database and uploads the results to a query store."""
 
     def __init__(
         self,

@@ -1,5 +1,4 @@
-"""RDB
-"""
+"""RelationalDatabase"""
 from abc import ABC, abstractmethod
 import pandas as pd
 from db_object_config import DBObjectConfig
