@@ -17,6 +17,17 @@ SYNAPSE_DATATYPES = {
 
 PANDAS_DATATYPES = {DBDatatype.INT: "Int64", DBDatatype.BOOLEAN: "boolean"}
 
+class SynapseTableNameError(Exception):
+    """SynapseTableNameError"""
+
+    def __init__(self, message, table_name):
+        self.message = message
+        self.table_name = table_name
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"{self.message}:{self.table_name}"
+
 
 class Synapse:
     """Synapse
@@ -59,8 +70,8 @@ class Synapse:
             table_name (str): The name of the table
 
         Raises:
-            ValueError: When no tables match the name
-            ValueError: When multiple tables match the name
+            SynapseTableNameError: When no tables match the name
+            SynapseTableNameError: When multiple tables match the name
 
         Returns:
             str: A synapse id
@@ -68,9 +79,9 @@ class Synapse:
         tables = self._get_tables()
         matching_tables = [table for table in tables if table["name"] == table_name]
         if len(matching_tables) == 0:
-            raise ValueError(f"No matching tables with name {table_name}")
+            raise SynapseTableNameError("No matching tables with name:", table_name)
         if len(matching_tables) > 1:
-            raise ValueError(f"Multiple matching tables with name {table_name}")
+            raise SynapseTableNameError("Multiple matching tables with name:", table_name)
         return matching_tables[0]["id"]
 
     def get_table_name_from_synapse_id(self, synapse_id: str) -> str:
