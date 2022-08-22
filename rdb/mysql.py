@@ -5,7 +5,7 @@ import numpy as np
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import insert
 from db_object_config import DBObjectConfig, DBDatatype
-from .rdb_type import RDBType
+from .rdb import RelationalDatabase
 
 MYSQL_DATATYPES = {
     DBDatatype.TEXT: sa.String(100),
@@ -18,7 +18,7 @@ MYSQL_DATATYPES = {
 PANDAS_DATATYPES = {DBDatatype.INT: "Int64", DBDatatype.BOOLEAN: "boolean"}
 
 
-class MySQL(RDBType):
+class MySQLDatabase(RelationalDatabase):
     """MYSQL
     - Represents a mysql database.
     - Implements the RDBType interface.

@@ -3,10 +3,10 @@
 import pandas as pd
 from db_object_config import DBObjectConfig
 from synapse import Synapse
-from .rdb_type import RDBType
+from .rdb import RelationalDatabase
 
 
-class SynapseDatabase(RDBType):
+class SynapseDatabase(RelationalDatabase):
     """Synapse
     - Represents:
       - A database stored as Synapse tables

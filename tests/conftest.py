@@ -13,8 +13,8 @@ from db_object_config import (
     DBDatatype,
     DBForeignKey,
 )
-from rdb_type import MySQL
-from rdb import RDB
+from rdb import MySQLDatabase
+from rdb_updater import RDBUpdater
 from manifest_store import SynapseManifestStore
 from query_store import SynapseQueryStore
 
@@ -49,7 +49,7 @@ def fixture_mysql(config_dict):
     """
     Yields a MYSQL object
     """
-    obj = MySQL(config_dict["database"])
+    obj = MySQLDatabase(config_dict["database"])
     yield obj
     test_table_names = ["table_three", "table_one", "table_two"]
     for table_name in test_table_names:
@@ -80,16 +80,16 @@ def fixture_synapse_query_store(config_dict):
     assert obj.synapse.get_table_names() == []
 
 
-@pytest.fixture(scope="module", name="rdb_mysql")
-def fixture_rdb_mysql(config_dict, synapse_manifest_store, synapse_query_store):
-    """Yields a RDB object"""
-    mysql = MySQL(config_dict["database"])
-    rdb = RDB(
-        rdb_type=mysql,
+@pytest.fixture(scope="module", name="rdb_updater_mysql")
+def fixture_rdb_updater_mysql(config_dict, synapse_manifest_store, synapse_query_store):
+    """Yields a RDBUpdater"""
+    mysql = MySQLDatabase(config_dict["database"])
+    obj = RDBUpdater(
+        rdb=mysql,
         manifest_store=synapse_manifest_store,
         query_store=synapse_query_store,
     )
-    yield rdb
+    yield obj
 
 
 @pytest.fixture(scope="session")
