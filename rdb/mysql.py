@@ -16,6 +16,17 @@ MYSQL_DATATYPES = {
 
 PANDAS_DATATYPES = {DBDatatype.INT: "Int64", DBDatatype.BOOLEAN: "boolean"}
 
+class DataframeKeyError(Exception):
+    """DataframeKeyError"""
+
+    def __init__(self, message, key):
+        self.message = message
+        self.key = key
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"{self.message}:{self.key}"
+
 
 class MySQLDatabase(RelationalDatabase):
     """MySQLDatabase
@@ -69,9 +80,9 @@ class MySQLDatabase(RelationalDatabase):
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
     ):
         primary_keys = table_config.primary_keys
-        for col in primary_keys:
-            if col not in list(data.columns):
-                raise ValueError(f"primary key: {col} missing from data")
+        for key in primary_keys:
+            if key not in list(data.columns):
+                raise DataframeKeyError("Primary key missing from data:", key)
         data = data[primary_keys]
         tuples = list(data.itertuples(index=False, name=None))
         tuples = [(f"'{i}'" for i in tup) for tup in tuples]
