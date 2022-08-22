@@ -15,6 +15,7 @@ from db_object_config import (
 )
 from rdb import MySQLDatabase
 from rdb_updater import RDBUpdater
+from rbd_queryer import RDBQueryer
 from manifest_store import SynapseManifestStore
 from query_store import SynapseQueryStore
 
@@ -81,12 +82,17 @@ def fixture_synapse_query_store(config_dict):
 
 
 @pytest.fixture(scope="module", name="rdb_updater_mysql")
-def fixture_rdb_updater_mysql(config_dict, synapse_manifest_store, synapse_query_store):
+def fixture_rdb_updater_mysql(mysql, synapse_manifest_store):
     """Yields a RDBUpdater"""
-    mysql = MySQLDatabase(config_dict["database"])
-    obj = RDBUpdater(
+    obj = RDBUpdater(rdb=mysql, manifest_store=synapse_manifest_store)
+    yield obj
+
+
+@pytest.fixture(scope="module", name="rdb_queryer_mysql")
+def fixture_rdb_queryer_mysql(mysql, synapse_query_store):
+    """Yields a RDBQueryer"""
+    obj = RDBQueryer(
         rdb=mysql,
-        manifest_store=synapse_manifest_store,
         query_store=synapse_query_store,
     )
     yield obj

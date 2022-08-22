@@ -1,8 +1,8 @@
-"""Testing for RDB.
+"""Testing for RDBUpdater.
 """
 import pytest
 import pandas as pd
-from rdb_updater import RDBUpdater, UpdateDatabaseError, normalize_table
+from rdb_updater import RDBUpdater, normalize_table, UpdateDatabaseError
 
 
 class TestUtils:
@@ -40,7 +40,7 @@ class TestUtils:
         pd.testing.assert_frame_equal(result, correct_result, check_like=True)
 
 
-class TestRDBMySQLUpdate:
+class TestRDBUpdater:
     """Testing for RDB with MySQL database"""
 
     def test_init(self, rdb_updater_mysql):
@@ -118,72 +118,3 @@ class TestRDBMySQLUpdate:
             UpdateDatabaseError, match="Length of param manifest_table_names"
         ):
             rdb_updater_mysql.update_all_database_tables([["table_one"]], table_configs)
-
-
-class TestRDBMySQLQueries:
-    """Testing for RDB with MySQL database"""
-
-    def test_store_query_result(self, rdb_updater_mysql, table_configs):
-        """Testing for RDB.store_query_result()"""
-
-        assert rdb_updater_mysql.rdb.get_table_names() == []
-        assert rdb_updater_mysql.query_store.synapse.get_table_names() == []
-
-        rdb_updater_mysql.update_all_database_tables(
-            [["table_one"], ["table_two"], ["table_three"]], table_configs
-        )
-        assert rdb_updater_mysql.rdb.get_table_names() == [
-            "table_one",
-            "table_three",
-            "table_two",
-        ]
-
-        query = (
-            "SELECT one.pk_one_col, one.int_one_col, three.string_three_col FROM "
-            + "(SELECT pk_one_col, int_one_col FROM table_one) AS one "
-            + "INNER JOIN "
-            + "(SELECT pk_one_col, string_three_col FROM table_three) AS three "
-            + "ON one.pk_one_col = three.pk_one_col;"
-        )
-        rdb_updater_mysql.store_query_result(query, "result_zero")
-        assert rdb_updater_mysql.query_store.synapse.get_table_names() == [
-            "result_zero"
-        ]
-
-        rdb_updater_mysql.query_store.synapse.drop_table("result_zero")
-        rdb_updater_mysql.rdb.drop_table("table_three")
-        rdb_updater_mysql.rdb.drop_table("table_two")
-        rdb_updater_mysql.rdb.drop_table("table_one")
-        assert rdb_updater_mysql.rdb.get_table_names() == []
-        assert rdb_updater_mysql.query_store.synapse.get_table_names() == []
-
-    def test_store_query_results(
-        self, rdb_updater_mysql, table_configs, query_csv_path
-    ):
-        """Testing for RDB.store_query_results()"""
-
-        assert rdb_updater_mysql.rdb.get_table_names() == []
-        assert rdb_updater_mysql.query_store.synapse.get_table_names() == []
-
-        rdb_updater_mysql.update_all_database_tables(
-            [["table_one"], ["table_two"], ["table_three"]], table_configs
-        )
-        assert rdb_updater_mysql.rdb.get_table_names() == [
-            "table_one",
-            "table_three",
-            "table_two",
-        ]
-
-        rdb_updater_mysql.store_query_results(query_csv_path)
-        assert rdb_updater_mysql.query_store.synapse.get_table_names() == [
-            "result_one",
-            "result_two",
-        ]
-
-        rdb_updater_mysql.query_store.synapse.drop_table("result_one")
-        rdb_updater_mysql.query_store.synapse.drop_table("result_two")
-        rdb_updater_mysql.rdb.drop_table("table_three")
-        rdb_updater_mysql.rdb.drop_table("table_two")
-        rdb_updater_mysql.rdb.drop_table("table_one")
-        assert rdb_updater_mysql.rdb.get_table_names() == []
-        assert rdb_updater_mysql.query_store.synapse.get_table_names() == []
