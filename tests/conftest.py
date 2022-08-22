@@ -13,8 +13,10 @@ from db_object_config import (
     DBDatatype,
     DBForeignKey,
 )
-from rdb_type import MySQL, Synapse
+from rdb_type import MySQL
 from rdb import RDB
+from manifest_store import SynapseManifestStore
+from query_store import SynapseQueryStore
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")
@@ -61,7 +63,7 @@ def fixture_synapse_manifest_store(config_dict):
     """
     Yields a Synapse Manifest Store
     """
-    obj = Synapse(config_dict["manifest_store"])
+    obj = SynapseManifestStore(config_dict["manifest_store"])
     yield obj
 
 
@@ -70,12 +72,12 @@ def fixture_synapse_query_store(config_dict):
     """
     Yields a Synapse Query Store
     """
-    obj = Synapse(config_dict["query_store"])
-    assert obj.get_table_names() == []
+    obj = SynapseQueryStore(config_dict["query_store"])
+    assert obj.synapse.get_table_names() == []
     yield obj
-    for name in obj.get_table_names():
-        obj.drop_table(name)
-    assert obj.get_table_names() == []
+    for name in obj.synapse.get_table_names():
+        obj.synapse.drop_table(name)
+    assert obj.synapse.get_table_names() == []
 
 
 @pytest.fixture(scope="module", name="rdb_mysql")

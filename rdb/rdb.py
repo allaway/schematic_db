@@ -76,18 +76,21 @@ class RDB:
             table_config (DBObjectConfig): A generic representation of the table as a
                 DBObjectConfig object.
         """
-        manifest_tables = []
-        for name in manifest_table_names:
-            table = self.manifest_store.get_manifest_table(name, table_config)
-            manifest_tables.append(table)
+        manifest_tables = [
+            self.manifest_store.get_manifest_table(name, table_config)
+            for name in manifest_table_names
+        ]
         manifest_table = pd.concat(manifest_tables)
         manifest_table = normalize_table(manifest_table, table_config)
+        self.rdb_type.update_table(manifest_table, table_config)
 
+        """
         database_table_names = self.rdb_type.get_table_names()
         table_name = table_config.name
         if table_name not in database_table_names:
             self.rdb_type.add_table(table_name, table_config)
         self.rdb_type.upsert_table_rows(table_name, manifest_table)
+        """
 
     def store_query_results(self, csv_path: str):
         """Stores the results of queries
@@ -109,18 +112,4 @@ class RDB:
             table_name (str): The name of the table the result will be stored as
         """
         query_result = self.rdb_type.execute_sql_query(query)
-        self.query_store.build_table(table_name, query_result)
-
-    def delete_table_rows(
-        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ):
-        # pylint: disable=missing-function-docstring
-        self.rdb_type.delete_table_rows(table_name, data, table_config)
-
-    delete_table_rows.__doc__ = RDBType.drop_table.__doc__
-
-    def drop_table(self, table_name: str):
-        # pylint: disable=missing-function-docstring
-        self.rdb_type.drop_table(table_name)
-
-    drop_table.__doc__ = RDBType.drop_table.__doc__
+        self.query_store.store_query_result(table_name, query_result)

@@ -8,10 +8,10 @@ class QueryStore(ABC):
     """An interface for Query Store objects"""
 
     @abstractmethod
-    def store_query_result(self, table_name: str, table: pd.DataFrame):
+    def store_query_result(self, table_name: str, query_result: pd.DataFrame):
         """Stores The result of a query
 
         Args:
             table_name (str): The name of the table the result will be stored as
-            table (pd.DataFrame): The query result
+            query_result (pd.DataFrame): The query result in table form
         """

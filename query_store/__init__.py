@@ -1,3 +1,3 @@
 """ Import all classes
 """
-from .query_store import *
+from .synapse_query_store import *

@@ -18,8 +18,7 @@ import os
 import pytest
 import pandas as pd
 from yaml import safe_load
-from rdb_type import Synapse
-from db_object_config import DBDatatype
+from synapse import Synapse
 
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -32,7 +31,7 @@ if not os.path.exists(CONFIG_PATH):
 @pytest.fixture(scope="module", name="config_dict")
 def fixture_config_dict():
     """
-    Yields a MYSQL config dict
+    Yields a Synapse config dict
     """
     with open(CONFIG_PATH, mode="rt", encoding="utf-8") as file:
         config = safe_load(file)
@@ -96,43 +95,3 @@ class TestSynapse:
         assert synapse.get_table_names() == test_project_table_names
         synapse.add_table("table_one", table_one_config)
         assert synapse.get_table_names() == ["table_one"] + test_project_table_names
-
-    def test_add_table_column(
-        self, synapse, table_one, table_one_config, test_project_table_names
-    ):
-        """Testing for synapse.add_table_column()"""
-        assert synapse.get_table_names() == ["table_one"] + test_project_table_names
-        assert synapse.get_column_names_from_table("table_one") == list(
-            table_one.columns
-        )
-
-        synapse.add_table_column("table_one", "test_add_col", DBDatatype.FLOAT)
-        assert synapse.get_column_names_from_table("table_one") == list(
-            table_one.columns
-        ) + ["test_add_col"]
-
-        synapse.drop_table("table_one")
-        synapse.add_table("table_one", table_one_config)
-
-    def test_drop_table_column(self, synapse, table_one, table_one_config):
-        """Testing for synapse.drop_table_column()"""
-        synapse.drop_table_column("table_one", "test_add_col")
-        assert synapse.get_column_names_from_table("table_one") == list(
-            table_one.columns
-        )
-
-        synapse.drop_table("table_one")
-        synapse.add_table("table_one", table_one_config)
-
-    def test_insert_delete_table_rows(
-        self, synapse, table_one, table_one_config, test_project_table_names
-    ):
-        """
-        Testing for synapse.insert_table_rows() and synapse.delete_table_rows()
-        """
-        assert synapse.get_table_names() == ["table_one"] + test_project_table_names
-        synapse.insert_table_rows("table_one", table_one)
-        result = synapse.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result, table_one)
-        synapse.drop_table("table_one")
-        synapse.add_table("table_one", table_one_config)

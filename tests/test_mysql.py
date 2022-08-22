@@ -15,7 +15,6 @@ If the the config doesn't exist, the file at 'tests/data/mysql_config.yml'
 will be used.
 """
 from datetime import datetime
-import sqlalchemy as sa
 import pandas as pd
 
 
@@ -48,70 +47,13 @@ class TestMYSQLGetters:
     Testing for MYSQL
     """
 
-    def test_get_table_names1(self, mysql, table_one_config):
+    def test_get_table_names(self, mysql, table_one_config):
         """
         Testing for MYSQL.get_table_names()
         """
         assert mysql.get_table_names() == []
         mysql.add_table("table_one", table_one_config)
         assert mysql.get_table_names() == ["table_one"]
-
-    def test_get_columns_from_table(self, mysql):
-        """
-        Testing for MYSQL.get_columns_from_table()
-        """
-        assert mysql.get_table_names() == ["table_one"]
-        columns = mysql.get_columns_from_table("table_one")
-        assert isinstance(columns, list)
-        assert isinstance(columns[0], dict)
-
-    def test_get_column_names_from_table(self, mysql):
-        """
-        Testing for MYSQL.get_column_names_from_table()
-        """
-        assert mysql.get_table_names() == ["table_one"]
-        names = mysql.get_column_names_from_table("table_one")
-        assert isinstance(names, list)
-        assert isinstance(names[0], str)
-
-    def test_get_schemas(self, mysql):
-        """
-        Testing for MYSQL.get_schemas()
-        """
-        assert isinstance(mysql.get_schemas(), list)
-
-    def test_get_current_schema(self, mysql):
-        """
-        Testing for MYSQL.get_current_schema()
-        """
-        assert mysql.get_current_schema() == "test_schema"
-
-    def test_get_table_names2(self, mysql):
-        """
-        Testing for MYSQL.get_table_names()
-        """
-        assert mysql.get_table_names() == ["table_one"]
-        mysql.drop_table("table_one")
-        assert mysql.get_table_names() == []
-
-
-class TestMYSQLUpdateTableColumns:
-    """Testing for MYSQL methods that update table columns"""
-
-    def test_add_drop_table_column(self, mysql, table_one, table_one_config):
-        """
-        Testing for MYSQL.add_table_column(), and MYSQL.drop_table_column()
-        """
-        assert mysql.get_table_names() == []
-        mysql.add_table("table_one", table_one_config)
-        assert mysql.get_table_names() == ["table_one"]
-        assert mysql.get_column_names_from_table("table_one") == list(table_one.columns)
-        mysql.add_table_column("table_one", "name", "varchar(100)")
-        assert mysql.get_column_names_from_table("table_one") == list(
-            table_one.columns
-        ) + ["name"]
-        mysql.drop_table_column("table_one", "name")
-        assert mysql.get_column_names_from_table("table_one") == list(table_one.columns)
         mysql.drop_table("table_one")
         assert mysql.get_table_names() == []
 

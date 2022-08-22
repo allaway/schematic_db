@@ -1,3 +1,3 @@
 """ Import all classes
 """
-from .manifest_store import *
+from .synapse_manifest_store import *

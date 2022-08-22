@@ -1,4 +1,4 @@
 """ Import all rdb type classes
 """
 from .mysql import *
-from .synapse import *
+from .synapse_database import *

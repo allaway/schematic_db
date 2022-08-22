@@ -56,7 +56,7 @@ class TestRDBMySQLUpdate:
         result = rdb_mysql.rdb_type.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result, table_one)
 
-        rdb_mysql.drop_table("table_one")
+        rdb_mysql.rdb_type.drop_table("table_one")
         assert rdb_mysql.rdb_type.get_table_names() == []
 
     def test_update_database_table2(
@@ -70,7 +70,7 @@ class TestRDBMySQLUpdate:
         test_table = pd.concat([table_two, table_two_b]).reset_index(drop=True)
         pd.testing.assert_frame_equal(result, test_table)
 
-        rdb_mysql.drop_table("table_two")
+        rdb_mysql.rdb_type.drop_table("table_two")
         assert rdb_mysql.rdb_type.get_table_names() == []
 
     def test_update_all_database_tables1(
@@ -104,9 +104,9 @@ class TestRDBMySQLUpdate:
             "table_two",
         ]
 
-        rdb_mysql.drop_table("table_three")
-        rdb_mysql.drop_table("table_two")
-        rdb_mysql.drop_table("table_one")
+        rdb_mysql.rdb_type.drop_table("table_three")
+        rdb_mysql.rdb_type.drop_table("table_two")
+        rdb_mysql.rdb_type.drop_table("table_one")
         assert rdb_mysql.rdb_type.get_table_names() == []
 
     def test_update_all_database_tables2(self, rdb_mysql, table_configs):
@@ -124,7 +124,7 @@ class TestRDBMySQLQueries:
         """Testing for RDB.store_query_result()"""
 
         assert rdb_mysql.rdb_type.get_table_names() == []
-        assert rdb_mysql.query_store.get_table_names() == []
+        assert rdb_mysql.query_store.synapse.get_table_names() == []
 
         rdb_mysql.update_all_database_tables(
             [["table_one"], ["table_two"], ["table_three"]], table_configs
@@ -143,20 +143,20 @@ class TestRDBMySQLQueries:
             + "ON one.pk_one_col = three.pk_one_col;"
         )
         rdb_mysql.store_query_result(query, "result_zero")
-        assert rdb_mysql.query_store.get_table_names() == ["result_zero"]
+        assert rdb_mysql.query_store.synapse.get_table_names() == ["result_zero"]
 
-        rdb_mysql.query_store.drop_table("result_zero")
-        rdb_mysql.drop_table("table_three")
-        rdb_mysql.drop_table("table_two")
-        rdb_mysql.drop_table("table_one")
+        rdb_mysql.query_store.synapse.drop_table("result_zero")
+        rdb_mysql.rdb_type.drop_table("table_three")
+        rdb_mysql.rdb_type.drop_table("table_two")
+        rdb_mysql.rdb_type.drop_table("table_one")
         assert rdb_mysql.rdb_type.get_table_names() == []
-        assert rdb_mysql.query_store.get_table_names() == []
+        assert rdb_mysql.query_store.synapse.get_table_names() == []
 
     def test_store_query_results(self, rdb_mysql, table_configs, query_csv_path):
         """Testing for RDB.store_query_results()"""
 
         assert rdb_mysql.rdb_type.get_table_names() == []
-        assert rdb_mysql.query_store.get_table_names() == []
+        assert rdb_mysql.query_store.synapse.get_table_names() == []
 
         rdb_mysql.update_all_database_tables(
             [["table_one"], ["table_two"], ["table_three"]], table_configs
@@ -168,15 +168,15 @@ class TestRDBMySQLQueries:
         ]
 
         rdb_mysql.store_query_results(query_csv_path)
-        assert rdb_mysql.query_store.get_table_names() == [
+        assert rdb_mysql.query_store.synapse.get_table_names() == [
             "result_one",
             "result_two",
         ]
 
-        rdb_mysql.query_store.drop_table("result_one")
-        rdb_mysql.query_store.drop_table("result_two")
-        rdb_mysql.drop_table("table_three")
-        rdb_mysql.drop_table("table_two")
-        rdb_mysql.drop_table("table_one")
+        rdb_mysql.query_store.synapse.drop_table("result_one")
+        rdb_mysql.query_store.synapse.drop_table("result_two")
+        rdb_mysql.rdb_type.drop_table("table_three")
+        rdb_mysql.rdb_type.drop_table("table_two")
+        rdb_mysql.rdb_type.drop_table("table_one")
         assert rdb_mysql.rdb_type.get_table_names() == []
-        assert rdb_mysql.query_store.get_table_names() == []
+        assert rdb_mysql.query_store.synapse.get_table_names() == []
