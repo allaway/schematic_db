@@ -14,19 +14,6 @@ class UpdateDatabaseError(Exception):
         self.message = message
         super().__init__(self.message)
 
-
-class ManifestError(Exception):
-    """ManifestError"""
-
-    def __init__(self, message, name):
-        self.message = message
-        self.name = name
-        super().__init__(self.message)
-
-    def __str__(self):
-        return f"{self.message}:{self.name}"
-
-
 class RDBUpdater:
     """An for updating a database."""
 
