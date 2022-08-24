@@ -14,6 +14,7 @@ class UpdateDatabaseError(Exception):
         self.message = message
         super().__init__(self.message)
 
+
 class RDBUpdater:
     """An for updating a database."""
 

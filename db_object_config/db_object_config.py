@@ -37,6 +37,33 @@ class DBForeignKey:
     foreign_attribute_name: str
 
 
+class ConfigAttributeError(Exception):
+    """ConfigAttributeError"""
+
+    def __init__(self, message: str, object_name: str):
+        self.message = message
+        self.object_name = object_name
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"{self.message}: {self.object_name}"
+
+
+class ConfigKeyError(Exception):
+    """ConfigKeyError"""
+
+    def __init__(self, message: str, object_name: str, key: str = None):
+        self.message = message
+        self.object_name = object_name
+        self.key = key
+        super().__init__(self.message)
+
+    def __str__(self):
+        if self.key is None:
+            return f"{self.message}: {self.object_name}"
+        return f"{self.message}: {self.object_name}; {self.key}"
+
+
 @dataclass
 class DBObjectConfig:
     """A config for a generic database object."""
@@ -79,53 +106,78 @@ class DBObjectConfig:
         return [key for key in self.foreign_keys if key.name == name][0]
 
     def _check_attributes(self):
-        if not isinstance(self.attributes, List):
-            raise TypeError(f"Param attributes is not of type List:{self.attributes}")
         if len(self.attributes) == 0:
-            raise ValueError("Param attributes is empty.")
-        for item in self.attributes:
-            if not isinstance(item, DBAttributeConfig):
-                raise TypeError(
-                    f"Item in param attributes is not of type DBAttributeConfig:{item}"
-                )
+            raise ConfigAttributeError("Attributes is empty", self.name)
 
     def _check_primary_keys(self):
-        if not isinstance(self.primary_keys, List):
-            raise TypeError(
-                f"Param primary_keys is not of type List:{self.primary_keys}"
-            )
         if len(self.primary_keys) == 0:
-            raise ValueError("Param primary_keys is empty.")
+            raise ConfigKeyError("Primary keys is empty", self.name)
         for key in self.primary_keys:
             self._check_primary_key(key)
 
     def _check_primary_key(self, key):
         if key not in self.get_attribute_names():
-            raise ValueError(
-                f"Item in param primary_keys is missing from param attributes:{key}"
+            raise ConfigKeyError(
+                "Primary key is missing from attributes", self.name, key
             )
 
     def _check_foreign_keys(self):
-        if not isinstance(self.foreign_keys, List):
-            raise TypeError(
-                f"Param foreign_keys is not of type List:{self.foreign_keys}"
-            )
         for key in self.foreign_keys:
             self._check_foreign_key(key)
 
     def _check_foreign_key(self, key):
-        if not isinstance(key, DBForeignKey):
-            raise TypeError(
-                f"Key in param foreign_keys is not of type DBForeignKey:{key}"
-            )
         if key.name not in self.get_attribute_names():
-            raise ValueError(
-                f"Key in param foreign_keys is missing from param attributes:{key}"
+            raise ConfigKeyError(
+                "Foreign key is missing from attributes", self.name, key
             )
         if key.foreign_object_name == self.name:
-            raise ValueError(
-                f"Key in param foreign_keys references its own table:{key}"
+            raise ConfigKeyError(
+                "Foreign key references its own object", self.name, key
             )
+
+
+class ConfigForeignKeyObjectError(Exception):
+    """ConfigForeignKeyObjectError"""
+
+    def __init__(self, foreign_key: str, object_name: str, foreign_object_name: str):
+        self.message = "Foreign key references object which does not exist in config."
+        self.foreign_key = foreign_key
+        self.object_name = object_name
+        self.foreign_object_name = foreign_object_name
+        super().__init__(self.message)
+
+    def __str__(self):
+        msg = (
+            f"Foreign key '{self.foreign_key}' in object '{self.object_name}' references object"
+            f"'{self.foreign_object_name}' which does not exist in config."
+        )
+        return msg
+
+
+class ConfigForeignKeyObjectError2(Exception):
+    """ConfigForeignKeyObjectError2"""
+
+    def __init__(
+        self,
+        foreign_key: str,
+        object_name: str,
+        foreign_object_name: str,
+        foreign_object_attribute: str,
+    ):
+        self.message = "Foreign key references attribute which does not exist."
+        self.foreign_key = foreign_key
+        self.object_name = object_name
+        self.foreign_object_name = foreign_object_name
+        self.foreign_object_attribute = foreign_object_attribute
+        super().__init__(self.message)
+
+    def __str__(self):
+        msg = (
+            f"Foreign key '{self.foreign_key}' in object '{self.object_name}' references"
+            f"attribute '{self.foreign_object_attribute}' which does not exist in object"
+            f"'{self.foreign_object_name}'"
+        )
+        return msg
 
 
 @dataclass
@@ -135,15 +187,6 @@ class DBObjectConfigList:
     configs: List[DBObjectConfig]
 
     def __post_init__(self):
-        if not isinstance(self.configs, List):
-            raise TypeError(f"Param configs is not of type List:{self.configs}")
-
-        for config in self.configs:
-            if not isinstance(config, DBObjectConfig):
-                raise TypeError(
-                    f"Item in param configs is not of type DBObjectConfig:{config}"
-                )
-
         for config in self.configs:
             self._check_foreign_keys(config)
 
@@ -173,18 +216,18 @@ class DBObjectConfigList:
 
     def _check_foreign_key_object(self, config, key):
         if key.foreign_object_name not in self.get_config_names():
-            msg = (
-                f"Foreign key in config does not exist in foreign object:"
-                f"foreign_key:{key}; config.name:{config.name}"
+            raise ConfigForeignKeyObjectError(
+                foreign_key=key,
+                object_name=config.name,
+                foreign_object_name=key.foreign_object_name,
             )
-            raise ValueError(msg)
 
     def _check_foreign_key_attribute(self, config, key):
         foreign_config = self.get_config_by_name(key.foreign_object_name)
         if key.foreign_attribute_name not in foreign_config.get_attribute_names():
-            msg = (
-                f"Foreign key attribute in config does not exist in foreign object:"
-                f"foreign_key:{key}; config.name:{config.name};"
-                f"foreign object:{foreign_config.name}."
+            raise ConfigForeignKeyObjectError2(
+                foreign_key=key,
+                object_name=config.name,
+                foreign_object_name=key.foreign_object_name,
+                foreign_object_attribute=key.foreign_attribute_name,
             )
-            raise ValueError(msg)

@@ -16,6 +16,7 @@ MYSQL_DATATYPES = {
 
 PANDAS_DATATYPES = {DBDatatype.INT: "Int64", DBDatatype.BOOLEAN: "boolean"}
 
+
 class DataframeKeyError(Exception):
     """DataframeKeyError"""
 

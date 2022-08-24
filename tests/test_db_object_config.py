@@ -8,6 +8,10 @@ from db_object_config import (
     DBAttributeConfig,
     DBDatatype,
     DBForeignKey,
+    ConfigAttributeError,
+    ConfigForeignKeyObjectError,
+    ConfigKeyError,
+    ConfigForeignKeyObjectError2,
 )
 
 
@@ -22,15 +26,6 @@ class TestDBAttributeConfig:
         """
         obj = DBAttributeConfig(name="col", datatype=DBDatatype.TEXT)
         assert isinstance(obj, DBAttributeConfig)
-
-    def test_db_attribute_config_exceptions(self):
-        """
-        Tests for DBAttributeConfig() that raise exceptions
-        """
-        with pytest.raises(
-            TypeError, match="Param datatype is not of type DBDatatype:"
-        ):
-            DBAttributeConfig(name="col", datatype="Text")
 
 
 class TestDBObjectConfig:
@@ -73,83 +68,42 @@ class TestDBObjectConfig:
         Tests for DBObjectConfig() that raise exceptions
         """
         # test attributes
-        with pytest.raises(TypeError, match="Param attributes is not of type List:"):
-            DBObjectConfig(
-                name="table",
-                attributes=DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
-                primary_keys=["pk_col"],
-                foreign_keys=[],
-            )
-
-        with pytest.raises(ValueError, match="Param attributes is empty."):
-            DBObjectConfig(
-                name="table", attributes=[], primary_keys=["pk_col"], foreign_keys=[]
-            )
-
         with pytest.raises(
-            TypeError,
-            match="Item in param attributes is not of type DBAttributeConfig:",
+            ConfigAttributeError, match="Attributes is empty: table_name"
         ):
             DBObjectConfig(
-                name="table",
-                attributes=[{"name": "pk_col", "datatype": DBDatatype.TEXT}],
+                name="table_name",
+                attributes=[],
                 primary_keys=["pk_col"],
                 foreign_keys=[],
             )
 
         # test primary_keys
-        with pytest.raises(TypeError, match="Param primary_keys is not of type List:"):
+        with pytest.raises(ConfigKeyError, match="Primary keys is empty: table_name"):
             DBObjectConfig(
-                name="table",
-                attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
-                primary_keys="pk_col",
-                foreign_keys=[],
-            )
-
-        with pytest.raises(ValueError, match="Param primary_keys is empty."):
-            DBObjectConfig(
-                name="table",
+                name="table_name",
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=[],
                 foreign_keys=[],
             )
 
         with pytest.raises(
-            ValueError,
-            match="Item in param primary_keys is missing from param attributes:",
+            ConfigKeyError,
+            match="Primary key is missing from attributes: table_name; pk_col1",
         ):
             DBObjectConfig(
-                name="table",
+                name="table_name",
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=["pk_col1"],
                 foreign_keys=[],
             )
-
         # test foreign_keys
-        with pytest.raises(TypeError, match="Param foreign_keys is not of type List:"):
-            DBObjectConfig(
-                name="table",
-                attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
-                primary_keys=["pk_col"],
-                foreign_keys="col",
-            )
-
         with pytest.raises(
-            TypeError, match="Key in param foreign_keys is not of type DBForeignKey:"
+            ConfigKeyError,
+            match="Foreign key is missing from attributes: table_name",
         ):
             DBObjectConfig(
-                name="table",
-                attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
-                primary_keys=["pk_col"],
-                foreign_keys=["col"],
-            )
-
-        with pytest.raises(
-            ValueError,
-            match="Key in param foreign_keys is missing from param attributes:",
-        ):
-            DBObjectConfig(
-                name="table",
+                name="table_name",
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=["pk_col"],
                 foreign_keys=[
@@ -162,16 +116,17 @@ class TestDBObjectConfig:
             )
 
         with pytest.raises(
-            ValueError, match="Key in param foreign_keys references its own table:"
+            ConfigKeyError,
+            match="Foreign key references its own object: table_name",
         ):
             DBObjectConfig(
-                name="table",
+                name="table_name",
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=["pk_col"],
                 foreign_keys=[
                     DBForeignKey(
                         name="pk_col",
-                        foreign_object_name="table",
+                        foreign_object_name="table_name",
                         foreign_attribute_name="pk_one_col",
                     )
                 ],
@@ -233,16 +188,9 @@ class TestDBObjectConfigList:
         """
         Tests for DBObjectConfigList() that raise exceptions
         """
-        with pytest.raises(TypeError, match="Param configs is not of type List:"):
-            DBObjectConfigList("x")
 
         with pytest.raises(
-            TypeError, match="Item in param configs is not of type DBObjectConfig:"
-        ):
-            DBObjectConfigList(["x"])
-
-        with pytest.raises(
-            ValueError, match="Foreign key in config does not exist in foreign object:"
+            ConfigForeignKeyObjectError, match="Foreign key 'DBForeignKey"
         ):
             DBObjectConfigList(
                 [
@@ -264,8 +212,8 @@ class TestDBObjectConfigList:
             )
 
         with pytest.raises(
-            ValueError,
-            match="Foreign key attribute in config does not exist in foreign object:",
+            ConfigForeignKeyObjectError2,
+            match="Foreign key 'DBForeignKey",
         ):
             DBObjectConfigList(
                 [
