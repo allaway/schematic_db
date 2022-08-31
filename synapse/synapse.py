@@ -197,6 +197,55 @@ class Synapse:
         synapse_id = self.get_synapse_id_from_table_name(table_name)
         self.syn.delete(synapse_id)
 
+    def insert_table_rows(self, table_name: str, data: pd.DataFrame):
+        """Insert table rows
+        Args:
+            table_name (str): The name of the table to add rows into
+            data (pd.DataFrame): The rows to be added.
+        """
+        synapse_id = self.get_synapse_id_from_table_name(table_name)
+        table = self.syn.get(synapse_id)
+        self.syn.store(sc.Table(table, data))
+
+    def delete_table_rows(
+        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
+    ):
+        """Deletes rows from the given table
+        Args:
+            table_name (str): The name of the table the rows will be deleted from
+            data (pd.DataFrame): A pandas.DataFrame. It must contain the primary keys of the table
+            table_config (DBObjectConfig): A generic representation of the table as a
+                DBObjectConfig object.
+        """
+        primary_keys = table_config.primary_keys
+        primary_key_string = ",".join(primary_keys)
+        table_id = self.get_synapse_id_from_table_name(table_name)
+        query = f"SELECT {primary_key_string} FROM {table_id}"
+        table = self.execute_sql_query(query, include_row_data=True)
+        merged_table = pd.merge(data, table, how="inner", on=primary_keys)
+        self.syn.delete(sc.Table(table_id, merged_table))
+
+    def update_table_rows(
+        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
+    ):
+        """Updates rows from the given table
+        Args:
+            table_name (str): The name of the table to be updated
+            data (pd.DataFrame): A pandas.DataFrame. It must contain the primary keys of the table
+            table_config (DBObjectConfig): A generic representation of the table as a
+                DBObjectConfig object.
+        """
+        primary_keys = table_config.primary_keys
+        primary_key_string = ",".join(primary_keys)
+        table_id = self.get_synapse_id_from_table_name(table_name)
+        query = f"SELECT {primary_key_string} FROM {table_id}"
+        table = self.execute_sql_query(query, include_row_data=True)
+        merged_table = pd.merge(data, table, how="inner", on=primary_keys)
+        self.syn.store(sc.Table(table_id, merged_table))
+
+    def upsert_table_rows(self, table_name: str, data: pd.DataFrame):
+        pass
+
     def _create_synapse_column(self, name: str, datatype: str) -> sc.Column:
         func = SYNAPSE_DATATYPES.get(datatype)
         return func(name=name)

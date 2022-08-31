@@ -95,3 +95,50 @@ class TestSynapse:
         assert synapse.get_table_names() == test_project_table_names
         synapse.add_table("table_one", table_one_config)
         assert synapse.get_table_names() == ["table_one"] + test_project_table_names
+
+
+class TestSynapseModifyRows:
+    """
+    Testing for synapse
+    """
+
+    def test_insert_table_rows(
+        self, synapse, table_one, table_one_config, test_project_table_names
+    ):
+        """
+        Testing for synapse.insert_table_rows()
+        """
+        assert synapse.get_table_names() == ["table_one"] + test_project_table_names
+        synapse.insert_table_rows("table_one", table_one)
+        result = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result, table_one)
+        synapse.drop_table("table_one")
+        synapse.add_table("table_one", table_one_config)
+
+    def test_delete_table_rows(
+        self, synapse, table_one, table_one_config, test_project_table_names
+    ):
+        """
+        Testing for synapse.delete_table_rows()
+        """
+        assert synapse.get_table_names() == ["table_one"] + test_project_table_names
+        synapse.insert_table_rows("table_one", table_one)
+        result = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result, table_one)
+        synapse.delete_table_rows("table_one", table_one, table_one_config)
+        synapse.drop_table("table_one")
+        synapse.add_table("table_one", table_one_config)
+
+    def test_update_table_rows(
+        self, synapse, table_one, table_one_config, test_project_table_names
+    ):
+        """
+        Testing for synapse.update_table_rows()
+        """
+        assert synapse.get_table_names() == ["table_one"] + test_project_table_names
+        synapse.insert_table_rows("table_one", table_one)
+        result = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result, table_one)
+        synapse.update_table_rows("table_one", table_one, table_one_config)
+        synapse.drop_table("table_one")
+        synapse.add_table("table_one", table_one_config)
