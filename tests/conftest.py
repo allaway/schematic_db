@@ -1,5 +1,6 @@
 """Fixtures for all testsDBDatatype.TEXT
 """
+from ast import Raise
 import os
 from datetime import datetime
 import pytest
@@ -18,12 +19,16 @@ from rdb_updater import RDBUpdater
 from rbd_queryer import RDBQueryer
 from manifest_store import SynapseManifestStore
 from query_store import SynapseQueryStore
+from synapse import Synapse
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")
 CONFIG_PATH = os.path.join(DATA_DIR, "local_mysql_config.yml")
 if not os.path.exists(CONFIG_PATH):
     CONFIG_PATH = os.path.join(DATA_DIR, "mysql_config.yml")
+SYNAPSE_CONFIG_PATH = os.path.join(DATA_DIR, "local_synapse_config.yml")
+if not os.path.exists(SYNAPSE_CONFIG_PATH):
+    SYNAPSE_CONFIG_PATH = os.path.join(DATA_DIR, "synapse_config.yml")
 
 
 @pytest.fixture(scope="session", name="config_dict")
@@ -32,6 +37,16 @@ def fixture_config_dict():
     Yields a MYSQL config dict
     """
     with open(CONFIG_PATH, mode="rt", encoding="utf-8") as file:
+        config = safe_load(file)
+    yield config
+
+
+@pytest.fixture(scope="session", name="synapse_config_dict")
+def fixture_synapse_config_dict():
+    """
+    Yields a Synapse config dict
+    """
+    with open(SYNAPSE_CONFIG_PATH, mode="rt", encoding="utf-8") as file:
         config = safe_load(file)
     yield config
 
@@ -57,6 +72,27 @@ def fixture_mysql(config_dict):
         if table_name in obj.get_table_names():
             obj.drop_table(table_name)
     assert obj.get_table_names() == []
+
+
+@pytest.fixture(scope="session", name="synapse_database_table_names")
+def fixture_synapse_database_table_names():
+    """
+    Yields a list of table names the database testing project should start out with.
+    """
+    yield ["test_table_one"]
+
+
+@pytest.fixture(scope="session", name="synapse_database_project")
+def fixture_synapse(synapse_config_dict, synapse_database_table_names):
+    """
+    Yields a Synapse object used for testing databases
+    """
+    obj = Synapse(synapse_config_dict)
+    if obj.get_table_names() != synapse_database_table_names:
+        raise ValueError("synapse_database_project has incorrect table names.")
+    yield obj
+    if obj.get_table_names() != synapse_database_table_names:
+        raise ValueError("synapse_database_project has incorrect table names.")
 
 
 @pytest.fixture(scope="session", name="synapse_manifest_store")
