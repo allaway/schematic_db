@@ -1,11 +1,14 @@
 # adapted from : https://jacobian.org/til/github-actions-poetry/
 
-name: Test schematic_db mysql
-on: [push, pull_request]
+name: Test schematic_db
+on: [pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      SYNAPSE_LOGIN: ${{ secrets.SYNAPSE_LOGIN }}
+      SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
     steps:
 
       - uses: actions/checkout@v2
@@ -20,6 +23,54 @@ jobs:
       - name: Set up MySQL
         run: |
           sudo /etc/init.d/mysql start
+
+      # Create the synapse yaml config file
+      - name: create synapse config
+        run: |
+          import yaml
+
+          dict = {
+              "username": "${{secrets.SYNAPSE_LOGIN}}",
+              "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
+              "project_id": "syn33832432"
+          }
+
+          with open('tests/data/synapse_config.yml', 'w') as file:
+              yaml.dump(dict, file)
+
+        shell: python
+
+      # Create the mysql yaml config file
+      - name: create mysql config
+        run: |
+          import yaml
+
+          dict = {
+              "manifest_store": {
+                  "type": "synapse",
+                  "username": "${{secrets.SYNAPSE_LOGIN}}",
+                  "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
+                  "project_id": "syn33937311"
+              },
+              "database": {
+                  "type": "mysql",
+                  "username": "root",
+                  "password": "root",
+                  "host": "localhost",
+                  "schema": "test_schema"
+              },
+              "query_store": {
+                  "type": "synapse",
+                  "username": "${{secrets.SYNAPSE_LOGIN}}",
+                  "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
+                  "project_id": "syn34178981"
+              }
+          }
+
+          with open('tests/data/mysql_config.yml', 'w') as file:
+              yaml.dump(dict, file)
+
+        shell: python
 
       # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
       # reference the matrix python version here.
@@ -75,6 +126,12 @@ jobs:
       # they'll be installed and working.
       - run: poetry install --no-interaction
 
+      # This checks if code has been formatted with black
+      - name: Code formatting with black
+        uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+
       # And finally run tests. I'm using pytest and all my pytest config is in my `pyproject.toml`
       # so this line is super-simple. But it could be as complex as you need.
-      - run: poetry run pytest
+      - run: poetry run pytest -vs

@@ -1,6 +1,5 @@
-# Local DB configs
+# Local DB configs/scripts
 tests/data/local*
-
 
 # Ignore VS Code files and settings
 .vscode/
