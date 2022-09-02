@@ -1,6 +1,5 @@
 """Fixtures for all testsDBDatatype.TEXT
 """
-from ast import Raise
 import os
 from datetime import datetime
 import pytest
@@ -14,7 +13,7 @@ from db_object_config import (
     DBDatatype,
     DBForeignKey,
 )
-from rdb import MySQLDatabase
+from rdb import MySQLDatabase, SynapseDatabase
 from rdb_updater import RDBUpdater
 from rbd_queryer import RDBQueryer
 from manifest_store import SynapseManifestStore
@@ -123,12 +122,30 @@ def fixture_rdb_updater_mysql(mysql, synapse_manifest_store):
     obj = RDBUpdater(rdb=mysql, manifest_store=synapse_manifest_store)
     yield obj
 
+@pytest.fixture(scope="module", name="rdb_updater_synapse")
+def fixture_rdb_updater_synapse(synapse_config_dict, synapse_manifest_store):
+    """Yields a RDBQueryer"""
+    obj = RDBUpdater(
+        rdb=SynapseDatabase(synapse_config_dict),
+        manifest_store=synapse_manifest_store,
+    )
+    yield obj
+
 
 @pytest.fixture(scope="module", name="rdb_queryer_mysql")
 def fixture_rdb_queryer_mysql(mysql, synapse_query_store):
     """Yields a RDBQueryer"""
     obj = RDBQueryer(
         rdb=mysql,
+        query_store=synapse_query_store,
+    )
+    yield obj
+
+@pytest.fixture(scope="module", name="rdb_queryer_synapse")
+def fixture_rdb_queryer_synapse(synapse_config_dict, synapse_query_store):
+    """Yields a RDBQueryer"""
+    obj = RDBQueryer(
+        rdb=SynapseDatabase(synapse_config_dict),
         query_store=synapse_query_store,
     )
     yield obj
