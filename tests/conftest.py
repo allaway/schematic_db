@@ -122,6 +122,7 @@ def fixture_rdb_updater_mysql(mysql, synapse_manifest_store):
     obj = RDBUpdater(rdb=mysql, manifest_store=synapse_manifest_store)
     yield obj
 
+
 @pytest.fixture(scope="module", name="rdb_updater_synapse")
 def fixture_rdb_updater_synapse(synapse_config_dict, synapse_manifest_store):
     """Yields a RDBQueryer"""
@@ -140,6 +141,7 @@ def fixture_rdb_queryer_mysql(mysql, synapse_query_store):
         query_store=synapse_query_store,
     )
     yield obj
+
 
 @pytest.fixture(scope="module", name="rdb_queryer_synapse")
 def fixture_rdb_queryer_synapse(synapse_config_dict, synapse_query_store):
