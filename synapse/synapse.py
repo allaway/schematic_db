@@ -239,9 +239,10 @@ class Synapse:
         )
         self.syn.store(sc.Table(table_id, merged_table))
 
-    def upsert_table_rows(self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig):
-        """_summary_
-        """
+    def upsert_table_rows(
+        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
+    ):
+        """_summary_"""
         table_id = self.get_synapse_id_from_table_name(table_name)
         primary_keys = table_config.primary_keys
         table = self._get_primary_key_table(table_name, primary_keys)

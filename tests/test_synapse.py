@@ -109,9 +109,17 @@ class TestSynapseModifyRows:
         Testing for synapse.insert_table_rows()
         """
         assert synapse.get_table_names() == ["table_one"] + test_project_table_names
+
         synapse.insert_table_rows("table_one", table_one)
-        result = synapse.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result, table_one)
+        result1 = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result1, table_one)
+
+        synapse.insert_table_rows("table_one", table_one)
+        result2 = synapse.query_table("table_one", table_one_config)
+        test_table = pd.concat(objs=[table_one, table_one])
+        test_table.reset_index(drop=True, inplace=True)
+        pd.testing.assert_frame_equal(result2, test_table)
+
         synapse.drop_table("table_one")
         synapse.add_table("table_one", table_one_config)
 
@@ -123,9 +131,21 @@ class TestSynapseModifyRows:
         """
         assert synapse.get_table_names() == ["table_one"] + test_project_table_names
         synapse.insert_table_rows("table_one", table_one)
-        result = synapse.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result, table_one)
-        synapse.delete_table_rows("table_one", table_one, table_one_config)
+        result1 = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result1, table_one)
+
+        synapse.delete_table_rows("table_one", table_one.iloc[[0]], table_one_config)
+        result2 = synapse.query_table("table_one", table_one_config)
+        test_table = table_one.iloc[1:]
+        test_table.reset_index(drop=True, inplace=True)
+        pd.testing.assert_frame_equal(result2, test_table)
+
+        synapse.delete_table_rows("table_one", table_one.iloc[[0]], table_one_config)
+        result3 = synapse.query_table("table_one", table_one_config)
+        test_table2 = table_one.iloc[1:]
+        test_table2.reset_index(drop=True, inplace=True)
+        pd.testing.assert_frame_equal(result3, test_table2)
+
         synapse.drop_table("table_one")
         synapse.add_table("table_one", table_one_config)
 
@@ -137,9 +157,20 @@ class TestSynapseModifyRows:
         """
         assert synapse.get_table_names() == ["table_one"] + test_project_table_names
         synapse.insert_table_rows("table_one", table_one)
-        result = synapse.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result, table_one)
+        result1 = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result1, table_one)
+
         synapse.update_table_rows("table_one", table_one, table_one_config)
+        result2 = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result2, table_one)
+
+        update_table = pd.DataFrame({"pk_one_col": ["key1"], "string_one_col": ["x"]})
+        test_table = table_one
+        test_table.at[0, "string_one_col"] = "x"
+        synapse.update_table_rows("table_one", update_table, table_one_config)
+        result3 = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result3, test_table)
+
         synapse.drop_table("table_one")
         synapse.add_table("table_one", table_one_config)
 
@@ -151,8 +182,18 @@ class TestSynapseModifyRows:
         """
         assert synapse.get_table_names() == ["table_one"] + test_project_table_names
         synapse.insert_table_rows("table_one", table_one)
-        result = synapse.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result, table_one)
+        result1 = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result1, table_one)
+
         synapse.upsert_table_rows("table_one", table_one, table_one_config)
+        result2 = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result2, table_one)
+
+        upsert_table = table_one
+        upsert_table.at[0, "string_one_col"] = "x"
+        synapse.update_table_rows("table_one", upsert_table, table_one_config)
+        result3 = synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result3, upsert_table)
+
         synapse.drop_table("table_one")
         synapse.add_table("table_one", table_one_config)
