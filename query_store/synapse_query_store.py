@@ -19,6 +19,4 @@ class SynapseQueryStore(QueryStore):
         self.synapse = Synapse(config_dict)
 
     def store_query_result(self, table_name: str, query_result: pd.DataFrame):
-        if table_name in self.synapse.get_table_names():
-            self.synapse.drop_table(table_name)
-        self.synapse.build_table(table_name, query_result)
+        self.synapse.replace_table(table_name, query_result)

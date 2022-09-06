@@ -175,3 +175,19 @@ class TestSynapseModifyRows:
         obj.update_table_rows("table_one", upsert_table, table_one_config)
         result3 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result3, upsert_table)
+
+
+class TestReplaceTable:
+    """Testing for synapse.replace_table()"""
+
+    def test_replace_table(
+        self, synapse_with_filled_table_one, table_two, table_two_config
+    ):
+        """Testing for synapse.replace_table()"""
+        obj = synapse_with_filled_table_one
+        table_id1 = obj.get_synapse_id_from_table_name("table_one")
+        obj.replace_table("table_one", table_two)
+        result1 = obj.query_table("table_one", table_two_config)
+        pd.testing.assert_frame_equal(result1, table_two)
+        table_id2 = obj.get_synapse_id_from_table_name("table_one")
+        assert table_id1 == table_id2

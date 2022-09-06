@@ -119,17 +119,6 @@ class Synapse:
         project = self.syn.get(self.project_id)
         return list(self.syn.getChildren(project, includeTypes=["table"]))
 
-    def build_table(self, table_name: str, table: pd.DataFrame):
-        """Adds a table to the project based on the input table
-
-        Args:
-            table_name (str): The name fo the table
-            table (pd.DataFrame): A dataframe of the table
-        """
-        project = self.syn.get(self.project_id)
-        table = sc.table.build_table(table_name, project, table)
-        self.syn.store(table)
-
     def query_table(
         self, table_name: str, table_config: DBObjectConfig
     ) -> pd.DataFrame:
@@ -248,6 +237,50 @@ class Synapse:
         table = self._get_primary_key_table(table_name, primary_keys)
         merged_table = pd.merge(data, table, how="left", on=primary_keys)
         self.syn.store(sc.Table(table_id, merged_table))
+
+    def replace_table(self, table_name: str, table: pd.DataFrame):
+        """
+        Replaces synapse table with table made in table.
+        The synapse id is preserved.
+
+        Args:
+            table_name (str): The name of the table to be replaced
+            data (pd.DataFrame): A dataframe of the table to replace to old table with
+        """
+        if table_name not in self.get_table_names():
+            self.build_table(table_name, table)
+        else:
+            synapse_id = self.get_synapse_id_from_table_name(table_name)
+
+            # deletes all current rows
+            results = self.syn.tableQuery(f"select * from {synapse_id}")
+            self.syn.delete(results)
+
+            # removes all current columns
+            current_table = self.syn.get(synapse_id)
+            current_columns = self.syn.getTableColumns(current_table)
+            for col in current_columns:
+                current_table.removeColumn(col)
+
+            # adds new columns to schema
+            new_columns = sc.as_table_columns(table)
+            for col in new_columns:
+                current_table.addColumn(col)
+            self.syn.store(current_table)
+
+            # inserts new rows
+            self.insert_table_rows(table_name, table)
+
+    def build_table(self, table_name: str, table: pd.DataFrame):
+        """Adds a table to the project based on the input table
+
+        Args:
+            table_name (str): The name fo the table
+            table (pd.DataFrame): A dataframe of the table
+        """
+        project = self.syn.get(self.project_id)
+        table = sc.table.build_table(table_name, project, table)
+        self.syn.store(table)
 
     def _merge_dataframe_with_primary_key_table(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
