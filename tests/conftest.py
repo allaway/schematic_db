@@ -179,7 +179,7 @@ def fixture_table_one_config():
     Yields a DBObjectConfig object with one primary and no foreign keys
     """
     table_config = DBObjectConfig(
-        name="table_one",
+        name="syn35871897",
         attributes=[
             DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="string_one_col", datatype=DBDatatype.TEXT),
@@ -228,7 +228,7 @@ def fixture_table_two_config():
     Yields a DBObjectConfig object with one primary and no foreign keys
     """
     table_config = DBObjectConfig(
-        name="table_two",
+        name="syn35872115",
         attributes=[
             DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
@@ -260,7 +260,7 @@ def fixture_table_three_config():
     Yields a DBObjectConfig object with two keys that are both primary and foreign
     """
     table_config = DBObjectConfig(
-        name="table_three",
+        name="syn35872119",
         attributes=[
             DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
