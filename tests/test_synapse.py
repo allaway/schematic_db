@@ -70,7 +70,7 @@ class TestSynapseQueries:
         """Testing for synapse.read_csv_file()"""
         result = synapse_manifest_store.synapse.read_csv_file("syn35871897")
         assert result.shape == table_one.shape
-        assert result['pk_one_col'].tolist() == table_one['pk_one_col'].tolist()
+        assert result["pk_one_col"].tolist() == table_one["pk_one_col"].tolist()
 
 
 class TestSynapseModifyTables:
