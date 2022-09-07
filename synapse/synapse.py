@@ -282,6 +282,18 @@ class Synapse:
         table = sc.table.build_table(table_name, project, table)
         self.syn.store(table)
 
+    def read_csv_file(self, synapse_id: str) -> pd.DataFrame:
+        """Gets a csv file in synapse and returns a dataframe
+
+        Args:
+            synapse_id (str): The synapse id of the csv
+
+        Returns:
+            pd.DataFrame: the csv in pandas.Dataframe form
+        """
+        path = self.syn.get(synapse_id).path
+        return pd.read_csv(path)
+
     def _merge_dataframe_with_primary_key_table(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
     ):
