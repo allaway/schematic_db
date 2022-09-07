@@ -1,7 +1,6 @@
 """Synapse Manifest Store
 """
 import pandas as pd
-from db_object_config import DBObjectConfig
 from synapse import Synapse
 from .manifest_store import ManifestStore
 
@@ -19,7 +18,5 @@ class SynapseManifestStore(ManifestStore):
         """
         self.synapse = Synapse(config_dict)
 
-    def get_manifest_table(
-        self, manifest_name: str, table_config: DBObjectConfig
-    ) -> pd.DataFrame:
-        return self.synapse.query_table(manifest_name, table_config)
+    def get_manifest_table(self, manifest_name: str) -> pd.DataFrame:
+        return self.synapse.read_csv_file(manifest_name)
