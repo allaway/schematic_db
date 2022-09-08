@@ -39,6 +39,7 @@ class TestDBObjectConfig:
         """
         obj1 = DBObjectConfig(
             name="table",
+            manifest_ids=["syn1"],
             attributes=[
                 DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
             ],
@@ -49,6 +50,7 @@ class TestDBObjectConfig:
 
         obj2 = DBObjectConfig(
             name="table",
+            manifest_ids=["syn1"],
             attributes=[
                 DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
             ],
@@ -73,6 +75,7 @@ class TestDBObjectConfig:
         ):
             DBObjectConfig(
                 name="table_name",
+                manifest_ids=["syn1"],
                 attributes=[],
                 primary_keys=["pk_col"],
                 foreign_keys=[],
@@ -82,6 +85,7 @@ class TestDBObjectConfig:
         with pytest.raises(ConfigKeyError, match="Primary keys is empty: table_name"):
             DBObjectConfig(
                 name="table_name",
+                manifest_ids=["syn1"],
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=[],
                 foreign_keys=[],
@@ -93,6 +97,7 @@ class TestDBObjectConfig:
         ):
             DBObjectConfig(
                 name="table_name",
+                manifest_ids=["syn1"],
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=["pk_col1"],
                 foreign_keys=[],
@@ -104,6 +109,7 @@ class TestDBObjectConfig:
         ):
             DBObjectConfig(
                 name="table_name",
+                manifest_ids=["syn1"],
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=["pk_col"],
                 foreign_keys=[
@@ -121,6 +127,7 @@ class TestDBObjectConfig:
         ):
             DBObjectConfig(
                 name="table_name",
+                manifest_ids=["syn1"],
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=["pk_col"],
                 foreign_keys=[
@@ -146,6 +153,7 @@ class TestDBObjectConfigList:
             [
                 DBObjectConfig(
                     name="table",
+                    manifest_ids=["syn1"],
                     attributes=[
                         DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
                     ],
@@ -160,6 +168,7 @@ class TestDBObjectConfigList:
             [
                 DBObjectConfig(
                     name="table",
+                    manifest_ids=["syn1"],
                     attributes=[
                         DBAttributeConfig(name="pk_col1", datatype=DBDatatype.TEXT),
                     ],
@@ -168,6 +177,7 @@ class TestDBObjectConfigList:
                 ),
                 DBObjectConfig(
                     name="table2",
+                    manifest_ids=["syn1"],
                     attributes=[
                         DBAttributeConfig(name="pk_col2", datatype=DBDatatype.TEXT),
                     ],
@@ -196,6 +206,7 @@ class TestDBObjectConfigList:
                 [
                     DBObjectConfig(
                         name="table2",
+                        manifest_ids=["syn1"],
                         attributes=[
                             DBAttributeConfig(name="pk_col2", datatype=DBDatatype.TEXT),
                         ],
@@ -219,6 +230,7 @@ class TestDBObjectConfigList:
                 [
                     DBObjectConfig(
                         name="table",
+                        manifest_ids=["syn1"],
                         attributes=[
                             DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
                         ],
@@ -227,6 +239,7 @@ class TestDBObjectConfigList:
                     ),
                     DBObjectConfig(
                         name="table2",
+                        manifest_ids=["syn1"],
                         attributes=[
                             DBAttributeConfig(name="pk_col2", datatype=DBDatatype.TEXT),
                         ],

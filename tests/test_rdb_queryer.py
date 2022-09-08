@@ -13,9 +13,7 @@ class TestRDBQueryer:
         assert rdb_queryer_mysql.rdb.get_table_names() == []
         assert rdb_queryer_mysql.query_store.synapse.get_table_names() == []
 
-        rdb_updater_mysql.update_all_database_tables(
-            [["table_one"], ["table_two"], ["table_three"]], table_configs
-        )
+        rdb_updater_mysql.update_all_database_tables(table_configs)
         assert rdb_queryer_mysql.rdb.get_table_names() == [
             "table_one",
             "table_three",
