@@ -66,7 +66,9 @@ class TestRDBUpdater:
         assert rdb_updater_mysql.rdb.get_table_names() == []
 
         rdb_updater_mysql.update_database_table(table_two_config_combined)
-        result = rdb_updater_mysql.rdb.query_table("table_two", table_two_config_combined)
+        result = rdb_updater_mysql.rdb.query_table(
+            "table_two", table_two_config_combined
+        )
         test_table = pd.concat([table_two, table_two_b]).reset_index(drop=True)
         pd.testing.assert_frame_equal(result, test_table)
 

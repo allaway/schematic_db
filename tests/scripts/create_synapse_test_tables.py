@@ -22,7 +22,7 @@ df_one = pd.DataFrame(
     }
 )
 df_one.to_csv("table_one.csv", index=False)
-#syn.store(sc.File("table_one.csv", parent=MANIFEST_STORE_ID))
+# syn.store(sc.File("table_one.csv", parent=MANIFEST_STORE_ID))
 db_table_one = sc.table.build_table("test_table_one", DATABASE_ID, df_one)
 # syn.store(db_table_one)
 
@@ -34,7 +34,7 @@ df_two = dataframe = pd.DataFrame(
 )
 
 df_two.to_csv("table_two.csv", index=False)
-#syn.store(sc.File("table_two.csv", parent=MANIFEST_STORE_ID))
+# syn.store(sc.File("table_two.csv", parent=MANIFEST_STORE_ID))
 
 df_two_b = pd.DataFrame(
     {
@@ -44,7 +44,7 @@ df_two_b = pd.DataFrame(
 )
 
 df_two_b.to_csv("table_two_b.csv", index=False)
-#syn.store(sc.File("table_two_b.csv", parent=MANIFEST_STORE_ID))
+# syn.store(sc.File("table_two_b.csv", parent=MANIFEST_STORE_ID))
 
 df_three = pd.DataFrame(
     {
@@ -55,7 +55,7 @@ df_three = pd.DataFrame(
 )
 
 df_three.to_csv("table_three.csv", index=False)
-#syn.store(sc.File("table_three.csv", parent=MANIFEST_STORE_ID))
+# syn.store(sc.File("table_three.csv", parent=MANIFEST_STORE_ID))
 
 df_123_unormalized = pd.DataFrame(
     {
@@ -67,4 +67,4 @@ df_123_unormalized = pd.DataFrame(
 )
 
 df_123_unormalized.to_csv("table_123_unormalized.csv", index=False)
-#syn.store(sc.File("table_123_unormalized.csv", parent=MANIFEST_STORE_ID))
+# syn.store(sc.File("table_123_unormalized.csv", parent=MANIFEST_STORE_ID))

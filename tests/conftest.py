@@ -240,6 +240,7 @@ def fixture_table_two_config():
     )
     yield table_config
 
+
 @pytest.fixture(scope="session", name="table_two_config_combined")
 def fixture_table_two_config_combined():
     """
