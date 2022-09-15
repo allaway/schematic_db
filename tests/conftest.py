@@ -180,6 +180,7 @@ def fixture_table_one_config():
     """
     table_config = DBObjectConfig(
         name="table_one",
+        manifest_ids=["syn35871897"],
         attributes=[
             DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="string_one_col", datatype=DBDatatype.TEXT),
@@ -229,6 +230,25 @@ def fixture_table_two_config():
     """
     table_config = DBObjectConfig(
         name="table_two",
+        manifest_ids=["syn35872115"],
+        attributes=[
+            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
+        ],
+        primary_keys=["pk_two_col"],
+        foreign_keys=[],
+    )
+    yield table_config
+
+
+@pytest.fixture(scope="session", name="table_two_config_combined")
+def fixture_table_two_config_combined():
+    """
+    Yields a DBObjectConfig object with one primary and no foreign keys
+    """
+    table_config = DBObjectConfig(
+        name="table_two",
+        manifest_ids=["syn35872115", "syn35872117"],
         attributes=[
             DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
@@ -261,6 +281,7 @@ def fixture_table_three_config():
     """
     table_config = DBObjectConfig(
         name="table_three",
+        manifest_ids=["syn35872119"],
         attributes=[
             DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),

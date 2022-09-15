@@ -2,7 +2,6 @@
 These are a set of object for defining a database table in a dialect agnostic way.
 """
 from dataclasses import dataclass
-from typing import List
 from enum import Enum
 
 
@@ -69,16 +68,17 @@ class DBObjectConfig:
     """A config for a generic database object."""
 
     name: str
-    attributes: List[DBAttributeConfig]
-    primary_keys: List[str]
-    foreign_keys: List[DBForeignKey]
+    manifest_ids: list[str]
+    attributes: list[DBAttributeConfig]
+    primary_keys: list[str]
+    foreign_keys: list[DBForeignKey]
 
     def __post_init__(self):
         self._check_attributes()
         self._check_primary_keys()
         self._check_foreign_keys()
 
-    def get_attribute_names(self) -> List[str]:
+    def get_attribute_names(self) -> list[str]:
         """Returns a list of names of the attributes
 
         Returns:
@@ -86,7 +86,7 @@ class DBObjectConfig:
         """
         return [att.name for att in self.attributes]
 
-    def get_foreign_key_names(self) -> List[str]:
+    def get_foreign_key_names(self) -> list[str]:
         """Returns a list of names of the foreign keys
 
         Returns:
@@ -184,13 +184,13 @@ class ConfigForeignKeyObjectError2(Exception):
 class DBObjectConfigList:
     """A group of configs for generic database tables."""
 
-    configs: List[DBObjectConfig]
+    configs: list[DBObjectConfig]
 
     def __post_init__(self):
         for config in self.configs:
             self._check_foreign_keys(config)
 
-    def get_config_names(self) -> List[str]:
+    def get_config_names(self) -> list[str]:
         """Returns a list of names of the configs
 
         Returns:

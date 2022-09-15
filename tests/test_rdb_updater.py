@@ -1,8 +1,7 @@
 """Testing for RDBUpdater.
 """
-import pytest
 import pandas as pd
-from rdb_updater import RDBUpdater, normalize_table, UpdateDatabaseError
+from rdb_updater import RDBUpdater, normalize_table
 
 
 class TestUtils:
@@ -53,7 +52,7 @@ class TestRDBUpdater:
         """Testing for RDB.update_database_table()"""
         assert rdb_updater_mysql.rdb.get_table_names() == []
 
-        rdb_updater_mysql.update_database_table(["table_one"], table_one_config)
+        rdb_updater_mysql.update_database_table(table_one_config)
         result = rdb_updater_mysql.rdb.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result, table_one)
 
@@ -61,15 +60,15 @@ class TestRDBUpdater:
         assert rdb_updater_mysql.rdb.get_table_names() == []
 
     def test_update_database_table2(
-        self, rdb_updater_mysql, table_two, table_two_b, table_two_config
+        self, rdb_updater_mysql, table_two, table_two_b, table_two_config_combined
     ):
         """Testing for RDB.update_database_table()"""
         assert rdb_updater_mysql.rdb.get_table_names() == []
 
-        rdb_updater_mysql.update_database_table(
-            ["table_two", "table_two_b"], table_two_config
+        rdb_updater_mysql.update_database_table(table_two_config_combined)
+        result = rdb_updater_mysql.rdb.query_table(
+            "table_two", table_two_config_combined
         )
-        result = rdb_updater_mysql.rdb.query_table("table_two", table_two_config)
         test_table = pd.concat([table_two, table_two_b]).reset_index(drop=True)
         pd.testing.assert_frame_equal(result, test_table)
 
@@ -81,9 +80,7 @@ class TestRDBUpdater:
     ):
         """Testing for update_all_database_tables()"""
         assert rdb_updater_mysql.rdb.get_table_names() == []
-        rdb_updater_mysql.update_all_database_tables(
-            [["table_one"], ["table_two"], ["table_three"]], table_configs
-        )
+        rdb_updater_mysql.update_all_database_tables(table_configs)
         assert rdb_updater_mysql.rdb.get_table_names() == [
             "table_one",
             "table_three",
@@ -111,10 +108,3 @@ class TestRDBUpdater:
         rdb_updater_mysql.rdb.drop_table("table_two")
         rdb_updater_mysql.rdb.drop_table("table_one")
         assert rdb_updater_mysql.rdb.get_table_names() == []
-
-    def test_update_all_database_tables2(self, rdb_updater_mysql, table_configs):
-        """Testing for update_all_database_tables() exceptions"""
-        with pytest.raises(
-            UpdateDatabaseError, match="Length of param manifest_table_names"
-        ):
-            rdb_updater_mysql.update_all_database_tables([["table_one"]], table_configs)
