@@ -28,6 +28,19 @@ if not os.path.exists(CONFIG_PATH):
 SYNAPSE_CONFIG_PATH = os.path.join(DATA_DIR, "local_synapse_config.yml")
 if not os.path.exists(SYNAPSE_CONFIG_PATH):
     SYNAPSE_CONFIG_PATH = os.path.join(DATA_DIR, "synapse_config.yml")
+SECRETS_PATH = os.path.join(DATA_DIR, "local_secrets.yml")
+if not os.path.exists(SECRETS_PATH):
+    SECRETS_PATH = os.path.join(DATA_DIR, "secrets.yml")
+
+
+@pytest.fixture(scope="session", name="secrets_dict")
+def fixture_secrets_dict():
+    """
+    Yields a dict with various secrets, either locally or from a github action
+    """
+    with open(SECRETS_PATH, mode="rt", encoding="utf-8") as file:
+        config = safe_load(file)
+    yield config
 
 
 @pytest.fixture(scope="session", name="config_dict")
