@@ -1,6 +1,7 @@
 """Schema class"""
 
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
+import warnings
 import networkx
 from db_object_config import (
     DBObjectConfigList,
@@ -16,6 +17,16 @@ from .api_utils import (
     get_property_label_from_display_name,
     get_project_manifests,
 )
+
+
+class NoAttributesWarning(Warning):
+    """
+    Occurs when a database object has no attributes returned from find_class_specific_properties().
+    """
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
 
 
 def get_key_attribute(object_name: str) -> str:
@@ -115,7 +126,6 @@ class Schema:
         Returns:
             DBObjectConfigList: Configs for all objects in the database.
         """
-        # TODO: Determine how to handle errors if some configs fail to be created
         all_manifests = get_project_manifests(
             input_token=self.synapse_input_token,
             project_id=self.synapse_project_id,
@@ -143,20 +153,15 @@ class Schema:
         Returns:
             DBObjectConfig: The config for the object.
         """
-        # TODO: Determine why some components have zero attributes
-        # TODO: Switch to using schematic endpoint for datatype instead of using strings
+        # Some components will not have any attributes for various reasons
+        attributes = self.create_attributes(object_name)
+        if not attributes:
+            return None
         primary_key = get_property_label_from_display_name(
             self.schema_url, self.primary_key_getter(object_name)
         )
-        foreign_keys = self.create_foreign_keys(object_name)
-        attribute_names = find_class_specific_properties(self.schema_url, object_name)
-        if not attribute_names:
-            return None
-        attributes = [
-            DBAttributeConfig(name=name, datatype=DBDatatype.TEXT)
-            for name in attribute_names
-        ]
         attributes.append(DBAttributeConfig(name=primary_key, datatype=DBDatatype.TEXT))
+        foreign_keys = self.create_foreign_keys(object_name)
         return DBObjectConfig(
             name=object_name,
             manifest_ids=get_manifest_ids_for_object(object_name, manifests),
@@ -164,6 +169,30 @@ class Schema:
             primary_keys=[primary_key],
             foreign_keys=foreign_keys,
         )
+
+    def create_attributes(self, object_name: str) -> Union[list[DBAttributeConfig], None]:
+        """Create the attributes for the object
+
+        Args:
+            object_name (str): The name of the object to create the attributes for
+
+        Returns:
+            Union[list[DBAttributeConfig], None]: A list of attributes in DBAttributeConfig form
+        """
+        attribute_names = find_class_specific_properties(self.schema_url, object_name)
+        attributes = [
+            DBAttributeConfig(name=name, datatype=DBDatatype.TEXT)
+            for name in attribute_names
+        ]
+         # Some components will not have any attributes for various reasons
+        if not attributes:
+            warnings.warn(
+                NoAttributesWarning(
+                    f"Object {object_name} has no attributes, and will be skipped."
+                )
+            )
+            return None
+        return attributes
 
     def create_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
         """Creates a list of foreign keys for an object in the database

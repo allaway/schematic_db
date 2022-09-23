@@ -1,7 +1,7 @@
 """Testing for Schema."""
 import pytest
 from schema import Schema, get_project_manifests, get_manifest_ids_for_object
-from db_object_config import DBForeignKey
+from db_object_config import DBForeignKey, DBAttributeConfig, DBDatatype
 
 
 @pytest.fixture(name="test_synapse_project_id")
@@ -89,6 +89,19 @@ class TestUtils:
 
 class TestSchema:
     """Testing for Schema"""
+
+    def test_create_attributes(self, test_schema):
+        """Testing for Schema.attributes()"""
+        obj = test_schema
+        assert obj.create_attributes("Patient") == [
+            DBAttributeConfig(name='sex', datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name='yearofBirth', datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name='diagnosis', datatype=DBDatatype.TEXT)
+        ]
+        assert obj.create_attributes("Biospecimen") == [
+            DBAttributeConfig(name='patientId', datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name='tissueStatus', datatype=DBDatatype.TEXT)
+        ]
 
     def test_create_foreign_keys(self, test_schema):
         """Testing for Schema.create_foreign_keys()"""
