@@ -182,6 +182,7 @@ class TestSynapseModifyRows:
         result3 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result3, upsert_table)
 
+
 # TODO fix this test
 '''
 class TestReplaceTable:
