@@ -23,10 +23,9 @@ def fixture_test_synapse_asset_view_id():
 
 
 @pytest.fixture(name="synapse_input_token")
-def fixture_synapse_input_token(synapse_config_dict):
+def fixture_synapse_input_token(secrets_dict):
     """Yields a synapse token"""
-    # yield secrets_dict["synapse"]["auth_token"]
-    yield synapse_config_dict["auth_token"]
+    yield secrets_dict["synapse"]["auth_token"]
 
 
 @pytest.fixture(name="test_schema")
@@ -59,7 +58,7 @@ def fixture_test_manifests():
     ]
 
 
-class TestUtils:
+class FutureTestUtils:
     """Testing for Schema utils"""
 
     def test_get_manifest_ids_for_object(self, test_manifests):
@@ -88,7 +87,7 @@ class TestUtils:
         ]
 
 
-class TestSchema:
+class FutureTestSchema:
     """Testing for Schema"""
 
     def test_create_attributes(self, test_schema):
