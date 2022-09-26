@@ -23,10 +23,10 @@ def fixture_test_synapse_asset_view_id():
 
 
 @pytest.fixture(name="synapse_input_token")
-def fixture_synapse_input_token(secrets_dict):
+def fixture_synapse_input_token(secrets_dict, synapse_config_dict):
     """Yields a synapse token"""
-    yield secrets_dict["synapse"]["auth_token"]
-
+    #yield secrets_dict["synapse"]["auth_token"]
+    yield synapse_config_dict["auth_token"]
 
 @pytest.fixture(name="test_schema")
 def fixture_test_schema(
