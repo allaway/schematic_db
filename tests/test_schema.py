@@ -94,13 +94,13 @@ class TestSchema:
         """Testing for Schema.attributes()"""
         obj = test_schema
         assert obj.create_attributes("Patient") == [
-            DBAttributeConfig(name='sex', datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name='yearofBirth', datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name='diagnosis', datatype=DBDatatype.TEXT)
+            DBAttributeConfig(name="sex", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="yearofBirth", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="diagnosis", datatype=DBDatatype.TEXT),
         ]
         assert obj.create_attributes("Biospecimen") == [
-            DBAttributeConfig(name='patientId', datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name='tissueStatus', datatype=DBDatatype.TEXT)
+            DBAttributeConfig(name="patientId", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="tissueStatus", datatype=DBDatatype.TEXT),
         ]
 
     def test_create_foreign_keys(self, test_schema):

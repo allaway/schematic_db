@@ -130,18 +130,19 @@ def fixture_synapse_query_store(config_dict):
 
 
 @pytest.fixture(scope="module", name="rdb_updater_mysql")
-def fixture_rdb_updater_mysql(mysql, synapse_manifest_store):
+def fixture_rdb_updater_mysql(mysql, synapse_manifest_store, table_configs):
     """Yields a RDBUpdater"""
-    obj = RDBUpdater(rdb=mysql, manifest_store=synapse_manifest_store)
+    obj = RDBUpdater(rdb=mysql, manifest_store=synapse_manifest_store, db_config=table_configs)
     yield obj
 
 
 @pytest.fixture(scope="module", name="rdb_updater_synapse")
-def fixture_rdb_updater_synapse(synapse_config_dict, synapse_manifest_store):
+def fixture_rdb_updater_synapse(synapse_config_dict, synapse_manifest_store, table_configs):
     """Yields a RDBQueryer"""
     obj = RDBUpdater(
         rdb=SynapseDatabase(synapse_config_dict),
         manifest_store=synapse_manifest_store,
+        db_config=table_configs
     )
     yield obj
 
@@ -334,7 +335,7 @@ def table_123_unormalized():
     yield dataframe
 
 
-@pytest.fixture(scope="session")
-def table_configs(table_one_config, table_two_config, table_three_config):
+@pytest.fixture(scope="session", name = "table_configs")
+def fixture_table_configs(table_one_config, table_two_config, table_three_config):
     """Yields a DBObjectConfigList"""
     yield DBObjectConfigList([table_one_config, table_two_config, table_three_config])

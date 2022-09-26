@@ -17,23 +17,22 @@ class UpdateDatabaseError(Exception):
 class RDBUpdater:
     """An for updating a database."""
 
-    def __init__(self, rdb: RelationalDatabase, manifest_store: ManifestStore):
+    def __init__(
+        self,
+        rdb: RelationalDatabase,
+        manifest_store: ManifestStore,
+        db_config: DBObjectConfigList,
+    ) -> None:
         self.manifest_store = manifest_store
         self.rdb = rdb
+        self.db_config = db_config
 
-    def update_all_database_tables(self, table_configs: DBObjectConfigList):
-        """
-        Updates all tables in the list of table_configs
-
-        Args:
-            table_configs (DBObjectConfigList): A list of generic representations of each
-                table as a DBObjectConfig object. The list must be in the correct order to
-                update in regards to relationships.
-        """
-        for config in table_configs.configs:
+    def update_all_database_tables(self) -> None:
+        """Updates all tables in the db_config"""
+        for config in self.db_config.configs:
             self.update_database_table(config)
 
-    def update_database_table(self, table_config: DBObjectConfig):
+    def update_database_table(self, table_config: DBObjectConfig) -> None:
         """
         Updates a table in the database based on one or more manifests.
         If any of the manifests don't exist an exception will be raised.

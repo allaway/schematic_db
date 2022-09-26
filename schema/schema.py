@@ -170,7 +170,9 @@ class Schema:
             foreign_keys=foreign_keys,
         )
 
-    def create_attributes(self, object_name: str) -> Union[list[DBAttributeConfig], None]:
+    def create_attributes(
+        self, object_name: str
+    ) -> Union[list[DBAttributeConfig], None]:
         """Create the attributes for the object
 
         Args:
@@ -184,7 +186,7 @@ class Schema:
             DBAttributeConfig(name=name, datatype=DBDatatype.TEXT)
             for name in attribute_names
         ]
-         # Some components will not have any attributes for various reasons
+        # Some components will not have any attributes for various reasons
         if not attributes:
             warnings.warn(
                 NoAttributesWarning(
