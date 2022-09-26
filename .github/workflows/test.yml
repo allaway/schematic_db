@@ -34,6 +34,7 @@ jobs:
               "username": "${{secrets.SYNAPSE_LOGIN}}",
               "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
             }
+          }
 
           with open('tests/data/secrets.yml', 'w') as file:
               yaml.dump(dict, file)
