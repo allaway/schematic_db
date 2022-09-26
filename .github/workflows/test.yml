@@ -32,7 +32,7 @@ jobs:
           dict = {
             "synapse": {
               "username": "${{secrets.SYNAPSE_LOGIN}}",
-              "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
+              "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}"
             }
           }
 

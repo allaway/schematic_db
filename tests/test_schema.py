@@ -86,7 +86,7 @@ class TestUtils:
             }
         ]
 
-
+'''
 class TestSchema:
     """Testing for Schema"""
 
@@ -131,3 +131,4 @@ class TestSchema:
             "Biospecimen",
             "BulkRNA-seqAssay",
         ]
+'''
