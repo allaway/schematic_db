@@ -80,7 +80,7 @@ class TestRDBUpdater:
     ):
         """Testing for update_all_database_tables()"""
         assert rdb_updater_mysql.rdb.get_table_names() == []
-        rdb_updater_mysql.update_all_database_tables(table_configs)
+        rdb_updater_mysql.update_all_database_tables()
         assert rdb_updater_mysql.rdb.get_table_names() == [
             "table_one",
             "table_three",

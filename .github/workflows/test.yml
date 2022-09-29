@@ -24,6 +24,23 @@ jobs:
         run: |
           sudo /etc/init.d/mysql start
 
+      # Create the secrets config file
+      - name: create secrets config
+        run: |
+          import yaml
+
+          dict = {
+            "synapse": {
+              "username": "${{secrets.SYNAPSE_LOGIN}}",
+              "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}"
+            }
+          }
+
+          with open('tests/data/secrets.yml', 'w') as file:
+              yaml.dump(dict, file)
+
+        shell: python
+
       # Create the synapse yaml config file
       - name: create synapse config
         run: |

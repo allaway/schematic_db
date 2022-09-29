@@ -15,6 +15,7 @@ synapseclient = "^2.6.0"
 pandas = "^1.4.3"
 pdoc = "^12.1.0"
 black = "^22.6.0"
+networkx = "^2.8.6"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
