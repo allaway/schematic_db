@@ -160,8 +160,19 @@ class Schema:
         primary_key = get_property_label_from_display_name(
             self.schema_url, self.primary_key_getter(object_name)
         )
-        attributes.append(DBAttributeConfig(name=primary_key, datatype=DBDatatype.TEXT))
+        # primary keys don't always appear in the attributes endpoint
+        if primary_key not in [att.name for att in attributes]:
+            attributes.append(
+                DBAttributeConfig(name=primary_key, datatype=DBDatatype.TEXT)
+            )
+        # foreign keys don't always appear in the attributes endpoint
         foreign_keys = self.create_foreign_keys(object_name)
+        for key in foreign_keys:
+            name = key.name
+            if name not in [att.name for att in attributes]:
+                attributes.append(
+                    DBAttributeConfig(name=name, datatype=DBDatatype.TEXT)
+                )
         return DBObjectConfig(
             name=object_name,
             manifest_ids=get_manifest_ids_for_object(object_name, manifests),

@@ -4,6 +4,12 @@ from schema import Schema, get_project_manifests, get_manifest_ids_for_object
 from db_object_config import DBForeignKey, DBAttributeConfig, DBDatatype
 
 
+@pytest.fixture(name="synapse_input_token")
+def fixture_synapse_input_token(secrets_dict):
+    """Yields a synapse token"""
+    yield secrets_dict["synapse"]["auth_token"]
+
+
 @pytest.fixture(name="test_synapse_project_id")
 def fixture_test_synapse_project_id():
     """Yields the synapse id for the test schema project id"""
@@ -22,17 +28,11 @@ def fixture_test_synapse_asset_view_id():
     yield "syn23643253"
 
 
-@pytest.fixture(name="synapse_input_token")
-def fixture_synapse_input_token(secrets_dict):
-    """Yields a synapse token"""
-    yield secrets_dict["synapse"]["auth_token"]
-
-
 @pytest.fixture(name="test_schema")
 def fixture_test_schema(
     test_synapse_project_id, test_synapse_asset_view_id, synapse_input_token
 ):
-    """Yields a Schema  using the database specific test schema"""
+    """Yields a Schema using the database specific test schema"""
     schema_url = (
         "https://raw.githubusercontent.com/Sage-Bionetworks/"
         "schematic/develop-rdb-export-joins/tests/data/example.rdb.model.jsonld"
@@ -41,6 +41,36 @@ def fixture_test_schema(
         schema_url,
         test_synapse_project_id,
         test_synapse_asset_view_id,
+        synapse_input_token,
+    )
+    yield obj
+
+
+@pytest.fixture(name="gff_synapse_project_id")
+def fixture_gff_synapse_project_id():
+    """Yields the synapse id for the gff schema project id"""
+    yield "syn38296792"
+
+
+@pytest.fixture(name="gff_synapse_asset_view_id")
+def fixture_gff_synapse_asset_view_id():
+    """Yields the synapse id for the gff schema project id"""
+    yield "syn38308526"
+
+
+@pytest.fixture(name="gff_schema")
+def fixture_gff_schema(
+    gff_synapse_project_id, gff_synapse_asset_view_id, synapse_input_token
+):
+    """Yields a Schema using the GFF tools schema"""
+    schema_url = (
+        "https://raw.githubusercontent.com/nf-osi/"
+        "nf-research-tools-schema/main/nf-research-tools.jsonld"
+    )
+    obj = Schema(
+        schema_url,
+        gff_synapse_project_id,
+        gff_synapse_asset_view_id,
         synapse_input_token,
     )
     yield obj
@@ -58,7 +88,7 @@ def fixture_test_manifests():
     ]
 
 
-class FutureTestUtils:
+class TestUtils:
     """Testing for Schema utils"""
 
     def test_get_manifest_ids_for_object(self, test_manifests):
@@ -85,6 +115,17 @@ class FutureTestUtils:
                 "component_name": "Biospecimen",
             }
         ]
+
+    def test_get_project_manifests2(
+        self, synapse_input_token, gff_synapse_project_id, gff_synapse_asset_view_id
+    ):
+        "Testing for get_project_manifests"
+        manifests = get_project_manifests(
+            input_token=synapse_input_token,
+            project_id=gff_synapse_project_id,
+            asset_view=gff_synapse_asset_view_id,
+        )
+        assert len(manifests) == 6
 
 
 class FutureTestSchema:
@@ -130,4 +171,33 @@ class FutureTestSchema:
             "Patient",
             "Biospecimen",
             "BulkRNA-seqAssay",
+        ]
+
+
+class TestGFFSchema:
+    """Testing for GFF Schema"""
+
+    def test_create_db_config(self, gff_schema):
+        """Testing for Schema.test_create_db_config()"""
+        obj = gff_schema
+        config = obj.create_db_config()
+        assert config.get_config_names() == [
+            "Donor",
+            "AnimalModel",
+            "CellLine",
+            "Antibody",
+            "GeneticReagent",
+            "Funder",
+            "Publication",
+            "Investigator",
+            "Resource",
+            "MutationDetails",
+            "Vendor",
+            "Development",
+            "Mutation",
+            "ResourceApplication",
+            "Observation",
+            "VendorItem",
+            "Biobank",
+            "Usage",
         ]
