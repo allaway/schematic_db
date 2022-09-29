@@ -19,6 +19,7 @@ from rbd_queryer import RDBQueryer
 from manifest_store import SynapseManifestStore
 from query_store import SynapseQueryStore
 from synapse import Synapse
+from schema import Schema
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")
@@ -32,7 +33,7 @@ SECRETS_PATH = os.path.join(DATA_DIR, "local_secrets.yml")
 if not os.path.exists(SECRETS_PATH):
     SECRETS_PATH = os.path.join(DATA_DIR, "secrets.yml")
 
-
+# files -----------------------------------------------------------------------
 @pytest.fixture(scope="session", name="secrets_dict")
 def fixture_secrets_dict():
     """
@@ -72,6 +73,44 @@ def fixture_query_csv_path():
     yield path
 
 
+# schema objects --------------------------------------------------------------
+@pytest.fixture(scope="session", name="synapse_input_token")
+def fixture_synapse_input_token(secrets_dict):
+    """Yields a synapse token"""
+    yield secrets_dict["synapse"]["auth_token"]
+
+
+@pytest.fixture(scope="session", name="gff_synapse_project_id")
+def fixture_gff_synapse_project_id():
+    """Yields the synapse id for the gff schema project id"""
+    yield "syn38296792"
+
+
+@pytest.fixture(scope="session", name="gff_synapse_asset_view_id")
+def fixture_gff_synapse_asset_view_id():
+    """Yields the synapse id for the gff schema project id"""
+    yield "syn38308526"
+
+
+@pytest.fixture(scope="session", name="gff_schema")
+def fixture_gff_schema(
+    gff_synapse_project_id, gff_synapse_asset_view_id, synapse_input_token
+):
+    """Yields a Schema using the GFF tools schema"""
+    schema_url = (
+        "https://raw.githubusercontent.com/nf-osi/"
+        "nf-research-tools-schema/main/nf-research-tools.jsonld"
+    )
+    obj = Schema(
+        schema_url,
+        gff_synapse_project_id,
+        gff_synapse_asset_view_id,
+        synapse_input_token,
+    )
+    yield obj
+
+
+# database objects ------------------------------------------------------------
 @pytest.fixture(scope="session", name="mysql")
 def fixture_mysql(config_dict):
     """
@@ -169,6 +208,13 @@ def fixture_rdb_queryer_synapse(synapse_config_dict, synapse_query_store):
         query_store=synapse_query_store,
     )
     yield obj
+
+
+# config objects --------------------------------------------------------------
+@pytest.fixture(scope="session", name="gff_db_config")
+def fixture_gff_db_config(gff_schema):
+    """Yields a config from the GFF tools schema"""
+    yield gff_schema.create_db_config()
 
 
 @pytest.fixture(scope="session")

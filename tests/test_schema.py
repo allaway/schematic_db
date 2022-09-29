@@ -4,12 +4,6 @@ from schema import Schema, get_project_manifests, get_manifest_ids_for_object
 from db_object_config import DBForeignKey, DBAttributeConfig, DBDatatype
 
 
-@pytest.fixture(name="synapse_input_token")
-def fixture_synapse_input_token(secrets_dict):
-    """Yields a synapse token"""
-    yield secrets_dict["synapse"]["auth_token"]
-
-
 @pytest.fixture(name="test_synapse_project_id")
 def fixture_test_synapse_project_id():
     """Yields the synapse id for the test schema project id"""
@@ -41,36 +35,6 @@ def fixture_test_schema(
         schema_url,
         test_synapse_project_id,
         test_synapse_asset_view_id,
-        synapse_input_token,
-    )
-    yield obj
-
-
-@pytest.fixture(name="gff_synapse_project_id")
-def fixture_gff_synapse_project_id():
-    """Yields the synapse id for the gff schema project id"""
-    yield "syn38296792"
-
-
-@pytest.fixture(name="gff_synapse_asset_view_id")
-def fixture_gff_synapse_asset_view_id():
-    """Yields the synapse id for the gff schema project id"""
-    yield "syn38308526"
-
-
-@pytest.fixture(name="gff_schema")
-def fixture_gff_schema(
-    gff_synapse_project_id, gff_synapse_asset_view_id, synapse_input_token
-):
-    """Yields a Schema using the GFF tools schema"""
-    schema_url = (
-        "https://raw.githubusercontent.com/nf-osi/"
-        "nf-research-tools-schema/main/nf-research-tools.jsonld"
-    )
-    obj = Schema(
-        schema_url,
-        gff_synapse_project_id,
-        gff_synapse_asset_view_id,
         synapse_input_token,
     )
     yield obj
@@ -177,11 +141,9 @@ class FutureTestSchema:
 class TestGFFSchema:
     """Testing for GFF Schema"""
 
-    def test_create_db_config(self, gff_schema):
+    def test_create_db_config(self, gff_db_config):
         """Testing for Schema.test_create_db_config()"""
-        obj = gff_schema
-        config = obj.create_db_config()
-        assert config.get_config_names() == [
+        assert gff_db_config.get_config_names() == [
             "Donor",
             "AnimalModel",
             "CellLine",
