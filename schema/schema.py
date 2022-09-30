@@ -4,7 +4,7 @@ from typing import Optional, Callable, Union
 import warnings
 import networkx
 from db_object_config import (
-    DBObjectConfigList,
+    DBConfig,
     DBObjectConfig,
     DBForeignKey,
     DBAttributeConfig,
@@ -119,31 +119,29 @@ class Schema:
         self.synapse_input_token = synapse_input_token
         self.primary_key_getter = primary_key_getter
         self.foreign_key_getter = foreign_key_getter
-
-    def create_db_config(self) -> DBObjectConfigList:
-        """Creates the configs for all objects in the database.
-
-        Returns:
-            DBObjectConfigList: Configs for all objects in the database.
-        """
         all_manifests = get_project_manifests(
             input_token=self.synapse_input_token,
             project_id=self.synapse_project_id,
             asset_view=self.synapse_asset_view_id,
         )
+
+    def create_db_config(self) -> DBConfig:
+        """Creates the configs for all objects in the database.
+
+        Returns:
+            DBObjectConfigList: Configs for all objects in the database.
+        """
         # order objects so that ones with dependencies come after they depend on
         object_names = list(
             reversed(list(networkx.topological_sort(self.schema_graph)))
         )
         object_configs = [
-            self.create_db_object_config(name, all_manifests) for name in object_names
+            self.create_db_object_config(name) for name in object_names
         ]
         object_configs = [config for config in object_configs if config is not None]
-        return DBObjectConfigList(object_configs)
+        return DBConfig(object_configs)
 
-    def create_db_object_config(
-        self, object_name: str, manifests: list[dict[str:str]]
-    ) -> DBObjectConfig:
+    def create_db_object_config(self, object_name: str) -> DBObjectConfig:
         """Creates the config for one object in the database.
 
         Args:
@@ -175,7 +173,6 @@ class Schema:
                 )
         return DBObjectConfig(
             name=object_name,
-            manifest_ids=get_manifest_ids_for_object(object_name, manifests),
             attributes=attributes,
             primary_keys=[primary_key],
             foreign_keys=foreign_keys,

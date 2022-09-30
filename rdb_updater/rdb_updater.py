@@ -1,6 +1,6 @@
 """RDBUpdater"""
 import pandas as pd
-from db_object_config import DBObjectConfigList, DBObjectConfig
+from db_object_config import DBConfig, DBObjectConfig
 from rdb import RelationalDatabase
 from manifest_store import ManifestStore
 from .utils import normalize_table
@@ -21,7 +21,7 @@ class RDBUpdater:
         self,
         rdb: RelationalDatabase,
         manifest_store: ManifestStore,
-        db_config: DBObjectConfigList,
+        db_config: DBConfig,
     ) -> None:
         self.manifest_store = manifest_store
         self.rdb = rdb

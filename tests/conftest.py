@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from yaml import safe_load
 from db_object_config import (
-    DBObjectConfigList,
+    DBConfig,
     DBObjectConfig,
     DBAttributeConfig,
     DBDatatype,
@@ -244,7 +244,6 @@ def fixture_table_one_config():
     """
     table_config = DBObjectConfig(
         name="table_one",
-        manifest_ids=["syn35871897"],
         attributes=[
             DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="string_one_col", datatype=DBDatatype.TEXT),
@@ -294,7 +293,6 @@ def fixture_table_two_config():
     """
     table_config = DBObjectConfig(
         name="table_two",
-        manifest_ids=["syn35872115"],
         attributes=[
             DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
@@ -312,7 +310,6 @@ def fixture_table_two_config_combined():
     """
     table_config = DBObjectConfig(
         name="table_two",
-        manifest_ids=["syn35872115", "syn35872117"],
         attributes=[
             DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
@@ -345,7 +342,6 @@ def fixture_table_three_config():
     """
     table_config = DBObjectConfig(
         name="table_three",
-        manifest_ids=["syn35872119"],
         attributes=[
             DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
@@ -388,4 +384,4 @@ def table_123_unormalized():
 @pytest.fixture(scope="session", name="table_configs")
 def fixture_table_configs(table_one_config, table_two_config, table_three_config):
     """Yields a DBObjectConfigList"""
-    yield DBObjectConfigList([table_one_config, table_two_config, table_three_config])
+    yield DBConfig([table_one_config, table_two_config, table_three_config])
