@@ -1,6 +1,12 @@
 """Testing for Schema."""
 import pytest
-from schema import Schema, get_project_manifests, get_manifest_ids_for_object
+import pandas as pd
+from schema import (
+    Schema,
+    get_project_manifests,
+    get_manifest_ids_for_object,
+    get_manifest,
+)
 from db_object_config import DBForeignKey, DBAttributeConfig, DBDatatype
 
 
@@ -91,8 +97,15 @@ class TestUtils:
         )
         assert len(manifests) == 6
 
+    def test_get_manifest(self, synapse_input_token, gff_synapse_asset_view_id):
+        "Testing for get_manifest"
+        manifest = get_manifest(
+            synapse_input_token, "syn38306654", gff_synapse_asset_view_id
+        )
+        assert isinstance(manifest, pd.DataFrame)
 
-class FutureTestSchema:
+
+class TestSchema:
     """Testing for Schema"""
 
     def test_create_attributes(self, test_schema):
@@ -142,7 +155,7 @@ class TestGFFSchema:
     """Testing for GFF Schema"""
 
     def test_create_db_config(self, gff_db_config):
-        """Testing for Schema.test_create_db_config()"""
+        """Testing for Schema.create_db_config()"""
         assert gff_db_config.get_config_names() == [
             "Donor",
             "AnimalModel",
@@ -162,4 +175,33 @@ class TestGFFSchema:
             "VendorItem",
             "Biobank",
             "Usage",
+        ]
+
+    def test_get_manifests(self, gff_schema, gff_db_config):
+        """Testing for Schema.get_manifests()"""
+        manifests1 = gff_schema.get_manifests(gff_db_config.configs[0])
+        assert len(manifests1) == 1
+        assert list(manifests1[0].columns) == [
+            "age",
+            "donorId",
+            "parentDonorId",
+            "race",
+            "sex",
+            "species",
+        ]
+
+        manifests2 = gff_schema.get_manifests(gff_db_config.configs[1])
+        assert len(manifests2) == 1
+        assert list(manifests2[0].columns) == [
+            "animalModelDisease",
+            "animalModelofManifestation",
+            "animalModelId",
+            "animalState",
+            "backgroundStrain",
+            "backgroundSubstrain",
+            "donorId",
+            "generation",
+            "strainNomenclature",
+            "transplantationDonorId",
+            "transplantationType",
         ]

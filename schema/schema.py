@@ -3,6 +3,7 @@
 from typing import Optional, Callable, Union
 import warnings
 import networkx
+import pandas as pd
 from db_object_config import (
     DBConfig,
     DBObjectConfig,
@@ -16,6 +17,7 @@ from .api_utils import (
     find_class_specific_properties,
     get_property_label_from_display_name,
     get_project_manifests,
+    get_manifest,
 )
 
 
@@ -27,6 +29,31 @@ class NoAttributesWarning(Warning):
     def __init__(self, message):
         self.message = message
         super().__init__(self.message)
+
+
+class ManifestMissingPrimaryKeyError(Exception):
+    """Raised when a manifest is missing one or more primary keys"""
+
+    def __init__(
+        self,
+        object_name: str,
+        dataset_id: str,
+        primary_keys: list[str],
+        manifest_columns: list[str],
+    ):
+        self.message = "Manifest is missing one or more primary keys"
+        self.object_name = object_name
+        self.dataset_id = dataset_id
+        self.primary_keys = primary_keys
+        self.manifest_columns = manifest_columns
+        super().__init__(self.message)
+
+    def __str__(self):
+        return (
+            f"{self.message}; object name:{self.object_name}; "
+            f"dataset_id:{self.dataset_id}; primary keys:{self.primary_keys}; "
+            f"manifest columns:{self.manifest_columns}"
+        )
 
 
 def get_key_attribute(object_name: str) -> str:
@@ -58,6 +85,26 @@ def get_manifest_ids_for_object(
     """
     return [
         manifest.get("manifest_id")
+        for manifest in manifests
+        if manifest.get("component_name") == object_name
+        and manifest.get("manifest_id") != ""
+    ]
+
+
+def get_dataset_ids_for_object(
+    object_name: str, manifests: list[dict[str:str]]
+) -> list[str]:
+    """Gets the dataset ids from a list of manifests matching the object name
+
+    Args:
+        object_name (str): The name of the object to get the manifests for
+        manifests (list[dict[str:str]]): A list of manifests in dictionary form
+
+    Returns:
+        list[str]: A list of synapse ids for the manifest datasets
+    """
+    return [
+        manifest.get("dataset_id")
         for manifest in manifests
         if manifest.get("component_name") == object_name
         and manifest.get("manifest_id") != ""
@@ -119,10 +166,10 @@ class Schema:
         self.synapse_input_token = synapse_input_token
         self.primary_key_getter = primary_key_getter
         self.foreign_key_getter = foreign_key_getter
-        all_manifests = get_project_manifests(
-            input_token=self.synapse_input_token,
-            project_id=self.synapse_project_id,
-            asset_view=self.synapse_asset_view_id,
+        self.manifests = get_project_manifests(
+            input_token=synapse_input_token,
+            project_id=synapse_project_id,
+            asset_view=synapse_asset_view_id,
         )
 
     def create_db_config(self) -> DBConfig:
@@ -135,9 +182,7 @@ class Schema:
         object_names = list(
             reversed(list(networkx.topological_sort(self.schema_graph)))
         )
-        object_configs = [
-            self.create_db_object_config(name) for name in object_names
-        ]
+        object_configs = [self.create_db_object_config(name) for name in object_names]
         object_configs = [config for config in object_configs if config is not None]
         return DBConfig(object_configs)
 
@@ -237,3 +282,39 @@ class Schema:
             foreign_object_name,
             foreign_attribute_name,
         )
+
+    def get_manifests(self, config: DBObjectConfig) -> list[pd.DataFrame]:
+        dataset_ids = get_dataset_ids_for_object(config.name, self.manifests)
+        manifests = [
+            self.get_manifest(dataset_id, config) for dataset_id in dataset_ids
+        ]
+        return manifests
+
+    def get_manifest(self, dataset_id: str, config: DBObjectConfig) -> pd.DataFrame:
+        manifest = get_manifest(
+            self.synapse_input_token,
+            dataset_id,
+            self.synapse_asset_view_id,
+        )
+        # create dict with columns names as keys and attribute names as values
+        attribute_names = {
+            col_name: self.get_attribute_name(col_name)
+            for col_name in list(manifest.columns)
+        }
+        # filter dict for attribute names that appear in the config
+        attribute_names = {
+            col_name: att_name
+            for (col_name, att_name) in attribute_names.items()
+            if att_name in config.get_attribute_names()
+        }
+        # Raise error if all primary keys do not appear
+        if not all(key in attribute_names.values() for key in config.primary_keys):
+            raise ManifestMissingPrimaryKeyError(
+                config.name, dataset_id, config.primary_keys, attribute_names.values
+            )
+        # select rename columns manifest and select those in the config
+        manifest = manifest.rename(columns=attribute_names)[attribute_names.values()]
+        return manifest
+
+    def get_attribute_name(self, column_name: str) -> str:
+        return get_property_label_from_display_name(self.schema_url, column_name)

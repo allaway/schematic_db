@@ -3,6 +3,7 @@
 import pickle
 import requests
 import networkx
+import pandas
 
 # Currently this is the url for the API when running locally.
 API_URL = "http://0.0.0.0:3001"
@@ -182,3 +183,28 @@ def get_project_manifests(
         for item in response.json()
     ]
     return manifests
+
+
+def get_manifest(
+    input_token: str, dataset_id: str, asset_view: str
+) -> pandas.DataFrame:
+    """Downloads a manifest as a pd.dataframe
+
+    Args:
+        input_token (str): Access token
+        dataset_id (str): The id of the dataset the manifest part of
+        asset_view (str): The id of the view listing all project data assets. For example,
+            for Synapse this would be the Synapse ID of the fileview listing all
+            data assets for a given project.(i.e. master_fileview in config.yml)
+
+    Returns:
+        pd.DataFrame: The manifest in dataframe form
+    """
+    params = {
+        "input_token": input_token,
+        "dataset_id": dataset_id,
+        "asset_view": asset_view,
+        "as_json": True,
+    }
+    response = create_schematic_api_response("manifest/download", params)
+    return pandas.DataFrame(response.json())
