@@ -284,6 +284,14 @@ class Schema:
         )
 
     def get_manifests(self, config: DBObjectConfig) -> list[pd.DataFrame]:
+        """Gets the manifests associated with a db object config
+
+        Args:
+            config (DBObjectConfig): The config for the database object
+
+        Returns:
+            list[pd.DataFrame]: A list manifests in dataframe form
+        """
         dataset_ids = get_dataset_ids_for_object(config.name, self.manifests)
         manifests = [
             self.get_manifest(dataset_id, config) for dataset_id in dataset_ids
@@ -291,6 +299,18 @@ class Schema:
         return manifests
 
     def get_manifest(self, dataset_id: str, config: DBObjectConfig) -> pd.DataFrame:
+        """Gets and formats a manifest
+
+        Args:
+            dataset_id (str): The Synapse id of the dataset the manifest belongs to
+            config (DBObjectConfig): The config for the db object the manifest belongs to
+
+        Raises:
+            ManifestMissingPrimaryKeyError: Raised when the manifest is missing a primary key
+
+        Returns:
+            pd.DataFrame: The manifest in dataframe form
+        """
         manifest = get_manifest(
             self.synapse_input_token,
             dataset_id,
@@ -317,4 +337,12 @@ class Schema:
         return manifest
 
     def get_attribute_name(self, column_name: str) -> str:
+        """Gets the attribute name of a manifest column
+
+        Args:
+            column_name (str): The name of the column
+
+        Returns:
+            str: The attribute name of the column
+        """
         return get_property_label_from_display_name(self.schema_url, column_name)

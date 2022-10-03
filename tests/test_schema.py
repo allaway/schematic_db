@@ -141,7 +141,7 @@ class TestSchema:
         ]
 
     def test_create_db_config(self, test_schema):
-        """Testing for Schema.test_create_db_config()"""
+        """Testing for Schema.create_db_config()"""
         obj = test_schema
         config = obj.create_db_config()
         assert config.get_config_names() == [
