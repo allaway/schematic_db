@@ -4,6 +4,19 @@ import pandas as pd
 from db_object_config import DBObjectConfig
 
 
+class UpdateDBTableError(Exception):
+    """UpdateDBTableError"""
+
+    def __init__(self, table_name, error_message):
+        self.message = "Error updating table"
+        self.table_name = table_name
+        self.error_message = error_message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"{self.message}; table: {self.table_name}; error: {self.error_message}"
+
+
 class RelationalDatabase(ABC):
     """An interface for relational database types"""
 
@@ -24,6 +37,10 @@ class RelationalDatabase(ABC):
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig):
         """Updates or inserts rows into the given table
         If table does not exist the table is created
+
+        Raises:
+            UpdateDBTableError: When the subclass returns an error
+
         Args:
             table_name (str): The id(name) of the table the rows will be updated or added to
             data (pd.DataFrame): A pandas.DataFrame

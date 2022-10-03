@@ -3,8 +3,9 @@ import pandas as pd
 import numpy as np
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import insert
+from sqlalchemy import exc
 from db_object_config import DBObjectConfig, DBDatatype
-from .rdb import RelationalDatabase
+from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
     DBDatatype.TEXT: sa.String(100),
@@ -71,7 +72,13 @@ class MySQLDatabase(RelationalDatabase):
         table_name = table_config.name
         if table_name not in table_names:
             self.add_table(table_name, table_config)
-        self.upsert_table_rows(table_name, data)
+        #self.upsert_table_rows(table_name, data)
+        #'''
+        try:
+            self.upsert_table_rows(table_name, data)
+        except exc.IntegrityError as error:
+            raise UpdateDBTableError(table_name, error.orig.args[1]) from error
+        #'''
 
     def drop_table(self, table_name: str):
         self._execute_sql_statement(f"DROP TABLE IF EXISTS {table_name};")
