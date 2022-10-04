@@ -16,7 +16,6 @@ from db_object_config import (
 from rdb import MySQLDatabase, SynapseDatabase
 from rdb_updater import RDBUpdater
 from rbd_queryer import RDBQueryer
-from manifest_store import SynapseManifestStore
 from query_store import SynapseQueryStore
 from synapse import Synapse
 from schema import Schema
@@ -146,15 +145,6 @@ def fixture_synapse(synapse_config_dict, synapse_database_table_names):
         raise ValueError("synapse_database_project has incorrect table names.")
 
 
-@pytest.fixture(scope="session", name="synapse_manifest_store")
-def fixture_synapse_manifest_store(config_dict):
-    """
-    Yields a Synapse Manifest Store
-    """
-    obj = SynapseManifestStore(config_dict["manifest_store"])
-    yield obj
-
-
 @pytest.fixture(scope="session", name="synapse_query_store")
 def fixture_synapse_query_store(config_dict):
     """
@@ -168,25 +158,10 @@ def fixture_synapse_query_store(config_dict):
     assert obj.synapse.get_table_names() == []
 
 
-@pytest.fixture(scope="module", name="rdb_updater_mysql")
-def fixture_rdb_updater_mysql(mysql, synapse_manifest_store, table_configs):
+@pytest.fixture(scope="module", name="rdb_updater_mysql_gff")
+def fixture_rdb_updater_mysql_gff(mysql, gff_schema):
     """Yields a RDBUpdater"""
-    obj = RDBUpdater(
-        rdb=mysql, manifest_store=synapse_manifest_store, db_config=table_configs
-    )
-    yield obj
-
-
-@pytest.fixture(scope="module", name="rdb_updater_synapse")
-def fixture_rdb_updater_synapse(
-    synapse_config_dict, synapse_manifest_store, table_configs
-):
-    """Yields a RDBQueryer"""
-    obj = RDBUpdater(
-        rdb=SynapseDatabase(synapse_config_dict),
-        manifest_store=synapse_manifest_store,
-        db_config=table_configs,
-    )
+    obj = RDBUpdater(rdb=mysql, schema=gff_schema)
     yield obj
 
 
