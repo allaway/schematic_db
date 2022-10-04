@@ -95,7 +95,7 @@ class TestUtils:
             project_id=gff_synapse_project_id,
             asset_view=gff_synapse_asset_view_id,
         )
-        assert len(manifests) == 6
+        assert len(manifests) == 31
 
     def test_get_manifest(self, synapse_input_token, gff_synapse_asset_view_id):
         "Testing for get_manifest"
@@ -180,7 +180,7 @@ class TestGFFSchema:
     def test_get_manifests(self, gff_schema, gff_db_config):
         """Testing for Schema.get_manifests()"""
         manifests1 = gff_schema.get_manifests(gff_db_config.configs[0])
-        assert len(manifests1) == 1
+        assert len(manifests1) == 2
         assert list(manifests1[0].columns) == [
             "age",
             "donorId",

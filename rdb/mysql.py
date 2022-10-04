@@ -8,7 +8,7 @@ from db_object_config import DBObjectConfig, DBDatatype
 from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
-    DBDatatype.TEXT: sa.String(500),
+    DBDatatype.TEXT: sa.String(100),
     DBDatatype.DATE: sa.Date,
     DBDatatype.INT: sa.Integer,
     DBDatatype.FLOAT: sa.Float,
@@ -75,7 +75,7 @@ class MySQLDatabase(RelationalDatabase):
         try:
             self.upsert_table_rows(table_name, data)
         except exc.SQLAlchemyError as error:
-            error_msg = str(error.__dict__['orig'])
+            error_msg = str(error.__dict__["orig"])
             raise UpdateDBTableError(table_name, error_msg) from error
 
     def drop_table(self, table_name: str):
