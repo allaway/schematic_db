@@ -8,7 +8,7 @@ from db_object_config import DBObjectConfig, DBDatatype
 from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
-    DBDatatype.TEXT: sa.String(100),
+    DBDatatype.TEXT: sa.String(500),
     DBDatatype.DATE: sa.Date,
     DBDatatype.INT: sa.Integer,
     DBDatatype.FLOAT: sa.Float,
@@ -72,13 +72,11 @@ class MySQLDatabase(RelationalDatabase):
         table_name = table_config.name
         if table_name not in table_names:
             self.add_table(table_name, table_config)
-        #self.upsert_table_rows(table_name, data)
-        #'''
         try:
             self.upsert_table_rows(table_name, data)
-        except exc.IntegrityError as error:
-            raise UpdateDBTableError(table_name, error.orig.args[1]) from error
-        #'''
+        except exc.SQLAlchemyError as error:
+            error_msg = str(error.__dict__['orig'])
+            raise UpdateDBTableError(table_name, error_msg) from error
 
     def drop_table(self, table_name: str):
         self._execute_sql_statement(f"DROP TABLE IF EXISTS {table_name};")
@@ -173,7 +171,7 @@ class MySQLDatabase(RelationalDatabase):
                     sa.ForeignKey(
                         f"{key.foreign_object_name}.{key.foreign_attribute_name}"
                     ),
-                    nullable=False,
+                    nullable=True,
                 )
             else:
                 col = sa.Column(att_name, sql_datatype)
