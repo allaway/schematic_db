@@ -109,13 +109,96 @@ def fixture_gff_schema(
     yield obj
 
 
+# gff database objects --------------------------------------------------------
+
+
+@pytest.fixture(scope="session", name="gff_mysql")
+def fixture_gff_mysql():
+    """
+    Yields a MYSQL object with database named 'gff_test_schema'
+    """
+    obj = MySQLDatabase(
+        {
+            "username": "root",
+            "password": "pass",
+            "host": "localhost",
+            "schema": "gff_test_schema",
+        }
+    )
+    yield obj
+    table_names = [
+        "Usage",
+        "Biobank",
+        "VendorItem",
+        "Observation",
+        "ResourceApplication",
+        "Mutation",
+        "Development",
+        "Vendor",
+        "MutationDetails",
+        "Resource",
+        "Investigator",
+        "Publication",
+        "Funder",
+        "GeneticReagent",
+        "Antibody",
+        "CellLine",
+        "AnimalModel",
+        "Donor",
+    ]
+    for table_name in table_names:
+        if table_name in obj.get_table_names():
+            obj.drop_table(table_name)
+    assert obj.get_table_names() == []
+
+
+@pytest.fixture(scope="module", name="rdb_updater_mysql_gff")
+def fixture_rdb_updater_mysql_gff(gff_mysql, gff_schema):
+    """Yields a RDBUpdater with a mysql database and gff schema with tables added"""
+    obj = RDBUpdater(rdb=gff_mysql, schema=gff_schema)
+    obj.update_all_database_tables()
+    yield obj
+
+
+@pytest.fixture(scope="session", name="synapse_gff_query_store")
+def fixture_synapse_gff_query_store(secrets_dict):
+    """
+    Yields a Synapse Query Store for gff
+    """
+    obj = SynapseQueryStore(
+        {
+            "project_id": "syn39024404",
+            "username": secrets_dict.get("synapse").get("username"),
+            "auth_token": secrets_dict.get("synapse").get("auth_token"),
+        }
+    )
+    yield obj
+
+
+@pytest.fixture(scope="module", name="rdb_queryer_mysql_gff")
+def fixture_rdb_queryer_mysql_gff(rdb_updater_mysql_gff, synapse_gff_query_store):
+    """Yields a RDBQueryer with a mysql database with gff tables added"""
+    obj = RDBQueryer(
+        rdb=rdb_updater_mysql_gff.rdb,
+        query_store=synapse_gff_query_store,
+    )
+    yield obj
+
+
 # database objects ------------------------------------------------------------
 @pytest.fixture(scope="session", name="mysql")
-def fixture_mysql(config_dict):
+def fixture_mysql():
     """
     Yields a MYSQL object
     """
-    obj = MySQLDatabase(config_dict["database"])
+    obj = MySQLDatabase(
+        {
+            "username": "root",
+            "password": "pass",
+            "host": "localhost",
+            "schema": "test_schema",
+        }
+    )
     yield obj
     test_table_names = ["table_three", "table_one", "table_two"]
     for table_name in test_table_names:
@@ -156,13 +239,6 @@ def fixture_synapse_query_store(config_dict):
     for name in obj.synapse.get_table_names():
         obj.synapse.drop_table(name)
     assert obj.synapse.get_table_names() == []
-
-
-@pytest.fixture(scope="module", name="rdb_updater_mysql_gff")
-def fixture_rdb_updater_mysql_gff(mysql, gff_schema):
-    """Yields a RDBUpdater"""
-    obj = RDBUpdater(rdb=mysql, schema=gff_schema)
-    yield obj
 
 
 @pytest.fixture(scope="module", name="rdb_queryer_mysql")
