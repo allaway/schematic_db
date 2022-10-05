@@ -8,7 +8,7 @@ from db_object_config import DBObjectConfig, DBDatatype
 from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
-    DBDatatype.TEXT: sa.String(100),
+    DBDatatype.TEXT: sa.Text(5000),
     DBDatatype.DATE: sa.Date,
     DBDatatype.INT: sa.Integer,
     DBDatatype.FLOAT: sa.Float,
@@ -79,7 +79,7 @@ class MySQLDatabase(RelationalDatabase):
             raise UpdateDBTableError(table_name, error_msg) from error
 
     def drop_table(self, table_name: str):
-        self._execute_sql_statement(f"DROP TABLE IF EXISTS {table_name};")
+        self._execute_sql_statement(f"DROP TABLE IF EXISTS `{table_name}`;")
         self.metadata.clear()
 
     def delete_table_rows(
@@ -161,9 +161,16 @@ class MySQLDatabase(RelationalDatabase):
         columns = []
         for att in table_config.attributes:
             att_name = att.name
-            att_datatype = att.datatype
-            sql_datatype = MYSQL_DATATYPES.get(att_datatype)
-            if att_name in table_config.get_foreign_key_names():
+            primary_keys = table_config.primary_keys
+            foreign_keys = table_config.get_foreign_key_names()
+
+            # is column is a key set datatype to sa.String(100)
+            if att_name in primary_keys or att_name in foreign_keys:
+                sql_datatype = sa.String(100)
+            else:
+                sql_datatype = MYSQL_DATATYPES.get(att.datatype)
+
+            if att_name in foreign_keys:
                 key = table_config.get_foreign_key_by_name(att_name)
                 col = sa.Column(
                     att_name,
@@ -177,6 +184,6 @@ class MySQLDatabase(RelationalDatabase):
                 col = sa.Column(att_name, sql_datatype)
             columns.append(col)
 
-        if table_config.primary_keys != []:
-            columns.append(sa.PrimaryKeyConstraint(*table_config.primary_keys))
+        if primary_keys != []:
+            columns.append(sa.PrimaryKeyConstraint(*primary_keys))
         return columns
