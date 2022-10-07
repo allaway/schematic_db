@@ -2,7 +2,6 @@
 import pytest
 import pandas as pd
 from schema import (
-    Schema,
     get_project_manifests,
     get_manifest_ids_for_object,
     get_manifest,
@@ -10,40 +9,10 @@ from schema import (
 from db_object_config import DBForeignKey, DBAttributeConfig, DBDatatype
 
 
-@pytest.fixture(name="test_synapse_project_id")
-def fixture_test_synapse_project_id():
-    """Yields the synapse id for the test schema project id"""
-    yield "syn23643250"
-
-
 @pytest.fixture(name="test_synapse_folder_id")
 def fixture_test_synapse_folder_id():
     """Yields a synapse id for a folder in the test project"""
     yield "syn30988314"
-
-
-@pytest.fixture(name="test_synapse_asset_view_id")
-def fixture_test_synapse_asset_view_id():
-    """Yields the synapse id for the test schema project id"""
-    yield "syn23643253"
-
-
-@pytest.fixture(name="test_schema")
-def fixture_test_schema(
-    test_synapse_project_id, test_synapse_asset_view_id, synapse_input_token
-):
-    """Yields a Schema using the database specific test schema"""
-    schema_url = (
-        "https://raw.githubusercontent.com/Sage-Bionetworks/"
-        "schematic/develop-rdb-export-joins/tests/data/example.rdb.model.jsonld"
-    )
-    obj = Schema(
-        schema_url,
-        test_synapse_project_id,
-        test_synapse_asset_view_id,
-        synapse_input_token,
-    )
-    yield obj
 
 
 @pytest.fixture(name="test_manifests")
@@ -68,11 +37,11 @@ class TestUtils:
         assert get_manifest_ids_for_object("C3", test_manifests) == []
 
     def test_get_project_manifests(
-        self, synapse_input_token, test_synapse_folder_id, test_synapse_asset_view_id
+        self, secrets_dict, test_synapse_folder_id, test_synapse_asset_view_id
     ):
         "Testing for get_project_manifests"
         manifests = get_project_manifests(
-            input_token=synapse_input_token,
+            input_token=secrets_dict.get("synapse").get("auth_token"),
             project_id=test_synapse_folder_id,
             asset_view=test_synapse_asset_view_id,
         )
@@ -87,20 +56,22 @@ class TestUtils:
         ]
 
     def test_get_project_manifests2(
-        self, synapse_input_token, gff_synapse_project_id, gff_synapse_asset_view_id
+        self, secrets_dict, gff_synapse_project_id, gff_synapse_asset_view_id
     ):
         "Testing for get_project_manifests"
         manifests = get_project_manifests(
-            input_token=synapse_input_token,
+            input_token=secrets_dict.get("synapse").get("auth_token"),
             project_id=gff_synapse_project_id,
             asset_view=gff_synapse_asset_view_id,
         )
         assert len(manifests) == 31
 
-    def test_get_manifest(self, synapse_input_token, gff_synapse_asset_view_id):
+    def test_get_manifest(self, secrets_dict, gff_synapse_asset_view_id):
         "Testing for get_manifest"
         manifest = get_manifest(
-            synapse_input_token, "syn38306654", gff_synapse_asset_view_id
+            secrets_dict.get("synapse").get("auth_token"),
+            "syn38306654",
+            gff_synapse_asset_view_id,
         )
         assert isinstance(manifest, pd.DataFrame)
 

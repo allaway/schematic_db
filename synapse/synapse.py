@@ -284,6 +284,7 @@ class Synapse:
         """
         project = self.syn.get(self.project_id)
         import logging
+
         logging.warning(table)
         table = sc.table.build_table(table_name, project, table)
         self.syn.store(table)

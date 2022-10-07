@@ -38,7 +38,7 @@ class MySQLDatabase(RelationalDatabase):
     - Handles MYSQL specific functionality.
     """
 
-    def __init__(self, config_dict: dict, verbose: Optional[bool]=False):
+    def __init__(self, config_dict: dict, verbose: Optional[bool] = False):
         """Init
         An initial connection is created to the database without the schema.
         The schema will be created if it doesn't exist.

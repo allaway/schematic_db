@@ -22,12 +22,6 @@ from schema import Schema
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")
-CONFIG_PATH = os.path.join(DATA_DIR, "local_mysql_config.yml")
-if not os.path.exists(CONFIG_PATH):
-    CONFIG_PATH = os.path.join(DATA_DIR, "mysql_config.yml")
-SYNAPSE_CONFIG_PATH = os.path.join(DATA_DIR, "local_synapse_config.yml")
-if not os.path.exists(SYNAPSE_CONFIG_PATH):
-    SYNAPSE_CONFIG_PATH = os.path.join(DATA_DIR, "synapse_config.yml")
 SECRETS_PATH = os.path.join(DATA_DIR, "local_secrets.yml")
 if not os.path.exists(SECRETS_PATH):
     SECRETS_PATH = os.path.join(DATA_DIR, "secrets.yml")
@@ -43,59 +37,11 @@ def fixture_secrets_dict():
     yield config
 
 
-@pytest.fixture(scope="session", name="config_dict")
-def fixture_config_dict():
-    """
-    Yields a MYSQL config dict
-    """
-    with open(CONFIG_PATH, mode="rt", encoding="utf-8") as file:
-        config = safe_load(file)
-    yield config
-
-
-@pytest.fixture(scope="session", name="synapse_config_dict")
-def fixture_synapse_config_dict():
-    """
-    Yields a Synapse config dict
-    """
-    with open(SYNAPSE_CONFIG_PATH, mode="rt", encoding="utf-8") as file:
-        config = safe_load(file)
-    yield config
-
-
 @pytest.fixture(scope="session", name="query_csv_path")
 def fixture_query_csv_path():
     """Yields a path to a file of test SQL queries"""
     path = os.path.join(DATA_DIR, "queries.csv")
     yield path
-
-
-@pytest.fixture(scope="session", name="gff_query_csv_path")
-def fixture_gff_query_csv_path():
-    """Yields a path to a file of test SQL queries for gff"""
-    path = os.path.join(DATA_DIR, "gff_queries.csv")
-    yield path
-
-
-# schema objects --------------------------------------------------------------
-
-
-@pytest.fixture(scope="session", name="synapse_input_token")
-def fixture_synapse_input_token(secrets_dict):
-    """Yields a synapse token"""
-    yield secrets_dict["synapse"]["auth_token"]
-
-
-@pytest.fixture(scope="session", name="gff_synapse_project_id")
-def fixture_gff_synapse_project_id():
-    """Yields the synapse id for the gff schema project id"""
-    yield "syn38296792"
-
-
-@pytest.fixture(scope="session", name="gff_synapse_asset_view_id")
-def fixture_gff_synapse_asset_view_id():
-    """Yields the synapse id for the gff schema project id"""
-    yield "syn38308526"
 
 
 # gff database objects --------------------------------------------------------
@@ -141,10 +87,20 @@ def fixture_gff_mysql():
     assert obj.get_table_names() == []
 
 
+@pytest.fixture(scope="session", name="gff_synapse_project_id")
+def fixture_gff_synapse_project_id():
+    """Yields the synapse id for the gff schema project id"""
+    yield "syn38296792"
+
+
+@pytest.fixture(scope="session", name="gff_synapse_asset_view_id")
+def fixture_gff_synapse_asset_view_id():
+    """Yields the synapse id for the gff schema project id"""
+    yield "syn38308526"
+
+
 @pytest.fixture(scope="session", name="gff_schema")
-def fixture_gff_schema(
-    gff_synapse_project_id, gff_synapse_asset_view_id, synapse_input_token
-):
+def fixture_gff_schema(gff_synapse_project_id, gff_synapse_asset_view_id, secrets_dict):
     """Yields a Schema using the GFF tools schema"""
     schema_url = (
         "https://raw.githubusercontent.com/nf-osi/"
@@ -154,7 +110,7 @@ def fixture_gff_schema(
         schema_url,
         gff_synapse_project_id,
         gff_synapse_asset_view_id,
-        synapse_input_token,
+        secrets_dict.get("synapse").get("auth_token"),
     )
     yield obj
 
@@ -182,6 +138,13 @@ def fixture_synapse_gff_query_store(secrets_dict):
     yield obj
 
 
+@pytest.fixture(scope="session", name="gff_query_csv_path")
+def fixture_gff_query_csv_path():
+    """Yields a path to a file of test SQL queries for gff"""
+    path = os.path.join(DATA_DIR, "gff_queries.csv")
+    yield path
+
+
 @pytest.fixture(scope="module", name="rdb_queryer_mysql_gff")
 def fixture_rdb_queryer_mysql_gff(rdb_updater_mysql_gff, synapse_gff_query_store):
     """Yields a RDBQueryer with a mysql database with gff tables added"""
@@ -192,7 +155,9 @@ def fixture_rdb_queryer_mysql_gff(rdb_updater_mysql_gff, synapse_gff_query_store
     yield obj
 
 
-# database objects ------------------------------------------------------------
+# test database objects -------------------------------------------------------
+
+
 @pytest.fixture(scope="session", name="mysql")
 def fixture_mysql():
     """
@@ -214,6 +179,39 @@ def fixture_mysql():
     assert obj.get_table_names() == []
 
 
+@pytest.fixture(scope="session", name="test_synapse_project_id")
+def fixture_test_synapse_project_id():
+    """Yields the synapse id for the test schema project id"""
+    yield "syn23643250"
+
+
+@pytest.fixture(scope="session", name="test_synapse_asset_view_id")
+def fixture_test_synapse_asset_view_id():
+    """Yields the synapse id for the test schema project id"""
+    yield "syn23643253"
+
+
+@pytest.fixture(scope="session", name="test_schema")
+def fixture_test_schema(
+    test_synapse_project_id, test_synapse_asset_view_id, secrets_dict
+):
+    """Yields a Schema using the database specific test schema"""
+    schema_url = (
+        "https://raw.githubusercontent.com/Sage-Bionetworks/"
+        "schematic/develop-rdb-export-joins/tests/data/example.rdb.model.jsonld"
+    )
+    obj = Schema(
+        schema_url,
+        test_synapse_project_id,
+        test_synapse_asset_view_id,
+        secrets_dict.get("synapse").get("auth_token"),
+    )
+    yield obj
+
+
+# database objects ------------------------------------------------------------
+
+
 @pytest.fixture(scope="session", name="synapse_database_table_names")
 def fixture_synapse_database_table_names():
     """
@@ -223,11 +221,17 @@ def fixture_synapse_database_table_names():
 
 
 @pytest.fixture(scope="session", name="synapse_database_project")
-def fixture_synapse(synapse_config_dict, synapse_database_table_names):
+def fixture_synapse(secrets_dict, synapse_database_table_names):
     """
     Yields a Synapse object used for testing databases
     """
-    obj = Synapse(synapse_config_dict)
+    obj = Synapse(
+        {
+            "project_id": "syn33832432",
+            "username": secrets_dict["synapse"]["username"],
+            "auth_token": secrets_dict["synapse"]["auth_token"],
+        }
+    )
     if obj.get_table_names() != synapse_database_table_names:
         raise ValueError("synapse_database_project has incorrect table names.")
     yield obj
