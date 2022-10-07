@@ -6,20 +6,11 @@ on: [pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      SYNAPSE_LOGIN: ${{ secrets.SYNAPSE_LOGIN }}
-      SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
     steps:
 
       - uses: actions/checkout@v2
 
-      # install mysql
-      # use to create a database:
-      # env:
-      #   DB_DATABASE: test_db
-      #   DB_USER: root
-      #   DB_PASSWORD: root
-      # mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
+      # setup mysql
       - name: Set up MySQL
         run: |
           sudo /etc/init.d/mysql start
@@ -37,54 +28,6 @@ jobs:
           }
 
           with open('tests/data/secrets.yml', 'w') as file:
-              yaml.dump(dict, file)
-
-        shell: python
-
-      # Create the synapse yaml config file
-      - name: create synapse config
-        run: |
-          import yaml
-
-          dict = {
-              "username": "${{secrets.SYNAPSE_LOGIN}}",
-              "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
-              "project_id": "syn33832432"
-          }
-
-          with open('tests/data/synapse_config.yml', 'w') as file:
-              yaml.dump(dict, file)
-
-        shell: python
-
-      # Create the mysql yaml config file
-      - name: create mysql config
-        run: |
-          import yaml
-
-          dict = {
-              "manifest_store": {
-                  "type": "synapse",
-                  "username": "${{secrets.SYNAPSE_LOGIN}}",
-                  "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
-                  "project_id": "syn33937311"
-              },
-              "database": {
-                  "type": "mysql",
-                  "username": "root",
-                  "password": "root",
-                  "host": "localhost",
-                  "schema": "test_schema"
-              },
-              "query_store": {
-                  "type": "synapse",
-                  "username": "${{secrets.SYNAPSE_LOGIN}}",
-                  "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}",
-                  "project_id": "syn34178981"
-              }
-          }
-
-          with open('tests/data/mysql_config.yml', 'w') as file:
               yaml.dump(dict, file)
 
         shell: python
