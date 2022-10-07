@@ -27,7 +27,8 @@ def fixture_test_manifests():
     ]
 
 
-class TestUtils:
+# TODO: Turn on tests when api is public
+class FutureTestUtils:
     """Testing for Schema utils"""
 
     def test_get_manifest_ids_for_object(self, test_manifests):
@@ -76,7 +77,8 @@ class TestUtils:
         assert isinstance(manifest, pd.DataFrame)
 
 
-class TestSchema:
+# TODO: Turn on tests when api is public
+class FutureTestSchema:
     """Testing for Schema"""
 
     def test_create_attributes(self, test_schema):
@@ -122,7 +124,8 @@ class TestSchema:
         ]
 
 
-class TestGFFSchema:
+# TODO: Turn on tests when api is public
+class FutureTestGFFSchema:
     """Testing for GFF Schema"""
 
     def test_create_db_config(self, gff_db_config):

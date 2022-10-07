@@ -2,8 +2,8 @@
 """
 from rdb_updater import RDBUpdater
 
-
-class TestRDBUpdater:
+# TODO: Turn on tests when api is public
+class FutureTestRDBUpdater:
     """Testing for RDB with MySQL database"""
 
     def test_init(self, rdb_updater_mysql_gff):
