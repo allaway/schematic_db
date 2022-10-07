@@ -166,7 +166,7 @@ class MySQLDatabase(RelationalDatabase):
             primary_keys = table_config.primary_keys
             foreign_keys = table_config.get_foreign_key_names()
 
-            # is column is a key set datatype to sa.String(100)
+            # If column is a key, set datatype to sa.String(100)
             if att_name in primary_keys or att_name in foreign_keys:
                 sql_datatype = sa.String(100)
             else:
