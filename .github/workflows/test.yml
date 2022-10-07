@@ -24,6 +24,11 @@ jobs:
             "synapse": {
               "username": "${{secrets.SYNAPSE_LOGIN}}",
               "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}"
+            },
+            "mysql": {
+              "username": "${{secrets.MYSQL_USERNAME}}",
+              "password": "${{secrets.MYSQL_PASSWORD}}",
+              "host": "${{secrets.MYSQL_HOST}}"
             }
           }
 

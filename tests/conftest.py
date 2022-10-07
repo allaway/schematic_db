@@ -48,15 +48,15 @@ def fixture_query_csv_path():
 
 
 @pytest.fixture(scope="session", name="gff_mysql")
-def fixture_gff_mysql():
+def fixture_gff_mysql(secrets_dict):
     """
     Yields a MYSQL object with database named 'gff_test_schema'
     """
     obj = MySQLDatabase(
         {
-            "username": "root",
-            "password": "pass",
-            "host": "localhost",
+            "username": secrets_dict.get("mysql").get("username"),
+            "password": secrets_dict.get("mysql").get("password"),
+            "host": secrets_dict.get("mysql").get("host"),
             "schema": "gff_test_schema",
         }
     )
@@ -159,15 +159,15 @@ def fixture_rdb_queryer_mysql_gff(rdb_updater_mysql_gff, synapse_gff_query_store
 
 
 @pytest.fixture(scope="session", name="mysql")
-def fixture_mysql():
+def fixture_mysql(secrets_dict):
     """
     Yields a MYSQL object
     """
     obj = MySQLDatabase(
         {
-            "username": "root",
-            "password": "pass",
-            "host": "localhost",
+            "username": secrets_dict.get("mysql").get("username"),
+            "password": secrets_dict.get("mysql").get("password"),
+            "host": secrets_dict.get("mysql").get("host"),
             "schema": "test_schema",
         }
     )
