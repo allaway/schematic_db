@@ -1,4 +1,5 @@
 """MySQLDatabase"""
+from typing import Optional
 import pandas as pd
 import numpy as np
 import sqlalchemy as sa
@@ -37,7 +38,7 @@ class MySQLDatabase(RelationalDatabase):
     - Handles MYSQL specific functionality.
     """
 
-    def __init__(self, config_dict: dict):
+    def __init__(self, config_dict: dict, verbose: Optional[bool]=False):
         """Init
         An initial connection is created to the database without the schema.
         The schema will be created if it doesn't exist.
@@ -46,6 +47,7 @@ class MySQLDatabase(RelationalDatabase):
 
         Args:
             config_dict (dict): A dict with fields ["username", "password", "host", "schema"]
+            verbose (bool): Sends much more to logging.info
         """
         username = config_dict.get("username")
         password = config_dict.get("password")
@@ -53,12 +55,12 @@ class MySQLDatabase(RelationalDatabase):
         schema = config_dict.get("schema")
 
         url = f"mysql://{username}:{password}@{host}/"
-        engine = sa.create_engine(url, encoding="utf-8", echo=True)
+        engine = sa.create_engine(url, encoding="utf-8", echo=verbose)
         create_statement = f"CREATE DATABASE IF NOT EXISTS {schema};"
         engine.execute(create_statement)
 
         url2 = f"mysql://{username}:{password}@{host}/{schema}"
-        engine2 = sa.create_engine(url2, encoding="utf-8", echo=True)
+        engine2 = sa.create_engine(url2, encoding="utf-8", echo=verbose)
         self.engine = engine2
         self.metadata = sa.MetaData()
 

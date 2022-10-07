@@ -65,14 +65,21 @@ def fixture_synapse_config_dict():
 
 @pytest.fixture(scope="session", name="query_csv_path")
 def fixture_query_csv_path():
-    """
-    Yields a MYSQL config dict
-    """
+    """Yields a path to a file of test SQL queries"""
     path = os.path.join(DATA_DIR, "queries.csv")
     yield path
 
 
+@pytest.fixture(scope="session", name="gff_query_csv_path")
+def fixture_gff_query_csv_path():
+    """Yields a path to a file of test SQL queries for gff"""
+    path = os.path.join(DATA_DIR, "gff_queries.csv")
+    yield path
+
+
 # schema objects --------------------------------------------------------------
+
+
 @pytest.fixture(scope="session", name="synapse_input_token")
 def fixture_synapse_input_token(secrets_dict):
     """Yields a synapse token"""
@@ -89,24 +96,6 @@ def fixture_gff_synapse_project_id():
 def fixture_gff_synapse_asset_view_id():
     """Yields the synapse id for the gff schema project id"""
     yield "syn38308526"
-
-
-@pytest.fixture(scope="session", name="gff_schema")
-def fixture_gff_schema(
-    gff_synapse_project_id, gff_synapse_asset_view_id, synapse_input_token
-):
-    """Yields a Schema using the GFF tools schema"""
-    schema_url = (
-        "https://raw.githubusercontent.com/nf-osi/"
-        "nf-research-tools-schema/main/nf-research-tools.jsonld"
-    )
-    obj = Schema(
-        schema_url,
-        gff_synapse_project_id,
-        gff_synapse_asset_view_id,
-        synapse_input_token,
-    )
-    yield obj
 
 
 # gff database objects --------------------------------------------------------
@@ -150,6 +139,24 @@ def fixture_gff_mysql():
         if table_name in obj.get_table_names():
             obj.drop_table(table_name)
     assert obj.get_table_names() == []
+
+
+@pytest.fixture(scope="session", name="gff_schema")
+def fixture_gff_schema(
+    gff_synapse_project_id, gff_synapse_asset_view_id, synapse_input_token
+):
+    """Yields a Schema using the GFF tools schema"""
+    schema_url = (
+        "https://raw.githubusercontent.com/nf-osi/"
+        "nf-research-tools-schema/main/nf-research-tools.jsonld"
+    )
+    obj = Schema(
+        schema_url,
+        gff_synapse_project_id,
+        gff_synapse_asset_view_id,
+        synapse_input_token,
+    )
+    yield obj
 
 
 @pytest.fixture(scope="module", name="rdb_updater_mysql_gff")

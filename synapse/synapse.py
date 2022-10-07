@@ -1,5 +1,6 @@
 """Synapse
 """
+import time
 from functools import partial
 import synapseclient as sc
 import pandas as pd
@@ -256,6 +257,9 @@ class Synapse:
             results = self.syn.tableQuery(f"select * from {synapse_id}")
             self.syn.delete(results)
 
+            # wait for Synapse to catch up
+            time.sleep(5)
+
             # removes all current columns
             current_table = self.syn.get(synapse_id)
             current_columns = self.syn.getTableColumns(current_table)
@@ -279,6 +283,8 @@ class Synapse:
             table (pd.DataFrame): A dataframe of the table
         """
         project = self.syn.get(self.project_id)
+        import logging
+        logging.warning(table)
         table = sc.table.build_table(table_name, project, table)
         self.syn.store(table)
 
