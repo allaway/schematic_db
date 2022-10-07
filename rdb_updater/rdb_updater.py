@@ -47,8 +47,6 @@ class RDBUpdater:
         """Updates all tables in the db_config
 
         Args:
-            table_config (DBObjectConfig): A generic representation of the table as a
-                DBObjectConfig object.
             strict (bool): If false, some errors are turned into warnings.
         """
         db_config = self.schema.create_db_config()
