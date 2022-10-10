@@ -1,10 +1,9 @@
-"""QueryStore
-"""
+"""QueryStore"""
 from abc import ABC, abstractmethod
 import pandas as pd
 
 
-class QueryStore(ABC):
+class QueryStore(ABC):  # pylint: disable=too-few-public-methods
     """An interface for Query Store objects"""
 
     @abstractmethod

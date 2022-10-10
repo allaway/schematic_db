@@ -2,7 +2,7 @@
 """
 from rdb_updater import RDBUpdater
 
-# TODO: Turn on tests when api is public
+
 class FutureTestRDBUpdater:
     """Testing for RDB with MySQL database"""
 

@@ -38,8 +38,8 @@ def fixture_synapse_with_filled_table_one(synapse_with_empty_table_one, table_on
     yield obj
 
 
-class TestSynapseIDs:
-    """Testing for id methods"""
+class TestSynapse:
+    """Testing for Synapse class"""
 
     def test_get_table_id_from_name(self, synapse_database_project):
         """Testing for Synapse.get_table_id_from_name()"""
@@ -54,10 +54,6 @@ class TestSynapseIDs:
             synapse_database_project.get_table_name_from_synapse_id("syn34532191")
             == "test_table_one"
         )
-
-
-class TestSynapseQueries:
-    """Testing for query methods"""
 
     def test_query_table(self, synapse_database_project, table_one, table_one_config):
         """Testing for synapse.query_table()"""
@@ -175,22 +171,3 @@ class TestSynapseModifyRows:
         obj.update_table_rows("table_one", upsert_table, table_one_config)
         result3 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result3, upsert_table)
-
-
-# TODO fix this test
-'''
-class TestReplaceTable:
-    """Testing for synapse.replace_table()"""
-
-    def test_replace_table(
-        self, synapse_with_filled_table_one, table_two, table_two_config
-    ):
-        """Testing for synapse.replace_table()"""
-        obj = synapse_with_filled_table_one
-        table_id1 = obj.get_synapse_id_from_table_name("table_one")
-        obj.replace_table("table_one", table_two)
-        result1 = obj.query_table("table_one", table_two_config)
-        pd.testing.assert_frame_equal(result1, table_two)
-        table_id2 = obj.get_synapse_id_from_table_name("table_one")
-        assert table_id1 == table_id2
-'''

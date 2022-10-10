@@ -1,7 +1,6 @@
 """Testing for Testing for RDBQueryer."""
 
-# TODO: Turn on tests when api is public
-class FutureTestRDBQueryer:
+class FutureTestRDBQueryer: #pylint: disable=too-few-public-methods
     """Testing for RDBQueryer"""
 
     def test_store_query_results(self, rdb_queryer_mysql_gff, gff_query_csv_path):

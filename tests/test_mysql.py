@@ -18,7 +18,7 @@ from datetime import datetime
 import pandas as pd
 
 
-class TestMYSQLUpdateTables:
+class TestMYSQLUpdateTables: #pylint: disable=too-few-public-methods
     """Testing for MYSQL methods that update tables"""
 
     def test_add_drop_table(
@@ -42,7 +42,7 @@ class TestMYSQLUpdateTables:
         assert mysql.get_table_names() == []
 
 
-class TestMYSQLGetters:
+class TestMYSQLGetters: #pylint: disable=too-few-public-methods
     """
     Testing for MYSQL
     """
