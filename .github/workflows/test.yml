@@ -91,6 +91,10 @@ jobs:
       # they'll be installed and working.
       - run: poetry install --no-interaction
 
+      # This checks if code if statically typed
+      - name: Static typing with mypy
+        run: poetry run mypy .
+
       # This checks if code has been formatted with black
       - name: Code formatting with black
         uses: psf/black@stable
