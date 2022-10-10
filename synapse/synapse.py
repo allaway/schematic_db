@@ -232,8 +232,15 @@ class Synapse:
 
     def upsert_table_rows(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ):
-        """_summary_"""
+    ) -> None:
+        """Upserts rows from  the given table
+
+        Args:
+            table_name (str): The name fo the table to be upserted into
+            data (pd.DataFrame): The table the rows will come from
+            table_config (DBObjectConfig): A generic representation of the table as a
+                DBObjectConfig object.
+        """
         table_id = self.get_synapse_id_from_table_name(table_name)
         primary_keys = table_config.primary_keys
         table = self._get_primary_key_table(table_name, primary_keys)
