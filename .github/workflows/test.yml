@@ -94,7 +94,8 @@ jobs:
       # This checks if code if statically typed
       - name: Static typing with mypy
         run: |
-          poetry run mypy --install-types
+          mkdir .mypy_cache
+          poetry run mypy --install-types --non-interactive ./
           poetry run mypy .
 
       # This checks if code has been formatted with black
