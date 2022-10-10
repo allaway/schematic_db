@@ -117,7 +117,7 @@ class Schema:
     which contains schemas for each object(table) in a database.
     """
 
-    def __init__( #pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         schema_url: str,
         synapse_project_id: str,

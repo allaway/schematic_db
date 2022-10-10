@@ -1,6 +1,7 @@
 """Testing for Testing for RDBQueryer."""
 
-class FutureTestRDBQueryer: #pylint: disable=too-few-public-methods
+
+class FutureTestRDBQueryer:  # pylint: disable=too-few-public-methods
     """Testing for RDBQueryer"""
 
     def test_store_query_results(self, rdb_queryer_mysql_gff, gff_query_csv_path):
