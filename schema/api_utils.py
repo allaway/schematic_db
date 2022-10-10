@@ -95,7 +95,7 @@ def get_node_range(
 
 def get_property_label_from_display_name(
     schema_url: str, display_name: str, strict_came_case: bool = True
-) -> list[str]:
+) -> str:
     """Converts a given display name string into a proper property label string
 
     Args:
@@ -105,7 +105,7 @@ def get_property_label_from_display_name(
             to camel case is used. Defaults to True.
 
     Returns:
-        list[str]: _description_
+        str: the property label name
     """
     params = {
         "schema_url": schema_url,
@@ -153,7 +153,7 @@ def get_schema(schema_url: str) -> networkx.MultiDiGraph:
 
 def get_project_manifests(
     input_token: str, project_id: str, asset_view: str
-) -> list[dict[str:str]]:
+) -> list[dict[str, str]]:
     """Gets all metadata manifest files across all datasets in a specified project.
 
     Args:

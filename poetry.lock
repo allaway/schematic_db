@@ -292,6 +292,24 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "mypy"
+version = "0.982"
+description = "Optional static typing for Python"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+mypy-extensions = ">=0.4.3"
+tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
+typing-extensions = ">=3.10"
+
+[package.extras]
+dmypy = ["psutil (>=4.0)"]
+python2 = ["typed-ast (>=1.4.0,<2)"]
+reports = ["lxml"]
+
+[[package]]
 name = "mypy-extensions"
 version = "0.4.3"
 description = "Experimental type system extensions for programs checked with the mypy typechecker."
@@ -708,7 +726,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "2c6493d9ea78556c8684004cb881ad2255c64a9e242d15e9bcff06b6d25b6ee2"
+content-hash = "0f6499350e04080aec7c0eab4f61b128d6daa533f4a7c3a75a18e8b37c735c72"
 
 [metadata.files]
 astroid = []
@@ -735,6 +753,7 @@ lazy-object-proxy = []
 markupsafe = []
 mccabe = []
 more-itertools = []
+mypy = []
 mypy-extensions = []
 mysqlclient = []
 networkx = []

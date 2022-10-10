@@ -2,8 +2,9 @@
 """
 import time
 from functools import partial
-import synapseclient as sc
-import pandas as pd
+import typing
+import synapseclient as sc  # type: ignore
+import pandas as pd  # type: ignore
 from db_object_config import DBObjectConfig, DBDatatype
 
 
@@ -102,7 +103,7 @@ class Synapse:
 
     def execute_sql_statement(
         self, statement: str, include_row_data: bool = False
-    ) -> str:
+    ) -> typing.Any:
         """Execute a SQL statement
 
         Args:
@@ -110,7 +111,7 @@ class Synapse:
             include_row_data (bool, optional): Include row_id and row_etag. Defaults to False.
 
         Returns:
-            str: A path to a csv file containing the query
+            any: An object from
         """
         return self.syn.tableQuery(
             statement, includeRowIdAndRowVersion=include_row_data
@@ -167,8 +168,8 @@ class Synapse:
             table_name (str): The name of the table to be added
             table_config (DBObjectConfig): The config the table to be added
         """
-        columns = []
-        values = {}
+        columns: list[sc.Column] = []
+        values: dict[str, list] = {}
         for att in table_config.attributes:
             column = self._create_synapse_column(att.name, att.datatype)
             columns.append(column)
@@ -315,6 +316,6 @@ class Synapse:
         table = self.execute_sql_query(query, include_row_data=True)
         return table
 
-    def _create_synapse_column(self, name: str, datatype: str) -> sc.Column:
-        func = SYNAPSE_DATATYPES.get(datatype)
+    def _create_synapse_column(self, name: str, datatype: DBDatatype) -> sc.Column:
+        func = SYNAPSE_DATATYPES[datatype]
         return func(name=name)
