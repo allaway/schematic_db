@@ -99,7 +99,9 @@ jobs:
 
       # This checks for pylint score
       - name: Code formatting with pylint
-        run: pylint db_object_config query_store rdb rdb_queryer rdb_updater schema synapse tests
+        run: |
+          pip install pylint
+          pylint db_object_config query_store rdb rdb_queryer rdb_updater schema synapse tests
 
       # And finally run tests. I'm using pytest and all my pytest config is in my `pyproject.toml`
       # so this line is super-simple. But it could be as complex as you need.
