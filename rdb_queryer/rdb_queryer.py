@@ -3,6 +3,17 @@ import pandas as pd
 from rdb import RelationalDatabase
 from query_store import QueryStore
 
+class DuplicateColumnError(Exception):
+    """Occurs when a query results in a table with duplicate columns"""
+
+    def __init__(self, message: str, table_name: str) -> None:
+        self.message = message
+        self.table_name = table_name
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return f"{self.message}: {self.table_name}"
+
 
 class RDBQueryer:
     """Represents queries a database and uploads the results to a query store."""
@@ -33,6 +44,12 @@ class RDBQueryer:
         Args:
             query (str): A query in SQL form
             table_name (str): The name of the table the result will be stored as
+
+        Raises:
+            DuplicateColumnError: Raised when the query result has duplicate columns
         """
         query_result = self.rdb.execute_sql_query(query)
+        column_names = list(query_result.columns)
+        if len(column_names) != len(set(column_names)):
+            raise DuplicateColumnError("Query result has duplicate columns", table_name)
         self.query_store.store_query_result(table_name, query_result)
