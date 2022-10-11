@@ -67,7 +67,7 @@ def fixture_test_manifests() -> Generator:
     ]
 
 
-class TestUtils:
+class FutureTestUtils:
     """Testing for Schema utils"""
 
     def test_get_manifest_ids_for_object(
@@ -144,7 +144,7 @@ class TestUtils:
             )
 
 
-class TestSchema:
+class FutureTestSchema:
     """Testing for Schema"""
 
     def test_create_attributes(self, test_schema: Schema) -> None:
@@ -190,7 +190,7 @@ class TestSchema:
         ]
 
 
-class TestGFFSchema:
+class FutureTestGFFSchema:
     """Testing for GFF Schema"""
 
     def test_create_db_config(self, gff_db_config: DBConfig) -> None:
