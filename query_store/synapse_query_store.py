@@ -18,5 +18,5 @@ class SynapseQueryStore(QueryStore):  # pylint: disable=too-few-public-methods
         """
         self.synapse = Synapse(config_dict)
 
-    def store_query_result(self, table_name: str, query_result: pd.DataFrame):
+    def store_query_result(self, table_name: str, query_result: pd.DataFrame) -> None:
         self.synapse.replace_table(table_name, query_result)

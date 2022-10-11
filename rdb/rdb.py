@@ -7,13 +7,13 @@ from db_object_config import DBObjectConfig
 class UpdateDBTableError(Exception):
     """UpdateDBTableError"""
 
-    def __init__(self, table_name, error_message):
+    def __init__(self, table_name: str, error_message: str) -> None:
         self.message = "Error updating table"
         self.table_name = table_name
         self.error_message = error_message
         super().__init__(self.message)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.message}; table: {self.table_name}; error: {self.error_message}"
 
 
@@ -34,7 +34,7 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig):
+    def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
         """Updates or inserts rows into the given table
         If table does not exist the table is created
 
@@ -47,7 +47,7 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def drop_table(self, table_name: str):
+    def drop_table(self, table_name: str) -> None:
         """Drops a table from the schema
         Args:
             table_name (str): The id(name) of the table to be dropped
@@ -56,7 +56,7 @@ class RelationalDatabase(ABC):
     @abstractmethod
     def delete_table_rows(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ):
+    ) -> None:
         """Deletes rows from the given table
 
         Args:
