@@ -18,6 +18,7 @@ from .api_utils import (
     get_property_label_from_display_name,
     get_project_manifests,
     get_manifest,
+    ManifestSynapseConfig,
 )
 
 
@@ -72,42 +73,40 @@ def get_key_attribute(object_name: str) -> str:
 
 
 def get_manifest_ids_for_object(
-    object_name: str, manifests: list[dict[str, str]]
+    object_name: str, manifests: list[ManifestSynapseConfig]
 ) -> list[str]:
     """Gets the manifest ids from a list of manifests matching the object name
 
     Args:
         object_name (str): The name of the object to get the manifests for
-        manifests (list[dict[str:str]]): A list of manifests in dictionary form
+        manifests (list[ManifestSynapseConfig]): A list of manifests in Synapse
 
     Returns:
         list[str]: A list of synapse ids for the manifests
     """
     return [
-        manifest["manifest_id"]
+        manifest.manifest_id
         for manifest in manifests
-        if manifest.get("component_name") == object_name
-        and manifest.get("manifest_id") != ""
+        if manifest.component_name == object_name and manifest.manifest_id != ""
     ]
 
 
 def get_dataset_ids_for_object(
-    object_name: str, manifests: list[dict[str, str]]
+    object_name: str, manifests: list[ManifestSynapseConfig]
 ) -> list[str]:
     """Gets the dataset ids from a list of manifests matching the object name
 
     Args:
         object_name (str): The name of the object to get the manifests for
-        manifests (list[dict[str:str]]): A list of manifests in dictionary form
+        manifests (list[ManifestSynapseConfig]): A list of manifests in Synapse
 
     Returns:
         list[str]: A list of synapse ids for the manifest datasets
     """
     return [
-        manifest["dataset_id"]
+        manifest.dataset_id
         for manifest in manifests
-        if manifest.get("component_name") == object_name
-        and manifest.get("manifest_id") != ""
+        if manifest.component_name == object_name and manifest.manifest_id != ""
     ]
 
 

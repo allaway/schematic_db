@@ -10,8 +10,10 @@ from db_object_config import (
 )
 from schema import (
     Schema,
+    ManifestSynapseConfig,
     get_project_manifests,
     get_manifest_ids_for_object,
+    get_dataset_ids_for_object,
     get_manifest,
 )
 
@@ -26,24 +28,62 @@ def fixture_test_synapse_folder_id() -> Generator:
 def fixture_test_manifests() -> Generator:
     """Yields a test set of manifests"""
     yield [
-        {"manifest_id": "syn1", "component_name": "C1"},
-        {"manifest_id": "syn2", "component_name": "C2"},
-        {"manifest_id": "syn3", "component_name": ""},
-        {"manifest_id": "", "component_name": "C3"},
-        {"manifest_id": "syn5", "component_name": "C1"},
+        ManifestSynapseConfig(
+            manifest_id="syn1",
+            dataset_id="syn6",
+            component_name="C1",
+            dataset_name="",
+            manifest_name="",
+        ),
+        ManifestSynapseConfig(
+            manifest_id="syn2",
+            dataset_id="syn7",
+            component_name="C2",
+            dataset_name="",
+            manifest_name="",
+        ),
+        ManifestSynapseConfig(
+            manifest_id="syn3",
+            dataset_id="syn8",
+            component_name="",
+            dataset_name="",
+            manifest_name="",
+        ),
+        ManifestSynapseConfig(
+            manifest_id="",
+            dataset_id="syn9",
+            component_name="C3",
+            dataset_name="",
+            manifest_name="",
+        ),
+        ManifestSynapseConfig(
+            manifest_id="syn5",
+            dataset_id="syn10",
+            component_name="C1",
+            dataset_name="",
+            manifest_name="",
+        ),
     ]
 
 
-class FutureTestUtils:
+class TestUtils:
     """Testing for Schema utils"""
 
     def test_get_manifest_ids_for_object(
-        self, test_manifests: list[dict[str, str]]
+        self, test_manifests: list[ManifestSynapseConfig]
     ) -> None:
         """Testing for get_manifest_ids_for_object"""
         assert get_manifest_ids_for_object("C1", test_manifests) == ["syn1", "syn5"]
         assert get_manifest_ids_for_object("C2", test_manifests) == ["syn2"]
         assert get_manifest_ids_for_object("C3", test_manifests) == []
+
+    def test_get_dataset_ids_for_object(
+        self, test_manifests: list[ManifestSynapseConfig]
+    ) -> None:
+        """Testing for get_manifest_ids_for_object"""
+        assert get_dataset_ids_for_object("C1", test_manifests) == ["syn6", "syn10"]
+        assert get_dataset_ids_for_object("C2", test_manifests) == ["syn7"]
+        assert get_dataset_ids_for_object("C3", test_manifests) == []
 
     def test_get_project_manifests(
         self,
@@ -58,13 +98,13 @@ class FutureTestUtils:
             asset_view=test_synapse_asset_view_id,
         )
         assert manifests == [
-            {
-                "dataset_id": "syn30988361",
-                "dataset_name": "TestFolder",
-                "manifest_id": "syn30988380",
-                "manifest_name": "synapse_storage_manifest (2).csv",
-                "component_name": "Biospecimen",
-            }
+            ManifestSynapseConfig(
+                dataset_id="syn30988361",
+                dataset_name="TestFolder",
+                manifest_id="syn30988380",
+                manifest_name="synapse_storage_manifest (2).csv",
+                component_name="Biospecimen",
+            )
         ]
 
     def test_get_project_manifests2(
@@ -93,7 +133,7 @@ class FutureTestUtils:
         assert isinstance(manifest, pd.DataFrame)
 
 
-class FutureTestSchema:
+class TestSchema:
     """Testing for Schema"""
 
     def test_create_attributes(self, test_schema: Schema) -> None:
@@ -139,7 +179,7 @@ class FutureTestSchema:
         ]
 
 
-class FutureTestGFFSchema:
+class TestGFFSchema:
     """Testing for GFF Schema"""
 
     def test_create_db_config(self, gff_db_config: DBConfig) -> None:

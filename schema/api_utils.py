@@ -1,5 +1,6 @@
 """Functions that interact with the schematic API"""
 
+from dataclasses import dataclass
 import pickle
 import requests
 import networkx
@@ -151,9 +152,20 @@ def get_schema(schema_url: str) -> networkx.MultiDiGraph:
     return schema
 
 
+@dataclass
+class ManifestSynapseConfig:
+    """A config for a manifest in Synapse."""
+
+    dataset_id: str
+    dataset_name: str
+    manifest_id: str
+    manifest_name: str
+    component_name: str
+
+
 def get_project_manifests(
     input_token: str, project_id: str, asset_view: str
-) -> list[dict[str, str]]:
+) -> list[ManifestSynapseConfig]:
     """Gets all metadata manifest files across all datasets in a specified project.
 
     Args:
@@ -164,7 +176,7 @@ def get_project_manifests(
             data assets for a given project.(i.e. master_fileview in config.yml)
 
     Returns:
-        list[dict[str:str]]: A list of dictionaries where each dict represents a manifest.
+        list[ManifestSynapseConfig]: A list of manifests in Synapse
     """
     params = {
         "input_token": input_token,
@@ -173,13 +185,13 @@ def get_project_manifests(
     }
     response = create_schematic_api_response("storage/project/manifests", params)
     manifests = [
-        {
-            "dataset_id": item[0][0],
-            "dataset_name": item[0][1],
-            "manifest_id": item[1][0],
-            "manifest_name": item[1][1],
-            "component_name": item[2][0],
-        }
+        ManifestSynapseConfig(
+            dataset_id=item[0][0],
+            dataset_name=item[0][1],
+            manifest_id=item[1][0],
+            manifest_name=item[1][1],
+            component_name=item[2][0],
+        )
         for item in response.json()
     ]
     return manifests
