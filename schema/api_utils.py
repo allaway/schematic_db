@@ -11,6 +11,25 @@ API_URL = "http://0.0.0.0:3001"
 API_SERVER = "v1"
 
 
+class SchematicAPIError(Exception):
+    """When schematic API response status code is anything other than 200"""
+
+    def __init__(self, endpoint_url: str, status_code: int, reason: str) -> None:
+        self.message = "Error accessing Schematic endpoint"
+        self.endpoint_url = endpoint_url
+        self.status_code = status_code
+        self.reason = reason
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return (
+            f"{self.message}; "
+            f"URL: {self.endpoint_url}; "
+            f"Code: {self.status_code}; "
+            f"Reason: {self.reason}"
+        )
+
+
 def create_schematic_api_response(
     endpoint_path: str, params: dict
 ) -> requests.Response:
@@ -20,11 +39,17 @@ def create_schematic_api_response(
         endpoint_path (str): The path for the endpoint in the schematic API
         params (dict): The parameters in dict form for the requested endpoint
 
+    Raises:
+        SchematicAPIError: When response code is anything other than 200
+
     Returns:
         requests.Response: The response from the API
     """
     endpoint_url = f"{API_URL}/{API_SERVER}/{endpoint_path}"
-    return requests.get(endpoint_url, params=params, timeout=30)
+    response = requests.get(endpoint_url, params=params, timeout=30)
+    if response.status_code != 200:
+        raise SchematicAPIError(endpoint_url, response.status_code, response.reason)
+    return response
 
 
 def find_class_specific_properties(schema_url: str, schema_class: str) -> list[str]:
@@ -32,10 +57,10 @@ def find_class_specific_properties(schema_url: str, schema_class: str) -> list[s
 
     Args:
         schema_url (str): Data Model URL
-        schema_class (str): _description_
+        schema_class (str): The class/name fo the component
 
     Returns:
-        list[str]: _description_
+        list[str]: A list of properties of a given class/component.
     """
     params = {"schema_url": schema_url, "schema_class": schema_class}
     response = create_schematic_api_response(
@@ -54,12 +79,12 @@ def get_node_dependencies(
 
     Args:
         schema_url (str): Data Model URL
-        source_node (str): _description_
+        source_node (str): The node whose dependencies are needed
         return_display_names (bool, optional): _description_. Defaults to True.
         return_schema_ordered (bool, optional): _description_. Defaults to True.
 
     Returns:
-        list[str]: _description_
+        list[str]: List of nodes that are dependent on the source node.
     """
     params = {
         "schema_url": schema_url,

@@ -11,6 +11,7 @@ from db_object_config import (
 from schema import (
     Schema,
     ManifestSynapseConfig,
+    SchematicAPIError,
     get_project_manifests,
     get_manifest_ids_for_object,
     get_dataset_ids_for_object,
@@ -131,6 +132,16 @@ class TestUtils:
             gff_synapse_asset_view_id,
         )
         assert isinstance(manifest, pd.DataFrame)
+
+        with pytest.raises(
+            SchematicAPIError,
+            match="Error accessing Schematic endpoint",
+        ):
+            get_manifest(
+                secrets_dict["synapse"]["auth_token"],
+                "1",
+                gff_synapse_asset_view_id,
+            )
 
 
 class TestSchema:
