@@ -3,6 +3,7 @@ import pandas as pd
 from rdb import RelationalDatabase
 from query_store import QueryStore
 
+
 class DuplicateColumnError(Exception):
     """Occurs when a query results in a table with duplicate columns"""
 
