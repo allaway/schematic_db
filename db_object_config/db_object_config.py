@@ -109,7 +109,7 @@ class DBObjectConfig:
     def _check_attributes(self) -> None:
         if len(self.attributes) == 0:
             raise ConfigAttributeError("Attributes is empty", self.name)
-        if len(self.attributes) != len(set(self.attributes)):
+        if len(self.get_attribute_names()) != len(set(self.get_attribute_names())):
             raise ConfigAttributeError("Attributes has duplicates", self.name)
 
     def _check_primary_keys(self) -> None:
