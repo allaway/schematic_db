@@ -16,14 +16,21 @@ will be used.
 """
 from datetime import datetime
 import pandas as pd
+from db_object_config.db_object_config import DBObjectConfig
+
+from rdb.mysql import MySQLDatabase
 
 
 class TestMYSQLUpdateTables:  # pylint: disable=too-few-public-methods
     """Testing for MYSQL methods that update tables"""
 
     def test_add_drop_table(
-        self, mysql, table_one_config, table_two_config, table_three_config
-    ):
+        self,
+        mysql: MySQLDatabase,
+        table_one_config: DBObjectConfig,
+        table_two_config: DBObjectConfig,
+        table_three_config: DBObjectConfig,
+    ) -> None:
         """
         Testing for MYSQL.add_table() and and MYSQL.drop_table()
         """
@@ -47,7 +54,9 @@ class TestMYSQLGetters:  # pylint: disable=too-few-public-methods
     Testing for MYSQL
     """
 
-    def test_get_table_names(self, mysql, table_one_config):
+    def test_get_table_names(
+        self, mysql: MySQLDatabase, table_one_config: DBObjectConfig
+    ) -> None:
         """
         Testing for MYSQL.get_table_names()
         """
@@ -61,7 +70,12 @@ class TestMYSQLGetters:  # pylint: disable=too-few-public-methods
 class TestMYSQLUpdateRows:
     """Testing for MYSQL methods that update rows"""
 
-    def test_upsert_table_rows1(self, mysql, table_one, table_one_config):
+    def test_upsert_table_rows1(
+        self,
+        mysql: MySQLDatabase,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
         """Testing for MYSQL.upsert_table_rows()
         Whole table at once
         """
@@ -74,7 +88,12 @@ class TestMYSQLUpdateRows:
         mysql.drop_table("table_one")
         assert mysql.get_table_names() == []
 
-    def test_upsert_table_rows2(self, mysql, table_one, table_one_config):
+    def test_upsert_table_rows2(
+        self,
+        mysql: MySQLDatabase,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
         """Testing for MYSQL.upsert_table_rows()
         Whole table at once
         """
@@ -97,7 +116,12 @@ class TestMYSQLUpdateRows:
         mysql.drop_table("table_one")
         assert mysql.get_table_names() == []
 
-    def test_upsert_table_rows3(self, mysql, table_one, table_one_config):
+    def test_upsert_table_rows3(
+        self,
+        mysql: MySQLDatabase,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
         """Testing for MYSQL.upsert_table_rows()
         Updating a row
         """
@@ -148,7 +172,12 @@ class TestMYSQLUpdateRows:
         mysql.drop_table("table_one")
         assert mysql.get_table_names() == []
 
-    def test_delete_table_rows1(self, mysql, table_one_config, table_one):
+    def test_delete_table_rows1(
+        self,
+        mysql: MySQLDatabase,
+        table_one_config: DBObjectConfig,
+        table_one: pd.DataFrame,
+    ) -> None:
         """Testing for MYSQL.delete_table_rows()"""
         assert mysql.get_table_names() == []
         mysql.add_table("table_one", table_one_config)

@@ -15,28 +15,12 @@ from db_object_config import (
 )
 
 
-class TestDBAttributeConfig:
-    """Testing for DBAttributeConfig"""
-
-    def test_db_attribute_config_success(self):
-        """Successful tests for DBAttributeConfig()"""
-        obj = DBAttributeConfig(name="col", datatype=DBDatatype.TEXT)
-        assert isinstance(obj, DBAttributeConfig)
-
-    def test_db_attribute_config_error(self):
-        """Tests for DBAttributeConfig() that raise an error"""
-        with pytest.raises(
-            TypeError, match="Param datatype is not of type DBDatatype:TEXT"
-        ):
-            DBAttributeConfig(name="col", datatype="TEXT")
-
-
 class TestDBObjectConfig:
     """
     Testing for DBObjectConfig
     """
 
-    def test_db_object_config_success(self):
+    def test_db_object_config_success(self) -> None:
         """
         Successful tests for DBObjectConfig()
         """
@@ -66,7 +50,7 @@ class TestDBObjectConfig:
         )
         assert isinstance(obj2, DBObjectConfig)
 
-    def test_db_object_config_exceptions(self):
+    def test_db_object_config_exceptions(self) -> None:
         """
         Tests for DBObjectConfig() that raise exceptions
         """
@@ -141,7 +125,7 @@ class TestDBConfig:
     Testing for DBObjectConfigList
     """
 
-    def test_db_object_config_list_success(self):
+    def test_db_object_config_list_success(self) -> None:
         """
         Successful tests for DBObjectConfigList()
         """
@@ -187,7 +171,7 @@ class TestDBConfig:
         )
         assert isinstance(obj2, DBConfig)
 
-    def test_db_object_config_list_exceptions(self):
+    def test_db_object_config_list_exceptions(self) -> None:
         """
         Tests for DBObjectConfigList() that raise exceptions
         """

@@ -65,3 +65,11 @@ class RelationalDatabase(ABC):
             table_config (DBObjectConfig): A generic representation of the table as a
                 DBObjectConfig object.
         """
+
+    @abstractmethod
+    def get_table_names(self) -> list[str]:
+        """Gets the names of the tables in the database
+
+        Returns:
+            list[str]: A list of table names
+        """

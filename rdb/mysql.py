@@ -100,11 +100,6 @@ class MySQLDatabase(RelationalDatabase):
         self._execute_sql_statement(statement)
 
     def get_table_names(self) -> list[str]:
-        """Gets the names of the tables in the schema
-
-        Returns:
-            list[str]: A list of table names
-        """
         inspector = sa.inspect(self.engine)
         return inspector.get_table_names()
 
