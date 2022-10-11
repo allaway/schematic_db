@@ -258,7 +258,7 @@ class Synapse:
             self.syn.delete(results)
 
             # wait for Synapse to catch up
-            time.sleep(5)
+            time.sleep(1)
 
             # removes all current columns
             current_table = self.syn.get(synapse_id)
