@@ -15,12 +15,14 @@ If the the config doesn't exist, the file at 'tests/data/mysql_config.yml'
 will be used.
 """
 from datetime import datetime
+import pytest
 import pandas as pd
 from db_object_config.db_object_config import DBObjectConfig
 
 from rdb.mysql import MySQLDatabase
 
 
+@pytest.mark.fast
 class TestMYSQLUpdateTables:  # pylint: disable=too-few-public-methods
     """Testing for MYSQL methods that update tables"""
 
@@ -49,6 +51,7 @@ class TestMYSQLUpdateTables:  # pylint: disable=too-few-public-methods
         assert mysql.get_table_names() == []
 
 
+@pytest.mark.fast
 class TestMYSQLGetters:  # pylint: disable=too-few-public-methods
     """
     Testing for MYSQL
@@ -67,6 +70,7 @@ class TestMYSQLGetters:  # pylint: disable=too-few-public-methods
         assert mysql.get_table_names() == []
 
 
+@pytest.mark.fast
 class TestMYSQLUpdateRows:
     """Testing for MYSQL methods that update rows"""
 

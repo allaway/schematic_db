@@ -15,6 +15,7 @@ from db_object_config import (
 )
 
 
+@pytest.mark.fast
 class TestDBObjectConfig:
     """
     Testing for DBObjectConfig
@@ -120,6 +121,7 @@ class TestDBObjectConfig:
             )
 
 
+@pytest.mark.fast
 class TestDBConfig:
     """
     Testing for DBObjectConfigList

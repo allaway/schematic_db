@@ -67,7 +67,8 @@ def fixture_test_manifests() -> Generator:
     ]
 
 
-class FutureTestUtils:
+@pytest.mark.slow
+class TestUtils:
     """Testing for Schema utils"""
 
     def test_get_manifest_ids_for_object(
@@ -144,7 +145,8 @@ class FutureTestUtils:
             )
 
 
-class FutureTestSchema:
+@pytest.mark.slow
+class TestSchema:
     """Testing for Schema"""
 
     def test_create_attributes(self, test_schema: Schema) -> None:
@@ -190,7 +192,8 @@ class FutureTestSchema:
         ]
 
 
-class FutureTestGFFSchema:
+@pytest.mark.slow
+class TestGFFSchema:
     """Testing for GFF Schema"""
 
     def test_create_db_config(self, gff_db_config: DBConfig) -> None:
