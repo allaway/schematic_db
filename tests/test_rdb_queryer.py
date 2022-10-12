@@ -3,7 +3,8 @@ import pytest
 from rdb_queryer import RDBQueryer
 
 
-@pytest.mark.slow
+@pytest.mark.synapse
+@pytest.mark.schematic
 class TestRDBQueryer:  # pylint: disable=too-few-public-methods
     """Testing for RDBQueryer"""
 

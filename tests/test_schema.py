@@ -67,7 +67,7 @@ def fixture_test_manifests() -> Generator:
     ]
 
 
-@pytest.mark.slow
+@pytest.mark.fast
 class TestUtils:
     """Testing for Schema utils"""
 
@@ -86,6 +86,11 @@ class TestUtils:
         assert get_dataset_ids_for_object("C1", test_manifests) == ["syn6", "syn10"]
         assert get_dataset_ids_for_object("C2", test_manifests) == ["syn7"]
         assert get_dataset_ids_for_object("C3", test_manifests) == []
+
+
+@pytest.mark.schematic
+class TestAPIUtils:
+    """Testing for API utils"""
 
     def test_get_project_manifests(
         self,
@@ -145,7 +150,7 @@ class TestUtils:
             )
 
 
-@pytest.mark.slow
+@pytest.mark.schematic
 class TestSchema:
     """Testing for Schema"""
 
@@ -192,7 +197,7 @@ class TestSchema:
         ]
 
 
-@pytest.mark.slow
+@pytest.mark.schematic
 class TestGFFSchema:
     """Testing for GFF Schema"""
 

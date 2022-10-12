@@ -45,7 +45,7 @@ def fixture_synapse_with_filled_table_one(
     yield obj
 
 
-@pytest.mark.slow
+@pytest.mark.synapse
 class TestSynapse:
     """Testing for Synapse class"""
 
@@ -76,7 +76,7 @@ class TestSynapse:
         pd.testing.assert_frame_equal(result, table_one)
 
 
-@pytest.mark.slow
+@pytest.mark.synapse
 class TestSynapseModifyTables:
     """
     Testing for methods that add or drop tables
@@ -121,7 +121,7 @@ class TestSynapseModifyTables:
         assert table_id1 == table_id2
 
 
-@pytest.mark.slow
+@pytest.mark.synapse
 class TestSynapseModifyRows:
     """
     Testing for synapse methods that modify row data

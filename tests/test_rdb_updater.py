@@ -3,7 +3,7 @@ import pytest
 from rdb_updater import RDBUpdater
 
 
-@pytest.mark.slow
+@pytest.mark.schematic
 class TestRDBUpdater:
     """Testing for RDB with MySQL database"""
 
