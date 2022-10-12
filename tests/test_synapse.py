@@ -215,7 +215,3 @@ class TestSynapseModifyRows:
         obj.update_table_rows("table_one", upsert_table, table_one_config)
         result3 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result3, upsert_table)
-
-
-class TestReplaceTable:
-    """Testing for synapse.replace_table()"""
