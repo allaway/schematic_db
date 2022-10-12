@@ -83,7 +83,7 @@ class TestSynapseModifyTables:
     def test_add_table(
         self,
         synapse_no_extra_tables: pd.DataFrame,
-        table_one_config: pd.DataFrame,
+        table_one_config: DBObjectConfig,
         synapse_database_table_names: list[str],
     ) -> None:
         """Testing for Synapse.add_table()"""
@@ -102,6 +102,21 @@ class TestSynapseModifyTables:
         assert obj.get_table_names() == ["table_one"] + synapse_database_table_names
         obj.drop_table("table_one")
         assert obj.get_table_names() == synapse_database_table_names
+
+    def test_replace_table(
+        self,
+        synapse_with_filled_table_one: pd.DataFrame,
+        table_two: pd.DataFrame,
+        table_two_config: DBObjectConfig,
+    ):
+        """Testing for synapse.replace_table()"""
+        obj = synapse_with_filled_table_one
+        table_id1 = obj.get_synapse_id_from_table_name("table_one")
+        obj.replace_table("table_one", table_two)
+        result1 = obj.query_table("table_one", table_two_config)
+        pd.testing.assert_frame_equal(result1, table_two)
+        table_id2 = obj.get_synapse_id_from_table_name("table_one")
+        assert table_id1 == table_id2
 
 
 class TestSynapseModifyRows:
@@ -200,3 +215,7 @@ class TestSynapseModifyRows:
         obj.update_table_rows("table_one", upsert_table, table_one_config)
         result3 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result3, upsert_table)
+
+
+class TestReplaceTable:
+    """Testing for synapse.replace_table()"""
