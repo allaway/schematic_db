@@ -108,7 +108,7 @@ class TestSynapseModifyTables:
         synapse_with_filled_table_one: pd.DataFrame,
         table_two: pd.DataFrame,
         table_two_config: DBObjectConfig,
-    ):
+    ) -> None:
         """Testing for synapse.replace_table()"""
         obj = synapse_with_filled_table_one
         table_id1 = obj.get_synapse_id_from_table_name("table_one")
