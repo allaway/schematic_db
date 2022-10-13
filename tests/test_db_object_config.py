@@ -1,9 +1,9 @@
 """
-Testing for  DBObjectConfig.
+Testing for DBConfig.
 """
 import pytest
 from db_object_config import (
-    DBObjectConfigList,
+    DBConfig,
     DBObjectConfig,
     DBAttributeConfig,
     DBDatatype,
@@ -39,7 +39,6 @@ class TestDBObjectConfig:
         """
         obj1 = DBObjectConfig(
             name="table",
-            manifest_ids=["syn1"],
             attributes=[
                 DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
             ],
@@ -50,7 +49,6 @@ class TestDBObjectConfig:
 
         obj2 = DBObjectConfig(
             name="table",
-            manifest_ids=["syn1"],
             attributes=[
                 DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
             ],
@@ -75,7 +73,6 @@ class TestDBObjectConfig:
         ):
             DBObjectConfig(
                 name="table_name",
-                manifest_ids=["syn1"],
                 attributes=[],
                 primary_keys=["pk_col"],
                 foreign_keys=[],
@@ -85,7 +82,6 @@ class TestDBObjectConfig:
         with pytest.raises(ConfigKeyError, match="Primary keys is empty: table_name"):
             DBObjectConfig(
                 name="table_name",
-                manifest_ids=["syn1"],
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=[],
                 foreign_keys=[],
@@ -97,7 +93,6 @@ class TestDBObjectConfig:
         ):
             DBObjectConfig(
                 name="table_name",
-                manifest_ids=["syn1"],
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=["pk_col1"],
                 foreign_keys=[],
@@ -109,7 +104,6 @@ class TestDBObjectConfig:
         ):
             DBObjectConfig(
                 name="table_name",
-                manifest_ids=["syn1"],
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=["pk_col"],
                 foreign_keys=[
@@ -127,7 +121,6 @@ class TestDBObjectConfig:
         ):
             DBObjectConfig(
                 name="table_name",
-                manifest_ids=["syn1"],
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
                 primary_keys=["pk_col"],
                 foreign_keys=[
@@ -140,7 +133,7 @@ class TestDBObjectConfig:
             )
 
 
-class TestDBObjectConfigList:
+class TestDBConfig:
     """
     Testing for DBObjectConfigList
     """
@@ -149,11 +142,10 @@ class TestDBObjectConfigList:
         """
         Successful tests for DBObjectConfigList()
         """
-        obj1 = DBObjectConfigList(
+        obj1 = DBConfig(
             [
                 DBObjectConfig(
                     name="table",
-                    manifest_ids=["syn1"],
                     attributes=[
                         DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
                     ],
@@ -162,13 +154,12 @@ class TestDBObjectConfigList:
                 )
             ]
         )
-        assert isinstance(obj1, DBObjectConfigList)
+        assert isinstance(obj1, DBConfig)
 
-        obj2 = DBObjectConfigList(
+        obj2 = DBConfig(
             [
                 DBObjectConfig(
                     name="table",
-                    manifest_ids=["syn1"],
                     attributes=[
                         DBAttributeConfig(name="pk_col1", datatype=DBDatatype.TEXT),
                     ],
@@ -177,7 +168,6 @@ class TestDBObjectConfigList:
                 ),
                 DBObjectConfig(
                     name="table2",
-                    manifest_ids=["syn1"],
                     attributes=[
                         DBAttributeConfig(name="pk_col2", datatype=DBDatatype.TEXT),
                     ],
@@ -192,7 +182,7 @@ class TestDBObjectConfigList:
                 ),
             ]
         )
-        assert isinstance(obj2, DBObjectConfigList)
+        assert isinstance(obj2, DBConfig)
 
     def test_db_object_config_list_exceptions(self):
         """
@@ -202,11 +192,10 @@ class TestDBObjectConfigList:
         with pytest.raises(
             ConfigForeignKeyObjectError, match="Foreign key 'DBForeignKey"
         ):
-            DBObjectConfigList(
+            DBConfig(
                 [
                     DBObjectConfig(
                         name="table2",
-                        manifest_ids=["syn1"],
                         attributes=[
                             DBAttributeConfig(name="pk_col2", datatype=DBDatatype.TEXT),
                         ],
@@ -226,11 +215,10 @@ class TestDBObjectConfigList:
             ConfigForeignKeyObjectError2,
             match="Foreign key 'DBForeignKey",
         ):
-            DBObjectConfigList(
+            DBConfig(
                 [
                     DBObjectConfig(
                         name="table",
-                        manifest_ids=["syn1"],
                         attributes=[
                             DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
                         ],
@@ -239,7 +227,6 @@ class TestDBObjectConfigList:
                     ),
                     DBObjectConfig(
                         name="table2",
-                        manifest_ids=["syn1"],
                         attributes=[
                             DBAttributeConfig(name="pk_col2", datatype=DBDatatype.TEXT),
                         ],

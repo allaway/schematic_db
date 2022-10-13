@@ -1,49 +1,18 @@
 """Testing for Schema."""
 import pytest
-from schema import Schema, get_project_manifests, get_manifest_ids_for_object
+import pandas as pd
+from schema import (
+    get_project_manifests,
+    get_manifest_ids_for_object,
+    get_manifest,
+)
 from db_object_config import DBForeignKey, DBAttributeConfig, DBDatatype
-
-
-@pytest.fixture(name="test_synapse_project_id")
-def fixture_test_synapse_project_id():
-    """Yields the synapse id for the test schema project id"""
-    yield "syn23643250"
 
 
 @pytest.fixture(name="test_synapse_folder_id")
 def fixture_test_synapse_folder_id():
     """Yields a synapse id for a folder in the test project"""
     yield "syn30988314"
-
-
-@pytest.fixture(name="test_synapse_asset_view_id")
-def fixture_test_synapse_asset_view_id():
-    """Yields the synapse id for the test schema project id"""
-    yield "syn23643253"
-
-
-@pytest.fixture(name="synapse_input_token")
-def fixture_synapse_input_token(secrets_dict):
-    """Yields a synapse token"""
-    yield secrets_dict["synapse"]["auth_token"]
-
-
-@pytest.fixture(name="test_schema")
-def fixture_test_schema(
-    test_synapse_project_id, test_synapse_asset_view_id, synapse_input_token
-):
-    """Yields a Schema  using the database specific test schema"""
-    schema_url = (
-        "https://raw.githubusercontent.com/Sage-Bionetworks/"
-        "schematic/develop-rdb-export-joins/tests/data/example.rdb.model.jsonld"
-    )
-    obj = Schema(
-        schema_url,
-        test_synapse_project_id,
-        test_synapse_asset_view_id,
-        synapse_input_token,
-    )
-    yield obj
 
 
 @pytest.fixture(name="test_manifests")
@@ -58,6 +27,7 @@ def fixture_test_manifests():
     ]
 
 
+# TODO: Turn on tests when api is public
 class FutureTestUtils:
     """Testing for Schema utils"""
 
@@ -68,11 +38,11 @@ class FutureTestUtils:
         assert get_manifest_ids_for_object("C3", test_manifests) == []
 
     def test_get_project_manifests(
-        self, synapse_input_token, test_synapse_folder_id, test_synapse_asset_view_id
+        self, secrets_dict, test_synapse_folder_id, test_synapse_asset_view_id
     ):
         "Testing for get_project_manifests"
         manifests = get_project_manifests(
-            input_token=synapse_input_token,
+            input_token=secrets_dict.get("synapse").get("auth_token"),
             project_id=test_synapse_folder_id,
             asset_view=test_synapse_asset_view_id,
         )
@@ -86,7 +56,28 @@ class FutureTestUtils:
             }
         ]
 
+    def test_get_project_manifests2(
+        self, secrets_dict, gff_synapse_project_id, gff_synapse_asset_view_id
+    ):
+        "Testing for get_project_manifests"
+        manifests = get_project_manifests(
+            input_token=secrets_dict.get("synapse").get("auth_token"),
+            project_id=gff_synapse_project_id,
+            asset_view=gff_synapse_asset_view_id,
+        )
+        assert len(manifests) == 31
 
+    def test_get_manifest(self, secrets_dict, gff_synapse_asset_view_id):
+        "Testing for get_manifest"
+        manifest = get_manifest(
+            secrets_dict.get("synapse").get("auth_token"),
+            "syn38306654",
+            gff_synapse_asset_view_id,
+        )
+        assert isinstance(manifest, pd.DataFrame)
+
+
+# TODO: Turn on tests when api is public
 class FutureTestSchema:
     """Testing for Schema"""
 
@@ -123,11 +114,68 @@ class FutureTestSchema:
         ]
 
     def test_create_db_config(self, test_schema):
-        """Testing for Schema.test_create_db_config()"""
+        """Testing for Schema.create_db_config()"""
         obj = test_schema
         config = obj.create_db_config()
         assert config.get_config_names() == [
             "Patient",
             "Biospecimen",
             "BulkRNA-seqAssay",
+        ]
+
+
+# TODO: Turn on tests when api is public
+class FutureTestGFFSchema:
+    """Testing for GFF Schema"""
+
+    def test_create_db_config(self, gff_db_config):
+        """Testing for Schema.create_db_config()"""
+        assert gff_db_config.get_config_names() == [
+            "Donor",
+            "AnimalModel",
+            "CellLine",
+            "Antibody",
+            "GeneticReagent",
+            "Funder",
+            "Publication",
+            "Investigator",
+            "Resource",
+            "MutationDetails",
+            "Vendor",
+            "Development",
+            "Mutation",
+            "ResourceApplication",
+            "Observation",
+            "VendorItem",
+            "Biobank",
+            "Usage",
+        ]
+
+    def test_get_manifests(self, gff_schema, gff_db_config):
+        """Testing for Schema.get_manifests()"""
+        manifests1 = gff_schema.get_manifests(gff_db_config.configs[0])
+        assert len(manifests1) == 2
+        assert list(manifests1[0].columns) == [
+            "age",
+            "donorId",
+            "parentDonorId",
+            "race",
+            "sex",
+            "species",
+        ]
+
+        manifests2 = gff_schema.get_manifests(gff_db_config.configs[1])
+        assert len(manifests2) == 1
+        assert list(manifests2[0].columns) == [
+            "animalModelDisease",
+            "animalModelofManifestation",
+            "animalModelId",
+            "animalState",
+            "backgroundStrain",
+            "backgroundSubstrain",
+            "donorId",
+            "generation",
+            "strainNomenclature",
+            "transplantationDonorId",
+            "transplantationType",
         ]

@@ -1,5 +1,6 @@
 """Synapse
 """
+import time
 from functools import partial
 import synapseclient as sc
 import pandas as pd
@@ -255,6 +256,9 @@ class Synapse:
             # deletes all current rows
             results = self.syn.tableQuery(f"select * from {synapse_id}")
             self.syn.delete(results)
+
+            # wait for Synapse to catch up
+            time.sleep(1)
 
             # removes all current columns
             current_table = self.syn.get(synapse_id)

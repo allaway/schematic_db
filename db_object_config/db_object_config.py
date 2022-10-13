@@ -1,4 +1,4 @@
-"""Table config objects
+"""DB config
 These are a set of object for defining a database table in a dialect agnostic way.
 """
 from dataclasses import dataclass
@@ -68,7 +68,6 @@ class DBObjectConfig:
     """A config for a generic database object."""
 
     name: str
-    manifest_ids: list[str]
     attributes: list[DBAttributeConfig]
     primary_keys: list[str]
     foreign_keys: list[DBForeignKey]
@@ -181,7 +180,7 @@ class ConfigForeignKeyObjectError2(Exception):
 
 
 @dataclass
-class DBObjectConfigList:
+class DBConfig:
     """A group of configs for generic database tables."""
 
     configs: list[DBObjectConfig]

@@ -1,13 +1,15 @@
 """MySQLDatabase"""
+from typing import Optional
 import pandas as pd
 import numpy as np
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import insert
+from sqlalchemy import exc
 from db_object_config import DBObjectConfig, DBDatatype
-from .rdb import RelationalDatabase
+from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
-    DBDatatype.TEXT: sa.String(100),
+    DBDatatype.TEXT: sa.Text(5000),
     DBDatatype.DATE: sa.Date,
     DBDatatype.INT: sa.Integer,
     DBDatatype.FLOAT: sa.Float,
@@ -36,7 +38,7 @@ class MySQLDatabase(RelationalDatabase):
     - Handles MYSQL specific functionality.
     """
 
-    def __init__(self, config_dict: dict):
+    def __init__(self, config_dict: dict, verbose: Optional[bool] = False):
         """Init
         An initial connection is created to the database without the schema.
         The schema will be created if it doesn't exist.
@@ -45,6 +47,7 @@ class MySQLDatabase(RelationalDatabase):
 
         Args:
             config_dict (dict): A dict with fields ["username", "password", "host", "schema"]
+            verbose (bool): Sends much more to logging.info
         """
         username = config_dict.get("username")
         password = config_dict.get("password")
@@ -52,12 +55,12 @@ class MySQLDatabase(RelationalDatabase):
         schema = config_dict.get("schema")
 
         url = f"mysql://{username}:{password}@{host}/"
-        engine = sa.create_engine(url, encoding="utf-8", echo=True)
+        engine = sa.create_engine(url, encoding="utf-8", echo=verbose)
         create_statement = f"CREATE DATABASE IF NOT EXISTS {schema};"
         engine.execute(create_statement)
 
         url2 = f"mysql://{username}:{password}@{host}/{schema}"
-        engine2 = sa.create_engine(url2, encoding="utf-8", echo=True)
+        engine2 = sa.create_engine(url2, encoding="utf-8", echo=verbose)
         self.engine = engine2
         self.metadata = sa.MetaData()
 
@@ -71,10 +74,14 @@ class MySQLDatabase(RelationalDatabase):
         table_name = table_config.name
         if table_name not in table_names:
             self.add_table(table_name, table_config)
-        self.upsert_table_rows(table_name, data)
+        try:
+            self.upsert_table_rows(table_name, data)
+        except exc.SQLAlchemyError as error:
+            error_msg = str(error.__dict__["orig"])
+            raise UpdateDBTableError(table_name, error_msg) from error
 
     def drop_table(self, table_name: str):
-        self._execute_sql_statement(f"DROP TABLE IF EXISTS {table_name};")
+        self._execute_sql_statement(f"DROP TABLE IF EXISTS `{table_name}`;")
         self.metadata.clear()
 
     def delete_table_rows(
@@ -156,9 +163,16 @@ class MySQLDatabase(RelationalDatabase):
         columns = []
         for att in table_config.attributes:
             att_name = att.name
-            att_datatype = att.datatype
-            sql_datatype = MYSQL_DATATYPES.get(att_datatype)
-            if att_name in table_config.get_foreign_key_names():
+            primary_keys = table_config.primary_keys
+            foreign_keys = table_config.get_foreign_key_names()
+
+            # If column is a key, set datatype to sa.String(100)
+            if att_name in primary_keys or att_name in foreign_keys:
+                sql_datatype = sa.String(100)
+            else:
+                sql_datatype = MYSQL_DATATYPES.get(att.datatype)
+
+            if att_name in foreign_keys:
                 key = table_config.get_foreign_key_by_name(att_name)
                 col = sa.Column(
                     att_name,
@@ -166,12 +180,12 @@ class MySQLDatabase(RelationalDatabase):
                     sa.ForeignKey(
                         f"{key.foreign_object_name}.{key.foreign_attribute_name}"
                     ),
-                    nullable=False,
+                    nullable=True,
                 )
             else:
                 col = sa.Column(att_name, sql_datatype)
             columns.append(col)
 
-        if table_config.primary_keys != []:
-            columns.append(sa.PrimaryKeyConstraint(*table_config.primary_keys))
+        if primary_keys != []:
+            columns.append(sa.PrimaryKeyConstraint(*primary_keys))
         return columns
