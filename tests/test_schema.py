@@ -1,5 +1,5 @@
 """Testing for Schema."""
-from typing import Generator
+from typing import Generator, Any
 import pytest
 import pandas as pd
 from db_object_config import (
@@ -151,10 +151,10 @@ class TestAPIUtils:
 
 
 @pytest.mark.fast
-class TestMockSchema: # pylint: disable=too-few-public-methods
+class TestMockSchema:  # pylint: disable=too-few-public-methods
     """Testing for Schema with schematic endpoint mocked"""
 
-    def test_init(self, mocker) -> None:
+    def test_init(self, mocker: Any) -> None:
         """Testing for Schema.create_foreign_keys()"""
         subgraph = [["Patient", "PatientID"], ["Patient", "Sex"]]
         mocker.patch("schema.schema.get_graph_by_edge_type", return_value=subgraph)

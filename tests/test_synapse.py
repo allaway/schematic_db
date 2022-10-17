@@ -1,5 +1,5 @@
 """Testing for Synapse."""
-from typing import Generator
+from typing import Any, Generator
 import pytest
 import pandas as pd
 from db_object_config.db_object_config import (
@@ -53,7 +53,7 @@ def fixture_synapse_with_filled_table_one(
 class TestMockSynapse:
     """Testing for Synapse class with mocked methods"""
 
-    def test_get_table_names(self, mocker) -> None:
+    def test_get_table_names(self, mocker: Any) -> None:
         """Testing for Synapse.get_table_names"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         mocker.patch("synapseclient.Synapse.login", return_value=None)
@@ -61,7 +61,7 @@ class TestMockSynapse:
         obj = Synapse({})
         assert obj.get_table_names() == ["table1", "table2"]
 
-    def test_get_synapse_id_from_table_name(self, mocker) -> None:
+    def test_get_synapse_id_from_table_name(self, mocker: Any) -> None:
         """Testing for Synapse.get_synapse_id_from_table_name"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         mocker.patch("synapseclient.Synapse.login", return_value=None)
@@ -70,7 +70,7 @@ class TestMockSynapse:
         assert obj.get_synapse_id_from_table_name("table1") == "syn1"
         assert obj.get_synapse_id_from_table_name("table2") == "syn2"
 
-    def test_get_table_name_from_synapse_id(self, mocker) -> None:
+    def test_get_table_name_from_synapse_id(self, mocker: Any) -> None:
         """Testing for Synapse.get_table_name_from_synapse_id"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         mocker.patch("synapseclient.Synapse.login", return_value=None)
@@ -79,7 +79,7 @@ class TestMockSynapse:
         assert obj.get_table_name_from_synapse_id("syn1") == "table1"
         assert obj.get_table_name_from_synapse_id("syn2") == "table2"
 
-    def test_query_table(self, mocker) -> None:
+    def test_query_table(self, mocker: Any) -> None:
         """Testing for Synapse.query_table"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         query_result = pd.DataFrame({"col1": ["a", "b"], "col2": [1, 2]})
