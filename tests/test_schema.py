@@ -2,7 +2,6 @@
 from typing import Generator
 import pytest
 import pandas as pd
-from sqlalchemy import ForeignKey
 from db_object_config import (
     DBConfig,
     DBForeignKey,
@@ -152,15 +151,14 @@ class TestAPIUtils:
 
 
 @pytest.mark.fast
-class TestMockSchema:
+class TestMockSchema: # pylint: disable=too-few-public-methods
     """Testing for Schema with schematic endpoint mocked"""
 
     def test_init(self, mocker) -> None:
         """Testing for Schema.create_foreign_keys()"""
         subgraph = [["Patient", "PatientID"], ["Patient", "Sex"]]
-        manifests = []
         mocker.patch("schema.schema.get_graph_by_edge_type", return_value=subgraph)
-        mocker.patch("schema.schema.get_project_manifests", return_value=manifests)
+        mocker.patch("schema.schema.get_project_manifests", return_value=[])
         obj = Schema("url", "project_id", "asset_id", "token")
         assert isinstance(obj, Schema)
 
