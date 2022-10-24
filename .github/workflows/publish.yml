@@ -1,9 +1,8 @@
 name: Publish schematic_db to PYPI
-on: [pull_request]
-#on:
-#  push:
-#    branches:
-#      - main
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
