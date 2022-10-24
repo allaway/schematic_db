@@ -2,12 +2,12 @@
 from typing import Any, Generator
 import pytest
 import pandas as pd
-from db_object_config.db_object_config import (
+from schematic_db.db_object_config.db_object_config import (
     DBAttributeConfig,
     DBDatatype,
     DBObjectConfig,
 )
-from synapse import Synapse
+from schematic_db.synapse import Synapse
 
 
 @pytest.fixture(name="synapse_no_extra_tables")
@@ -57,7 +57,9 @@ class TestMockSynapse:
         """Testing for Synapse.get_table_names"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         mocker.patch("synapseclient.Synapse.login", return_value=None)
-        mocker.patch("synapse.synapse.Synapse._get_tables", return_value=tables)
+        mocker.patch(
+            "schematic_db.synapse.synapse.Synapse._get_tables", return_value=tables
+        )
         obj = Synapse({})
         assert obj.get_table_names() == ["table1", "table2"]
 
@@ -65,7 +67,9 @@ class TestMockSynapse:
         """Testing for Synapse.get_synapse_id_from_table_name"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         mocker.patch("synapseclient.Synapse.login", return_value=None)
-        mocker.patch("synapse.synapse.Synapse._get_tables", return_value=tables)
+        mocker.patch(
+            "schematic_db.synapse.synapse.Synapse._get_tables", return_value=tables
+        )
         obj = Synapse({})
         assert obj.get_synapse_id_from_table_name("table1") == "syn1"
         assert obj.get_synapse_id_from_table_name("table2") == "syn2"
@@ -74,7 +78,9 @@ class TestMockSynapse:
         """Testing for Synapse.get_table_name_from_synapse_id"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         mocker.patch("synapseclient.Synapse.login", return_value=None)
-        mocker.patch("synapse.synapse.Synapse._get_tables", return_value=tables)
+        mocker.patch(
+            "schematic_db.synapse.synapse.Synapse._get_tables", return_value=tables
+        )
         obj = Synapse({})
         assert obj.get_table_name_from_synapse_id("syn1") == "table1"
         assert obj.get_table_name_from_synapse_id("syn2") == "table2"
@@ -93,9 +99,12 @@ class TestMockSynapse:
             foreign_keys=[],
         )
         mocker.patch("synapseclient.Synapse.login", return_value=None)
-        mocker.patch("synapse.synapse.Synapse._get_tables", return_value=tables)
         mocker.patch(
-            "synapse.synapse.Synapse.execute_sql_query", return_value=query_result
+            "schematic_db.synapse.synapse.Synapse._get_tables", return_value=tables
+        )
+        mocker.patch(
+            "schematic_db.synapse.synapse.Synapse.execute_sql_query",
+            return_value=query_result,
         )
         obj = Synapse({})
         assert isinstance(obj.query_table("table1", config), pd.DataFrame)

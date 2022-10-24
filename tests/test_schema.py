@@ -2,13 +2,13 @@
 from typing import Generator, Any
 import pytest
 import pandas as pd
-from db_object_config import (
+from schematic_db.db_object_config import (
     DBConfig,
     DBForeignKey,
     DBAttributeConfig,
     DBDatatype,
 )
-from schema import (
+from schematic_db.schema import (
     Schema,
     ManifestSynapseConfig,
     SchematicAPIError,
@@ -157,8 +157,12 @@ class TestMockSchema:  # pylint: disable=too-few-public-methods
     def test_init(self, mocker: Any) -> None:
         """Testing for Schema.create_foreign_keys()"""
         subgraph = [["Patient", "PatientID"], ["Patient", "Sex"]]
-        mocker.patch("schema.schema.get_graph_by_edge_type", return_value=subgraph)
-        mocker.patch("schema.schema.get_project_manifests", return_value=[])
+        mocker.patch(
+            "schematic_db.schema.schema.get_graph_by_edge_type", return_value=subgraph
+        )
+        mocker.patch(
+            "schematic_db.schema.schema.get_project_manifests", return_value=[]
+        )
         obj = Schema("url", "project_id", "asset_id", "token")
         assert isinstance(obj, Schema)
 

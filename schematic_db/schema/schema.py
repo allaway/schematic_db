@@ -4,7 +4,7 @@ from typing import Optional, Callable, Union
 import warnings
 import networkx
 import pandas as pd
-from db_object_config import (
+from schematic_db.db_object_config import (
     DBConfig,
     DBObjectConfig,
     DBForeignKey,

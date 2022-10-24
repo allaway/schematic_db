@@ -1,6 +1,6 @@
 """Testing for RDBUpdater."""
 import pytest
-from rdb_updater import RDBUpdater
+from schematic_db.rdb_updater import RDBUpdater
 
 
 @pytest.mark.schematic

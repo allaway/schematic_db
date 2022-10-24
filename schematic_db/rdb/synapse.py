@@ -1,7 +1,7 @@
 """SynapseDatabase"""
 import pandas as pd
-from db_object_config import DBObjectConfig
-from synapse import Synapse
+from schematic_db.db_object_config import DBObjectConfig
+from schematic_db.synapse import Synapse
 from .rdb import RelationalDatabase
 
 
