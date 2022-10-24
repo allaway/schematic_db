@@ -8,7 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
 
       # setup mysql
       - name: Set up MySQL
@@ -37,11 +38,6 @@ jobs:
 
         shell: python
 
-      # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
-      # reference the matrix python version here.
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
 
       # Cache the installation of Poetry itself, e.g. the next step. This prevents the workflow
       # from installing Poetry every time, which can be slow. Note the use of the Poetry version
@@ -52,7 +48,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.local
-          key: poetry-1.2
+          key: poetry-1.2-0
 
       # Install Poetry. You could do this manually, or there are several actions that do this.
       # `snok/install-poetry` seems to be minimal yet complete, and really just calls out to
