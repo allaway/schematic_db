@@ -5,7 +5,7 @@ from synapse import Synapse
 from .query_store import QueryStore
 
 
-class SynapseQueryStore(QueryStore):
+class SynapseQueryStore(QueryStore):  # pylint: disable=too-few-public-methods
     """SynapseQueryStore
     - Represents a place to put query results in Synapse
     - An adaptor between Synapse class and QueryStore ABC

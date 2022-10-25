@@ -15,7 +15,7 @@ from db_object_config import (
 )
 from rdb import MySQLDatabase, SynapseDatabase
 from rdb_updater import RDBUpdater
-from rbd_queryer import RDBQueryer
+from rdb_queryer import RDBQueryer
 from query_store import SynapseQueryStore
 from synapse import Synapse
 from schema import Schema

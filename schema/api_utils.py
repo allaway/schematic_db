@@ -23,7 +23,7 @@ def create_schematic_api_response(
         requests.Response: The response from the API
     """
     endpoint_url = f"{API_URL}/{API_SERVER}/{endpoint_path}"
-    return requests.get(endpoint_url, params=params)
+    return requests.get(endpoint_url, params=params, timeout=30)
 
 
 def find_class_specific_properties(schema_url: str, schema_class: str) -> list[str]:

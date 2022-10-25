@@ -16,16 +16,19 @@ from db_object_config import (
 
 
 class TestDBAttributeConfig:
-    """
-    Testing for DBAttributeConfig
-    """
+    """Testing for DBAttributeConfig"""
 
     def test_db_attribute_config_success(self):
-        """
-        Successful tests for DBAttributeConfig()
-        """
+        """Successful tests for DBAttributeConfig()"""
         obj = DBAttributeConfig(name="col", datatype=DBDatatype.TEXT)
         assert isinstance(obj, DBAttributeConfig)
+
+    def test_db_attribute_config_error(self):
+        """Tests for DBAttributeConfig() that raise an error"""
+        with pytest.raises(
+            TypeError, match="Param datatype is not of type DBDatatype:TEXT"
+        ):
+            DBAttributeConfig(name="col", datatype="TEXT")
 
 
 class TestDBObjectConfig:
