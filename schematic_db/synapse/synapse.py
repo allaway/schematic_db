@@ -33,12 +33,8 @@ class SynapseTableNameError(Exception):
 
 
 class Synapse:
-    """Synapse
-    - Represents:
-      - A database stored as Synapse tables
-      - A source of manifest tables in Synapse
-      - A destination of queries in Synapse
-    - Handles Synapse specific functionality.
+    """
+    The Synapse class handles interactions with a project in Synapse.
     """
 
     def __init__(self, config_dict: dict) -> None:
