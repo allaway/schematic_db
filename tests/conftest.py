@@ -245,14 +245,14 @@ def fixture_synapse(
         raise ValueError(
             "Synapse_database_project has incorrect table names;",
             f"Actual: {obj.get_table_names()}",
-            f"Expected: {synapse_database_table_names}"
+            f"Expected: {synapse_database_table_names}",
         )
     yield obj
     if obj.get_table_names() != synapse_database_table_names:
         raise ValueError(
             "Synapse_database_project has incorrect table names;",
             f"Actual: {obj.get_table_names()}",
-            f"Expected: {synapse_database_table_names}"
+            f"Expected: {synapse_database_table_names}",
         )
 
 
