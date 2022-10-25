@@ -9,9 +9,9 @@ from schematic_db.db_object_config import (
     DBDatatype,
     DBForeignKey,
     ConfigAttributeError,
-    ConfigForeignKeyObjectError,
+    ConfigForeignKeyMissingObjectError,
     ConfigKeyError,
-    ConfigForeignKeyObjectError2,
+    ConfigForeignKeyMissingAttributeError,
 )
 
 
@@ -179,7 +179,7 @@ class TestDBConfig:
         """
 
         with pytest.raises(
-            ConfigForeignKeyObjectError, match="Foreign key 'DBForeignKey"
+            ConfigForeignKeyMissingObjectError, match="Foreign key 'DBForeignKey"
         ):
             DBConfig(
                 [
@@ -201,7 +201,7 @@ class TestDBConfig:
             )
 
         with pytest.raises(
-            ConfigForeignKeyObjectError2,
+            ConfigForeignKeyMissingAttributeError,
             match="Foreign key 'DBForeignKey",
         ):
             DBConfig(
