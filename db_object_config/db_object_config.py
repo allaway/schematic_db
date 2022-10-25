@@ -137,8 +137,8 @@ class DBObjectConfig:
             )
 
 
-class ConfigForeignKeyObjectError(Exception):
-    """ConfigForeignKeyObjectError"""
+class ConfigForeignKeyMissingObjectError(Exception):
+    """When a foreign key references an object that doesn't exist"""
 
     def __init__(
         self, foreign_key: str, object_name: str, foreign_object_name: str
@@ -157,8 +157,8 @@ class ConfigForeignKeyObjectError(Exception):
         return msg
 
 
-class ConfigForeignKeyObjectError2(Exception):
-    """ConfigForeignKeyObjectError2"""
+class ConfigForeignKeyMissingAttributeError(Exception):
+    """When a foreign key references an object attribute the object doesn't have"""
 
     def __init__(
         self,
@@ -221,7 +221,7 @@ class DBConfig:
         self, config: DBObjectConfig, key: ForeignKey
     ) -> None:
         if key.foreign_object_name not in self.get_config_names():
-            raise ConfigForeignKeyObjectError(
+            raise ConfigForeignKeyMissingObjectError(
                 foreign_key=key,
                 object_name=config.name,
                 foreign_object_name=key.foreign_object_name,
@@ -232,7 +232,7 @@ class DBConfig:
     ) -> None:
         foreign_config = self.get_config_by_name(key.foreign_object_name)
         if key.foreign_attribute_name not in foreign_config.get_attribute_names():
-            raise ConfigForeignKeyObjectError2(
+            raise ConfigForeignKeyMissingAttributeError(
                 foreign_key=key,
                 object_name=config.name,
                 foreign_object_name=key.foreign_object_name,
