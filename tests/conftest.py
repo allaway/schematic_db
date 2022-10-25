@@ -242,10 +242,18 @@ def fixture_synapse(
         }
     )
     if obj.get_table_names() != synapse_database_table_names:
-        raise ValueError("synapse_database_project has incorrect table names.")
+        raise ValueError(
+            "Synapse_database_project has incorrect table names;",
+            f"Actual: {obj.get_table_names()}",
+            f"Expected: {synapse_database_table_names}"
+        )
     yield obj
     if obj.get_table_names() != synapse_database_table_names:
-        raise ValueError("synapse_database_project has incorrect table names.")
+        raise ValueError(
+            "Synapse_database_project has incorrect table names;",
+            f"Actual: {obj.get_table_names()}",
+            f"Expected: {synapse_database_table_names}"
+        )
 
 
 @pytest.fixture(scope="module", name="rdb_queryer_mysql")
