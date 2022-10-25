@@ -2,7 +2,7 @@
 Testing for DBConfig.
 """
 import pytest
-from schematic_db.db_object_config import (
+from schematic_db.db_config import (
     DBConfig,
     DBObjectConfig,
     DBAttributeConfig,

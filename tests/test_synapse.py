@@ -2,7 +2,7 @@
 from typing import Any, Generator
 import pytest
 import pandas as pd
-from schematic_db.db_object_config.db_object_config import (
+from schematic_db.db_config.db_config import (
     DBAttributeConfig,
     DBDatatype,
     DBObjectConfig,

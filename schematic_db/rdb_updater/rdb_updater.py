@@ -2,7 +2,7 @@
 import warnings
 import typing
 import pandas as pd
-from schematic_db.db_object_config import DBObjectConfig
+from schematic_db.db_config import DBObjectConfig
 from schematic_db.rdb import RelationalDatabase, UpdateDBTableError
 from schematic_db.schema import Schema
 

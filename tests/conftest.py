@@ -6,7 +6,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from yaml import safe_load
-from schematic_db.db_object_config import (
+from schematic_db.db_config import (
     DBConfig,
     DBObjectConfig,
     DBAttributeConfig,

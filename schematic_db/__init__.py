@@ -25,4 +25,4 @@ Currently Synapse is supported.
 
 The RDB_Queryer class is used to query a database and store the results somewhere.
 """
-from .db_object_config import *
+from .db_config import *

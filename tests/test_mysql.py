@@ -17,8 +17,7 @@ will be used.
 from datetime import datetime
 import pytest
 import pandas as pd
-from schematic_db.db_object_config.db_object_config import DBObjectConfig
-
+from schematic_db.db_config.db_config import DBObjectConfig
 from schematic_db.rdb.mysql import MySQLDatabase
 
 
