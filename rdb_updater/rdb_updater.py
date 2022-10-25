@@ -10,7 +10,7 @@ from schema import Schema
 class NoManifestWarning(Warning):
     """Raised when trying to update a database table there are no manifests"""
 
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(self.message)
 
@@ -18,11 +18,11 @@ class NoManifestWarning(Warning):
 class NoManifestError(Exception):
     """Raised when trying to update a database table there are no manifests"""
 
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(self.message)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -31,7 +31,7 @@ class UpdateTableWarning(Warning):
     Occurs when trying to update a database table and the rdb subclass encounters an error
     """
 
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(self.message)
 

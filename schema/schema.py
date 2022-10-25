@@ -26,7 +26,7 @@ class NoAttributesWarning(Warning):
     Occurs when a database object has no attributes returned from find_class_specific_properties().
     """
 
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(self.message)
 
@@ -48,7 +48,7 @@ class ManifestMissingPrimaryKeyError(Exception):
         self.manifest_columns = manifest_columns
         super().__init__(self.message)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"{self.message}; object name:{self.object_name}; "
             f"dataset_id:{self.dataset_id}; primary keys:{self.primary_keys}; "
@@ -72,7 +72,7 @@ def get_key_attribute(object_name: str) -> str:
 
 
 def get_manifest_ids_for_object(
-    object_name: str, manifests: list[dict[str:str]]
+    object_name: str, manifests: list[dict[str, str]]
 ) -> list[str]:
     """Gets the manifest ids from a list of manifests matching the object name
 
@@ -84,7 +84,7 @@ def get_manifest_ids_for_object(
         list[str]: A list of synapse ids for the manifests
     """
     return [
-        manifest.get("manifest_id")
+        manifest["manifest_id"]
         for manifest in manifests
         if manifest.get("component_name") == object_name
         and manifest.get("manifest_id") != ""
@@ -92,7 +92,7 @@ def get_manifest_ids_for_object(
 
 
 def get_dataset_ids_for_object(
-    object_name: str, manifests: list[dict[str:str]]
+    object_name: str, manifests: list[dict[str, str]]
 ) -> list[str]:
     """Gets the dataset ids from a list of manifests matching the object name
 
@@ -104,7 +104,7 @@ def get_dataset_ids_for_object(
         list[str]: A list of synapse ids for the manifest datasets
     """
     return [
-        manifest.get("dataset_id")
+        manifest["dataset_id"]
         for manifest in manifests
         if manifest.get("component_name") == object_name
         and manifest.get("manifest_id") != ""
@@ -123,8 +123,8 @@ class Schema:
         synapse_project_id: str,
         synapse_asset_view_id: str,
         synapse_input_token: str,
-        primary_key_getter: Optional[Callable[[str], str]] = get_key_attribute,
-        foreign_key_getter: Optional[Callable[[str], str]] = get_key_attribute,
+        primary_key_getter: Callable[[str], str] = get_key_attribute,
+        foreign_key_getter: Callable[[str], str] = get_key_attribute,
     ) -> None:
         """Init
 
@@ -149,9 +149,9 @@ class Schema:
             synapse_asset_view_id (str): The synapse id to the asset view that tracks the manifests.
             synapse_input_token (str): A synapse token with download permissions for both the
                 synapse_project_id and synapse_asset_view_id
-            primary_key_getter (Optional[Callable[[str], str]], optional):
+            primary_key_getter (Callable[[str], str], optional):
                 Defaults to get_key_attribute.
-            foreign_key_getter (Optional[Callable[[str], str]], optional):
+            foreign_key_getter (Callable[[str], str], optional):
                 Defaults to get_key_attribute.
         """
         # retrieve the edges from schematic API and store in networkx.DiGraph()
@@ -181,11 +181,15 @@ class Schema:
         object_names = list(
             reversed(list(networkx.topological_sort(self.schema_graph)))
         )
-        object_configs = [self.create_db_object_config(name) for name in object_names]
-        object_configs = [config for config in object_configs if config is not None]
-        return DBConfig(object_configs)
+        object_configs: list[Optional[DBObjectConfig]] = [
+            self.create_db_object_config(name) for name in object_names
+        ]
+        filtered_object_configs: list[DBObjectConfig] = [
+            config for config in object_configs if config is not None
+        ]
+        return DBConfig(filtered_object_configs)
 
-    def create_db_object_config(self, object_name: str) -> DBObjectConfig:
+    def create_db_object_config(self, object_name: str) -> Optional[DBObjectConfig]:
         """Creates the config for one object in the database.
 
         Args:
@@ -193,7 +197,8 @@ class Schema:
             manifests (list[dict[str:str]]): A list of manifests in dictionary form
 
         Returns:
-            DBObjectConfig: The config for the object.
+            Optional[DBObjectConfig]: The config for the object if the object has attributes
+              otherwise None.
         """
         # Some components will not have any attributes for various reasons
         attributes = self.create_attributes(object_name)
@@ -316,7 +321,7 @@ class Schema:
             self.synapse_asset_view_id,
         )
         # create dict with columns names as keys and attribute names as values
-        attribute_names = {
+        attribute_names: dict[str, str] = {
             col_name: self.get_attribute_name(col_name)
             for col_name in list(manifest.columns)
         }
@@ -329,10 +334,15 @@ class Schema:
         # Raise error if all primary keys do not appear
         if not all(key in attribute_names.values() for key in config.primary_keys):
             raise ManifestMissingPrimaryKeyError(
-                config.name, dataset_id, config.primary_keys, attribute_names.values
+                config.name,
+                dataset_id,
+                config.primary_keys,
+                list(attribute_names.values()),
             )
         # select rename columns manifest and select those in the config
-        manifest = manifest.rename(columns=attribute_names)[attribute_names.values()]
+        manifest = manifest.rename(columns=attribute_names)[
+            list(attribute_names.values())
+        ]
         return manifest
 
     def get_attribute_name(self, column_name: str) -> str:

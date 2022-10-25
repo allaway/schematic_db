@@ -1,5 +1,5 @@
 """MySQLDatabase"""
-from typing import Optional
+from typing import Optional, Any
 import pandas as pd
 import numpy as np
 import sqlalchemy as sa
@@ -22,12 +22,12 @@ PANDAS_DATATYPES = {DBDatatype.INT: "Int64", DBDatatype.BOOLEAN: "boolean"}
 class DataframeKeyError(Exception):
     """DataframeKeyError"""
 
-    def __init__(self, message, key):
+    def __init__(self, message: str, key: str) -> None:
         self.message = message
         self.key = key
         super().__init__(self.message)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.message}:{self.key}"
 
 
@@ -69,7 +69,7 @@ class MySQLDatabase(RelationalDatabase):
         table = pd.DataFrame(result)
         return table
 
-    def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig):
+    def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
         table_names = self.get_table_names()
         table_name = table_config.name
         if table_name not in table_names:
@@ -80,13 +80,13 @@ class MySQLDatabase(RelationalDatabase):
             error_msg = str(error.__dict__["orig"])
             raise UpdateDBTableError(table_name, error_msg) from error
 
-    def drop_table(self, table_name: str):
+    def drop_table(self, table_name: str) -> None:
         self._execute_sql_statement(f"DROP TABLE IF EXISTS `{table_name}`;")
         self.metadata.clear()
 
     def delete_table_rows(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ):
+    ) -> None:
         primary_keys = table_config.primary_keys
         for key in primary_keys:
             if key not in list(data.columns):
@@ -100,15 +100,10 @@ class MySQLDatabase(RelationalDatabase):
         self._execute_sql_statement(statement)
 
     def get_table_names(self) -> list[str]:
-        """Gets the names of the tables in the schema
-
-        Returns:
-            list[str]: A list of table names
-        """
         inspector = sa.inspect(self.engine)
         return inspector.get_table_names()
 
-    def add_table(self, table_name: str, table_config: DBObjectConfig):
+    def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
         """Adds a table to the schema
 
         Args:
@@ -119,7 +114,7 @@ class MySQLDatabase(RelationalDatabase):
         sa.Table(table_name, self.metadata, *columns)
         self.metadata.create_all(self.engine)
 
-    def upsert_table_rows(self, table_name: str, data: pd.DataFrame):
+    def upsert_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
         """Inserts and/or updates the rows of the table
 
         Args:
@@ -154,7 +149,7 @@ class MySQLDatabase(RelationalDatabase):
                 table = table.astype({att.name: pandas_value})
         return table
 
-    def _execute_sql_statement(self, statement: str):
+    def _execute_sql_statement(self, statement: str) -> Any:
         with self.engine.connect().execution_options(autocommit=True) as conn:
             result = conn.execute(statement)
         return result

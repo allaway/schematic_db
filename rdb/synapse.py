@@ -20,17 +20,17 @@ class SynapseDatabase(RelationalDatabase):
     ) -> pd.DataFrame:
         return self.synapse.execute_sql_query(query, include_row_data)
 
-    def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig):
+    def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
         if table_name not in table_names:
             self.synapse.add_table(table_name, table_config)
         # self.upsert_table_rows(table_name, data)
 
-    def drop_table(self, table_name: str):
+    def drop_table(self, table_name: str) -> None:
         self.synapse.drop_table(table_name)
 
     def delete_table_rows(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ):
+    ) -> None:
         pass
