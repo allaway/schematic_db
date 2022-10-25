@@ -15,7 +15,7 @@ class RDBQueryer:
         self.rdb = rdb
         self.query_store = query_store
 
-    def store_query_results(self, csv_path: str):
+    def store_query_results(self, csv_path: str) -> None:
         """Stores the results of queries
         Takes a csv file with two columns named "query" and "table_name", and runs each query,
         storing the result in the query_result_store as a table.
@@ -27,7 +27,7 @@ class RDBQueryer:
         for _, row in csv.iterrows():
             self.store_query_result(row["query"], row["table_name"])
 
-    def store_query_result(self, query: str, table_name: str):
+    def store_query_result(self, query: str, table_name: str) -> None:
         """Stores the result of a query
 
         Args:

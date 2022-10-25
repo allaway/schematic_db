@@ -1,22 +1,29 @@
 """Testing for Schema."""
+from typing import Generator
 import pytest
 import pandas as pd
+from db_object_config import (
+    DBConfig,
+    DBForeignKey,
+    DBAttributeConfig,
+    DBDatatype,
+)
 from schema import (
+    Schema,
     get_project_manifests,
     get_manifest_ids_for_object,
     get_manifest,
 )
-from db_object_config import DBForeignKey, DBAttributeConfig, DBDatatype
 
 
 @pytest.fixture(name="test_synapse_folder_id")
-def fixture_test_synapse_folder_id():
+def fixture_test_synapse_folder_id() -> Generator:
     """Yields a synapse id for a folder in the test project"""
     yield "syn30988314"
 
 
 @pytest.fixture(name="test_manifests")
-def fixture_test_manifests():
+def fixture_test_manifests() -> Generator:
     """Yields a test set of manifests"""
     yield [
         {"manifest_id": "syn1", "component_name": "C1"},
@@ -30,18 +37,23 @@ def fixture_test_manifests():
 class FutureTestUtils:
     """Testing for Schema utils"""
 
-    def test_get_manifest_ids_for_object(self, test_manifests):
+    def test_get_manifest_ids_for_object(
+        self, test_manifests: list[dict[str, str]]
+    ) -> None:
         """Testing for get_manifest_ids_for_object"""
         assert get_manifest_ids_for_object("C1", test_manifests) == ["syn1", "syn5"]
         assert get_manifest_ids_for_object("C2", test_manifests) == ["syn2"]
         assert get_manifest_ids_for_object("C3", test_manifests) == []
 
     def test_get_project_manifests(
-        self, secrets_dict, test_synapse_folder_id, test_synapse_asset_view_id
-    ):
+        self,
+        secrets_dict: dict,
+        test_synapse_folder_id: str,
+        test_synapse_asset_view_id: str,
+    ) -> None:
         "Testing for get_project_manifests"
         manifests = get_project_manifests(
-            input_token=secrets_dict.get("synapse").get("auth_token"),
+            input_token=secrets_dict["synapse"]["auth_token"],
             project_id=test_synapse_folder_id,
             asset_view=test_synapse_asset_view_id,
         )
@@ -56,20 +68,25 @@ class FutureTestUtils:
         ]
 
     def test_get_project_manifests2(
-        self, secrets_dict, gff_synapse_project_id, gff_synapse_asset_view_id
-    ):
+        self,
+        secrets_dict: dict,
+        gff_synapse_project_id: str,
+        gff_synapse_asset_view_id: str,
+    ) -> None:
         "Testing for get_project_manifests"
         manifests = get_project_manifests(
-            input_token=secrets_dict.get("synapse").get("auth_token"),
+            input_token=secrets_dict["synapse"]["auth_token"],
             project_id=gff_synapse_project_id,
             asset_view=gff_synapse_asset_view_id,
         )
         assert len(manifests) == 31
 
-    def test_get_manifest(self, secrets_dict, gff_synapse_asset_view_id):
+    def test_get_manifest(
+        self, secrets_dict: dict, gff_synapse_asset_view_id: str
+    ) -> None:
         "Testing for get_manifest"
         manifest = get_manifest(
-            secrets_dict.get("synapse").get("auth_token"),
+            secrets_dict["synapse"]["auth_token"],
             "syn38306654",
             gff_synapse_asset_view_id,
         )
@@ -79,7 +96,7 @@ class FutureTestUtils:
 class FutureTestSchema:
     """Testing for Schema"""
 
-    def test_create_attributes(self, test_schema):
+    def test_create_attributes(self, test_schema: Schema) -> None:
         """Testing for Schema.attributes()"""
         obj = test_schema
         assert obj.create_attributes("Patient") == [
@@ -92,7 +109,7 @@ class FutureTestSchema:
             DBAttributeConfig(name="tissueStatus", datatype=DBDatatype.TEXT),
         ]
 
-    def test_create_foreign_keys(self, test_schema):
+    def test_create_foreign_keys(self, test_schema: Schema) -> None:
         """Testing for Schema.create_foreign_keys()"""
         obj = test_schema
         assert obj.create_foreign_keys("Patient") == []
@@ -111,7 +128,7 @@ class FutureTestSchema:
             )
         ]
 
-    def test_create_db_config(self, test_schema):
+    def test_create_db_config(self, test_schema: Schema) -> None:
         """Testing for Schema.create_db_config()"""
         obj = test_schema
         config = obj.create_db_config()
@@ -125,7 +142,7 @@ class FutureTestSchema:
 class FutureTestGFFSchema:
     """Testing for GFF Schema"""
 
-    def test_create_db_config(self, gff_db_config):
+    def test_create_db_config(self, gff_db_config: DBConfig) -> None:
         """Testing for Schema.create_db_config()"""
         assert gff_db_config.get_config_names() == [
             "Donor",
@@ -148,7 +165,7 @@ class FutureTestGFFSchema:
             "Usage",
         ]
 
-    def test_get_manifests(self, gff_schema, gff_db_config):
+    def test_get_manifests(self, gff_schema: Schema, gff_db_config: DBConfig) -> None:
         """Testing for Schema.get_manifests()"""
         manifests1 = gff_schema.get_manifests(gff_db_config.configs[0])
         assert len(manifests1) == 2

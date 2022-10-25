@@ -1,12 +1,15 @@
 """Testing for Synapse."""
+from typing import Generator
 import pytest
 import pandas as pd
+from db_object_config.db_object_config import DBObjectConfig
+from synapse.synapse import Synapse
 
 
 @pytest.fixture(name="synapse_no_extra_tables")
 def fixture_synapse_no_extra_tables(
-    synapse_database_project, synapse_database_table_names
-):
+    synapse_database_project: Synapse, synapse_database_table_names: list[str]
+) -> Generator:
     """
     Yields a Synapse object
     """
@@ -19,7 +22,9 @@ def fixture_synapse_no_extra_tables(
 
 
 @pytest.fixture(name="synapse_with_empty_table_one")
-def fixture_synapse_with_empty_table_one(synapse_no_extra_tables, table_one_config):
+def fixture_synapse_with_empty_table_one(
+    synapse_no_extra_tables: Synapse, table_one_config: DBObjectConfig
+) -> Generator:
     """
     Yields a Synapse object with table one added
     """
@@ -29,7 +34,9 @@ def fixture_synapse_with_empty_table_one(synapse_no_extra_tables, table_one_conf
 
 
 @pytest.fixture(name="synapse_with_filled_table_one")
-def fixture_synapse_with_filled_table_one(synapse_with_empty_table_one, table_one):
+def fixture_synapse_with_filled_table_one(
+    synapse_with_empty_table_one: Synapse, table_one: pd.DataFrame
+) -> Generator:
     """
     Yields a Synapse object with table one filled
     """
@@ -41,21 +48,26 @@ def fixture_synapse_with_filled_table_one(synapse_with_empty_table_one, table_on
 class TestSynapse:
     """Testing for Synapse class"""
 
-    def test_get_table_id_from_name(self, synapse_database_project):
+    def test_get_table_id_from_name(self, synapse_database_project: Synapse) -> None:
         """Testing for Synapse.get_table_id_from_name()"""
         assert (
             synapse_database_project.get_synapse_id_from_table_name("test_table_one")
             == "syn34532191"
         )
 
-    def test_get_table_name_from_id(self, synapse_database_project):
+    def test_get_table_name_from_id(self, synapse_database_project: Synapse) -> None:
         """Testing for Synapse.get_table_name_from_id()"""
         assert (
             synapse_database_project.get_table_name_from_synapse_id("syn34532191")
             == "test_table_one"
         )
 
-    def test_query_table(self, synapse_database_project, table_one, table_one_config):
+    def test_query_table(
+        self,
+        synapse_database_project: Synapse,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
         """Testing for synapse.query_table()"""
         result = synapse_database_project.query_table(
             "test_table_one", table_one_config
@@ -69,8 +81,11 @@ class TestSynapseModifyTables:
     """
 
     def test_add_table(
-        self, synapse_no_extra_tables, table_one_config, synapse_database_table_names
-    ):
+        self,
+        synapse_no_extra_tables: pd.DataFrame,
+        table_one_config: pd.DataFrame,
+        synapse_database_table_names: list[str],
+    ) -> None:
         """Testing for Synapse.add_table()"""
         obj = synapse_no_extra_tables
         assert obj.get_table_names() == synapse_database_table_names
@@ -78,8 +93,10 @@ class TestSynapseModifyTables:
         assert obj.get_table_names() == ["table_one"] + synapse_database_table_names
 
     def test_drop_table(
-        self, synapse_with_empty_table_one, synapse_database_table_names
-    ):
+        self,
+        synapse_with_empty_table_one: pd.DataFrame,
+        synapse_database_table_names: list[str],
+    ) -> None:
         """Testing for Synapse.drop_table()"""
         obj = synapse_with_empty_table_one
         assert obj.get_table_names() == ["table_one"] + synapse_database_table_names
@@ -93,8 +110,11 @@ class TestSynapseModifyRows:
     """
 
     def test_insert_table_rows(
-        self, synapse_with_empty_table_one, table_one, table_one_config
-    ):
+        self,
+        synapse_with_empty_table_one: pd.DataFrame,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
         """
         Testing for synapse.insert_table_rows()
         """
@@ -110,8 +130,11 @@ class TestSynapseModifyRows:
         pd.testing.assert_frame_equal(result2, test_table)
 
     def test_delete_table_rows(
-        self, synapse_with_filled_table_one, table_one, table_one_config
-    ):
+        self,
+        synapse_with_filled_table_one: pd.DataFrame,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
         """
         Testing for synapse.delete_table_rows()
         """
@@ -132,8 +155,11 @@ class TestSynapseModifyRows:
         pd.testing.assert_frame_equal(result3, test_table2)
 
     def test_update_table_rows(
-        self, synapse_with_filled_table_one, table_one, table_one_config
-    ):
+        self,
+        synapse_with_filled_table_one: pd.DataFrame,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
         """
         Testing for synapse.update_table_rows()
         """
@@ -153,8 +179,11 @@ class TestSynapseModifyRows:
         pd.testing.assert_frame_equal(result3, test_table)
 
     def test_upsert_table_rows(
-        self, synapse_with_filled_table_one, table_one, table_one_config
-    ):
+        self,
+        synapse_with_filled_table_one: pd.DataFrame,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
         """
         Testing for synapse.upsert_table_rows()
         """

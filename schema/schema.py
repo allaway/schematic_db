@@ -26,7 +26,7 @@ class NoAttributesWarning(Warning):
     Occurs when a database object has no attributes returned from find_class_specific_properties().
     """
 
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(self.message)
 
@@ -48,7 +48,7 @@ class ManifestMissingPrimaryKeyError(Exception):
         self.manifest_columns = manifest_columns
         super().__init__(self.message)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"{self.message}; object name:{self.object_name}; "
             f"dataset_id:{self.dataset_id}; primary keys:{self.primary_keys}; "

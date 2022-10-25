@@ -7,7 +7,7 @@ class QueryStore(ABC):  # pylint: disable=too-few-public-methods
     """An interface for Query Store objects"""
 
     @abstractmethod
-    def store_query_result(self, table_name: str, query_result: pd.DataFrame):
+    def store_query_result(self, table_name: str, query_result: pd.DataFrame) -> None:
         """Stores The result of a query
 
         Args:
