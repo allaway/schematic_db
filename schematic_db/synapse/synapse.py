@@ -5,7 +5,7 @@ from functools import partial
 import typing
 import synapseclient as sc  # type: ignore
 import pandas as pd  # type: ignore
-from db_object_config import DBObjectConfig, DBDatatype
+from schematic_db.db_object_config import DBObjectConfig, DBDatatype
 
 
 SYNAPSE_DATATYPES = {

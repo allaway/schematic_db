@@ -1,7 +1,7 @@
 """RelationalDatabase"""
 from abc import ABC, abstractmethod
 import pandas as pd
-from db_object_config import DBObjectConfig
+from schematic_db.db_object_config import DBObjectConfig
 
 
 class UpdateDBTableError(Exception):

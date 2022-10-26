@@ -6,19 +6,20 @@ import pytest
 import pandas as pd
 import numpy as np
 from yaml import safe_load
-from db_object_config import (
+from schematic_db.db_object_config import (
     DBConfig,
     DBObjectConfig,
     DBAttributeConfig,
     DBDatatype,
     DBForeignKey,
 )
-from query_store import QueryStore, SynapseQueryStore
-from rdb import MySQLDatabase
-from rdb_updater import RDBUpdater
-from rdb_queryer import RDBQueryer
-from synapse import Synapse
-from schema import Schema
+
+from schematic_db.query_store import QueryStore, SynapseQueryStore
+from schematic_db.rdb import MySQLDatabase
+from schematic_db.rdb_updater import RDBUpdater
+from schematic_db.rdb_queryer import RDBQueryer
+from schematic_db.synapse import Synapse
+from schematic_db.schema import Schema
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")

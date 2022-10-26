@@ -5,7 +5,7 @@ import numpy as np
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy import exc
-from db_object_config import DBObjectConfig, DBDatatype
+from schematic_db.db_object_config import DBObjectConfig, DBDatatype
 from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {

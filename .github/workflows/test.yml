@@ -14,12 +14,10 @@ jobs:
       - name: Set up MySQL
         run: |
           sudo /etc/init.d/mysql start
-
       # Create the secrets config file
       - name: create secrets config
         run: |
           import yaml
-
           dict = {
             "synapse": {
               "username": "${{secrets.SYNAPSE_LOGIN}}",
@@ -31,10 +29,8 @@ jobs:
               "host": "${{secrets.MYSQL_HOST}}"
             }
           }
-
           with open('tests/data/secrets.yml', 'w') as file:
               yaml.dump(dict, file)
-
         shell: python
 
       # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
@@ -97,7 +93,6 @@ jobs:
           mkdir .mypy_cache
           poetry run mypy --install-types --non-interactive ./
           poetry run mypy --disallow-untyped-defs .
-
       # This checks if code has been formatted with black
       - name: Code formatting with black
         uses: psf/black@stable
@@ -106,7 +101,7 @@ jobs:
 
       # This checks for pylint score
       - name: Code formatting with pylint
-        run: poetry run pylint db_object_config query_store rdb rdb_queryer rdb_updater schema synapse tests
+        run: poetry run pylint schematic_db/* tests/*
 
       # And finally run tests. I'm using pytest and all my pytest config is in my `pyproject.toml`
       # so this line is super-simple. But it could be as complex as you need.
