@@ -1,5 +1,5 @@
 """Testing for Schema."""
-from typing import Generator
+from typing import Generator, Any
 import pytest
 import pandas as pd
 from db_object_config import (
@@ -67,7 +67,8 @@ def fixture_test_manifests() -> Generator:
     ]
 
 
-class FutureTestUtils:
+@pytest.mark.fast
+class TestUtils:
     """Testing for Schema utils"""
 
     def test_get_manifest_ids_for_object(
@@ -85,6 +86,11 @@ class FutureTestUtils:
         assert get_dataset_ids_for_object("C1", test_manifests) == ["syn6", "syn10"]
         assert get_dataset_ids_for_object("C2", test_manifests) == ["syn7"]
         assert get_dataset_ids_for_object("C3", test_manifests) == []
+
+
+@pytest.mark.schematic
+class TestAPIUtils:
+    """Testing for API utils"""
 
     def test_get_project_manifests(
         self,
@@ -144,7 +150,21 @@ class FutureTestUtils:
             )
 
 
-class FutureTestSchema:
+@pytest.mark.fast
+class TestMockSchema:  # pylint: disable=too-few-public-methods
+    """Testing for Schema with schematic endpoint mocked"""
+
+    def test_init(self, mocker: Any) -> None:
+        """Testing for Schema.create_foreign_keys()"""
+        subgraph = [["Patient", "PatientID"], ["Patient", "Sex"]]
+        mocker.patch("schema.schema.get_graph_by_edge_type", return_value=subgraph)
+        mocker.patch("schema.schema.get_project_manifests", return_value=[])
+        obj = Schema("url", "project_id", "asset_id", "token")
+        assert isinstance(obj, Schema)
+
+
+@pytest.mark.schematic
+class TestSchema:
     """Testing for Schema"""
 
     def test_create_attributes(self, test_schema: Schema) -> None:
@@ -190,7 +210,8 @@ class FutureTestSchema:
         ]
 
 
-class FutureTestGFFSchema:
+@pytest.mark.schematic
+class TestGFFSchema:
     """Testing for GFF Schema"""
 
     def test_create_db_config(self, gff_db_config: DBConfig) -> None:

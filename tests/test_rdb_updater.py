@@ -1,9 +1,10 @@
-"""Testing for RDBUpdater.
-"""
+"""Testing for RDBUpdater."""
+import pytest
 from rdb_updater import RDBUpdater
 
 
-class FutureTestRDBUpdater:
+@pytest.mark.schematic
+class TestRDBUpdater:
     """Testing for RDB with MySQL database"""
 
     def test_init(self, rdb_updater_mysql_gff: RDBUpdater) -> None:

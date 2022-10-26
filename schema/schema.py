@@ -153,13 +153,8 @@ class Schema:
             foreign_key_getter (Callable[[str], str], optional):
                 Defaults to get_key_attribute.
         """
-        # retrieve the edges from schematic API and store in networkx.DiGraph()
-        subgraph = get_graph_by_edge_type(schema_url, "requiresComponent")
-        schema_graph = networkx.DiGraph()
-        schema_graph.add_edges_from(subgraph)
-        self.schema_graph = schema_graph
-
         self.schema_url = schema_url
+        self.schema_graph = self.create_schema_graph()
         self.synapse_asset_view_id = synapse_asset_view_id
         self.synapse_input_token = synapse_input_token
         self.primary_key_getter = primary_key_getter
@@ -169,6 +164,17 @@ class Schema:
             project_id=synapse_project_id,
             asset_view=synapse_asset_view_id,
         )
+
+    def create_schema_graph(self) -> networkx.DiGraph:
+        """Retrieve the edges from schematic API and store in networkx.DiGraph()
+
+        Returns:
+            networkx.DiGraph: The edges of the graph
+        """
+        subgraph = get_graph_by_edge_type(self.schema_url, "requiresComponent")
+        schema_graph = networkx.DiGraph()
+        schema_graph.add_edges_from(subgraph)
+        return schema_graph
 
     def create_db_config(self) -> DBConfig:
         """Creates the configs for all objects in the database.

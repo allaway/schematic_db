@@ -1,8 +1,11 @@
 """Testing for Testing for RDBQueryer."""
+import pytest
 from rdb_queryer import RDBQueryer
 
 
-class FutureTestRDBQueryer:  # pylint: disable=too-few-public-methods
+@pytest.mark.synapse
+@pytest.mark.schematic
+class TestRDBQueryer:  # pylint: disable=too-few-public-methods
     """Testing for RDBQueryer"""
 
     def test_store_query_results(
