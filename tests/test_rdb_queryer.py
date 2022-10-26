@@ -1,6 +1,6 @@
 """Testing for Testing for RDBQueryer."""
 import pytest
-from rdb_queryer import RDBQueryer
+from schematic_db.rdb_queryer import RDBQueryer
 
 
 @pytest.mark.synapse

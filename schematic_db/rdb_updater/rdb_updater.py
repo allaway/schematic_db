@@ -2,9 +2,9 @@
 import warnings
 import typing
 import pandas as pd
-from db_object_config import DBObjectConfig
-from rdb import RelationalDatabase, UpdateDBTableError
-from schema import Schema
+from schematic_db.db_object_config import DBObjectConfig
+from schematic_db.rdb import RelationalDatabase, UpdateDBTableError
+from schematic_db.schema import Schema
 
 
 class NoManifestWarning(Warning):
