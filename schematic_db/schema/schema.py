@@ -4,7 +4,7 @@ from typing import Optional, Callable, Union
 import warnings
 import networkx
 import pandas as pd
-from schematic_db.db_object_config import (
+from schematic_db.db_config import (
     DBConfig,
     DBObjectConfig,
     DBForeignKey,
@@ -112,8 +112,8 @@ def get_dataset_ids_for_object(
 
 class Schema:
     """
-    The Schema object is used  to interact with the Schematic API to create a DBObjectConfigList,
-    which contains schemas for each object(table) in a database.
+    The Schema class interacts with the Schematic API to create a DBConfig
+     object or to get a list of manifests for the schema.
     """
 
     def __init__(  # pylint: disable=too-many-arguments

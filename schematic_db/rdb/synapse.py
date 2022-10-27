@@ -1,6 +1,6 @@
 """SynapseDatabase"""
 import pandas as pd
-from schematic_db.db_object_config import DBObjectConfig
+from schematic_db.db_config import DBObjectConfig
 from schematic_db.synapse import Synapse
 from .rdb import RelationalDatabase
 

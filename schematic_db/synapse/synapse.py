@@ -5,7 +5,7 @@ from functools import partial
 import typing
 import synapseclient as sc  # type: ignore
 import pandas as pd  # type: ignore
-from schematic_db.db_object_config import DBObjectConfig, DBDatatype
+from schematic_db.db_config import DBObjectConfig, DBDatatype
 
 
 SYNAPSE_DATATYPES = {
@@ -33,12 +33,8 @@ class SynapseTableNameError(Exception):
 
 
 class Synapse:
-    """Synapse
-    - Represents:
-      - A database stored as Synapse tables
-      - A source of manifest tables in Synapse
-      - A destination of queries in Synapse
-    - Handles Synapse specific functionality.
+    """
+    The Synapse class handles interactions with a project in Synapse.
     """
 
     def __init__(self, config_dict: dict) -> None:

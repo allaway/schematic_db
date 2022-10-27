@@ -1,5 +1,5 @@
 """DB config
-These are a set of object for defining a database table in a dialect agnostic way.
+These are a set of classes for defining a database table in a dialect agnostic way.
 """
 from dataclasses import dataclass
 from enum import Enum

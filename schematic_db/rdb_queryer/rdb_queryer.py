@@ -17,7 +17,7 @@ class DuplicateColumnError(Exception):
 
 
 class RDBQueryer:
-    """Represents queries a database and uploads the results to a query store."""
+    """Queries a database and uploads the results to a query store."""
 
     def __init__(
         self,
