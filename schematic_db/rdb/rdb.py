@@ -21,6 +21,10 @@ class RelationalDatabase(ABC):
     """An interface for relational database types"""
 
     @abstractmethod
+    def drop_all_tables(self) -> None:
+        """Drops all tables from the database"""
+
+    @abstractmethod
     def execute_sql_query(self, query: str) -> pd.DataFrame:
         """Executes a valid SQL statement
         Should be used when a result is expected.
