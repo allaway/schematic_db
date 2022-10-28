@@ -7,7 +7,7 @@ from schematic_db.db_config.db_config import (
     DBDatatype,
     DBObjectConfig,
 )
-from schematic_db.synapse import Synapse
+from schematic_db.synapse import Synapse, SynapseConfig
 
 
 @pytest.fixture(name="synapse_no_extra_tables")
@@ -22,7 +22,7 @@ def fixture_synapse_no_extra_tables(
     table_names = obj.get_table_names()
     for name in table_names:
         if name not in synapse_database_table_names:
-            obj.drop_table(name)
+            obj.delete_table(name)
 
 
 @pytest.fixture(name="synapse_with_empty_table_one")
@@ -49,43 +49,57 @@ def fixture_synapse_with_filled_table_one(
     yield obj
 
 
+@pytest.fixture(name="mock_synapse_config")
+def fixture_mock_synapse_config() -> Generator:
+    """
+    Yields a Synapse object with table one filled
+    """
+    yield SynapseConfig(username="", auth_token="", project_id="")
+
+
 @pytest.mark.fast
 class TestMockSynapse:
     """Testing for Synapse class with mocked methods"""
 
-    def test_get_table_names(self, mocker: Any) -> None:
+    def test_get_table_names(
+        self, mocker: Any, mock_synapse_config: SynapseConfig
+    ) -> None:
         """Testing for Synapse.get_table_names"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         mocker.patch("synapseclient.Synapse.login", return_value=None)
         mocker.patch(
             "schematic_db.synapse.synapse.Synapse._get_tables", return_value=tables
         )
-        obj = Synapse({})
+        obj = Synapse(mock_synapse_config)
         assert obj.get_table_names() == ["table1", "table2"]
 
-    def test_get_synapse_id_from_table_name(self, mocker: Any) -> None:
+    def test_get_synapse_id_from_table_name(
+        self, mocker: Any, mock_synapse_config: SynapseConfig
+    ) -> None:
         """Testing for Synapse.get_synapse_id_from_table_name"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         mocker.patch("synapseclient.Synapse.login", return_value=None)
         mocker.patch(
             "schematic_db.synapse.synapse.Synapse._get_tables", return_value=tables
         )
-        obj = Synapse({})
+        obj = Synapse(mock_synapse_config)
         assert obj.get_synapse_id_from_table_name("table1") == "syn1"
         assert obj.get_synapse_id_from_table_name("table2") == "syn2"
 
-    def test_get_table_name_from_synapse_id(self, mocker: Any) -> None:
+    def test_get_table_name_from_synapse_id(
+        self, mocker: Any, mock_synapse_config: SynapseConfig
+    ) -> None:
         """Testing for Synapse.get_table_name_from_synapse_id"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         mocker.patch("synapseclient.Synapse.login", return_value=None)
         mocker.patch(
             "schematic_db.synapse.synapse.Synapse._get_tables", return_value=tables
         )
-        obj = Synapse({})
+        obj = Synapse(mock_synapse_config)
         assert obj.get_table_name_from_synapse_id("syn1") == "table1"
         assert obj.get_table_name_from_synapse_id("syn2") == "table2"
 
-    def test_query_table(self, mocker: Any) -> None:
+    def test_query_table(self, mocker: Any, mock_synapse_config: SynapseConfig) -> None:
         """Testing for Synapse.query_table"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         query_result = pd.DataFrame({"col1": ["a", "b"], "col2": [1, 2]})
@@ -106,7 +120,7 @@ class TestMockSynapse:
             "schematic_db.synapse.synapse.Synapse.execute_sql_query",
             return_value=query_result,
         )
-        obj = Synapse({})
+        obj = Synapse(mock_synapse_config)
         assert isinstance(obj.query_table("table1", config), pd.DataFrame)
 
 
@@ -159,15 +173,15 @@ class TestSynapseModifyTables:
         obj.add_table("table_one", table_one_config)
         assert obj.get_table_names() == ["table_one"] + synapse_database_table_names
 
-    def test_drop_table(
+    def test_delete_table(
         self,
         synapse_with_empty_table_one: pd.DataFrame,
         synapse_database_table_names: list[str],
     ) -> None:
-        """Testing for Synapse.drop_table()"""
+        """Testing for Synapse.delete_table()"""
         obj = synapse_with_empty_table_one
         assert obj.get_table_names() == ["table_one"] + synapse_database_table_names
-        obj.drop_table("table_one")
+        obj.delete_table("table_one")
         assert obj.get_table_names() == synapse_database_table_names
 
     def test_replace_table(

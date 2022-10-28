@@ -1,6 +1,7 @@
 """Synapse
 """
 import time
+from dataclasses import dataclass
 from functools import partial
 import typing
 import synapseclient as sc  # type: ignore
@@ -32,20 +33,29 @@ class SynapseTableNameError(Exception):
         return f"{self.message}:{self.table_name}"
 
 
+@dataclass
+class SynapseConfig:
+    """A config for a Synapse Project."""
+
+    username: str
+    auth_token: str
+    project_id: str
+
+
 class Synapse:
     """
     The Synapse class handles interactions with a project in Synapse.
     """
 
-    def __init__(self, config_dict: dict) -> None:
+    def __init__(self, config: SynapseConfig) -> None:
         """Init
 
         Args:
-            config_dict (dict): A dict with fields ["username", "auth_token", "project_id"]
+            config (SynapseConfig): A SynapseConfig object
         """
-        username = config_dict.get("username")
-        auth_token = config_dict.get("auth_token")
-        project_id = config_dict.get("project_id")
+        username = config.username
+        auth_token = config.auth_token
+        project_id = config.project_id
 
         syn = sc.Synapse()
         syn.login(username, authToken=auth_token)
@@ -175,14 +185,41 @@ class Synapse:
         table = sc.Table(schema, values)
         table = self.syn.store(table)
 
-    def drop_table(self, table_name: str) -> None:
-        """Drops a Synapse table
+    def delete_table(self, table_name: str) -> None:
+        """Deletes a Synapse table
 
         Args:
             table_name (str): The name of the table to be dropped
         """
         synapse_id = self.get_synapse_id_from_table_name(table_name)
         self.syn.delete(synapse_id)
+
+    def clear_table(self, table_name: str) -> None:
+        """
+        Removes all rows and columns from a Synapse table.
+        This preserves the table name and Synapse ID
+
+        Args:
+            table_name (str): The name of the table to be cleared
+        """
+        synapse_id = self.get_synapse_id_from_table_name(table_name)
+
+        # deletes all current rows
+        results = self.syn.tableQuery(f"select * from {synapse_id}")
+        self.syn.delete(results)
+
+        # wait for Synapse to catch up
+        time.sleep(1)
+
+        # removes all current columns
+        current_table = self.syn.get(synapse_id)
+        current_columns = self.syn.getTableColumns(current_table)
+        for col in current_columns:
+            current_table.removeColumn(col)
+        self.syn.store(current_table)
+
+        # wait for synapse to catch up
+        time.sleep(3)
 
     def insert_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
         """Insert table rows
@@ -247,7 +284,6 @@ class Synapse:
         """
         Replaces synapse table with table made in table.
         The synapse id is preserved.
-
         Args:
             table_name (str): The name of the table to be replaced
             data (pd.DataFrame): A dataframe of the table to replace to old table with
@@ -262,7 +298,7 @@ class Synapse:
             self.syn.delete(results)
 
             # wait for Synapse to catch up
-            time.sleep(1)
+            time.sleep(5)
 
             # removes all current columns
             current_table = self.syn.get(synapse_id)

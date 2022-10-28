@@ -42,7 +42,9 @@ class RDBUpdater:
         self.rdb = rdb
         self.schema = schema
 
-    def update_all_database_tables(self, strict: bool = True, replace_tables: bool = False) -> None:
+    def update_all_database_tables(
+        self, strict: bool = True, replace_tables: bool = False
+    ) -> None:
         """Updates all tables in the db_config
 
         Args:
