@@ -42,6 +42,19 @@ class SynapseConfig:
     project_id: str
 
 
+def create_synapse_column(name: str, datatype: DBDatatype) -> sc.Column:
+    """Creates a Synapse column object
+
+    Args:
+        name (str): The name of the column
+        datatype (DBDatatype): The datatype of the column
+
+    Returns:
+        sc.Column: _description_
+    """
+    func = SYNAPSE_DATATYPES[datatype]
+    return func(name=name)
+
 class Synapse:
     """
     The Synapse class handles interactions with a project in Synapse.
@@ -177,7 +190,7 @@ class Synapse:
         columns: list[sc.Column] = []
         values: dict[str, list] = {}
         for att in table_config.attributes:
-            column = self._create_synapse_column(att.name, att.datatype)
+            column = create_synapse_column(att.name, att.datatype)
             columns.append(column)
             values[att.name] = []
 
@@ -326,17 +339,6 @@ class Synapse:
         table = sc.table.build_table(table_name, project, table)
         self.syn.store(table)
 
-    def read_csv_file(self, synapse_id: str) -> pd.DataFrame:
-        """Gets a csv file in synapse and returns a dataframe
-
-        Args:
-            synapse_id (str): The synapse id of the csv
-
-        Returns:
-            pd.DataFrame: the csv in pandas.Dataframe form
-        """
-        path = self.syn.get(synapse_id).path
-        return pd.read_csv(path)
 
     def _merge_dataframe_with_primary_key_table(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
@@ -354,7 +356,3 @@ class Synapse:
         query = f"SELECT {primary_key_string} FROM {table_id}"
         table = self.execute_sql_query(query, include_row_data=True)
         return table
-
-    def _create_synapse_column(self, name: str, datatype: DBDatatype) -> sc.Column:
-        func = SYNAPSE_DATATYPES[datatype]
-        return func(name=name)
