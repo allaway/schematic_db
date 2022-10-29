@@ -319,6 +319,10 @@ def table_one() -> Generator:
     )
     dataframe = dataframe.astype({"int_one_col": "Int64", "bool_one_col": "boolean"})
     dataframe["date_one_col"] = pd.to_datetime(dataframe["date_one_col"]).dt.date
+    import logging
+
+    logging.warning("conftest")
+    logging.warning(dataframe)
     yield dataframe
 
 
