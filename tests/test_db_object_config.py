@@ -30,7 +30,7 @@ class TestDBObjectConfig:
             attributes=[
                 DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
             ],
-            primary_keys=["pk_col"],
+            primary_key="pk_col",
             foreign_keys=[],
         )
         assert isinstance(obj1, DBObjectConfig)
@@ -40,7 +40,7 @@ class TestDBObjectConfig:
             attributes=[
                 DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
             ],
-            primary_keys=["pk_col"],
+            primary_key="pk_col",
             foreign_keys=[
                 DBForeignKey(
                     name="pk_col",
@@ -62,16 +62,7 @@ class TestDBObjectConfig:
             DBObjectConfig(
                 name="table_name",
                 attributes=[],
-                primary_keys=["pk_col"],
-                foreign_keys=[],
-            )
-
-        # test primary_keys
-        with pytest.raises(ConfigKeyError, match="Primary keys is empty: table_name"):
-            DBObjectConfig(
-                name="table_name",
-                attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
-                primary_keys=[],
+                primary_key="pk_col",
                 foreign_keys=[],
             )
 
@@ -82,7 +73,7 @@ class TestDBObjectConfig:
             DBObjectConfig(
                 name="table_name",
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
-                primary_keys=["pk_col1"],
+                primary_key="pk_col1",
                 foreign_keys=[],
             )
         # test foreign_keys
@@ -93,7 +84,7 @@ class TestDBObjectConfig:
             DBObjectConfig(
                 name="table_name",
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
-                primary_keys=["pk_col"],
+                primary_key="pk_col",
                 foreign_keys=[
                     DBForeignKey(
                         name="pk_col1",
@@ -110,7 +101,7 @@ class TestDBObjectConfig:
             DBObjectConfig(
                 name="table_name",
                 attributes=[DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT)],
-                primary_keys=["pk_col"],
+                primary_key="pk_col",
                 foreign_keys=[
                     DBForeignKey(
                         name="pk_col",
@@ -138,7 +129,7 @@ class TestDBConfig:
                     attributes=[
                         DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
                     ],
-                    primary_keys=["pk_col"],
+                    primary_key="pk_col",
                     foreign_keys=[],
                 )
             ]
@@ -152,7 +143,7 @@ class TestDBConfig:
                     attributes=[
                         DBAttributeConfig(name="pk_col1", datatype=DBDatatype.TEXT),
                     ],
-                    primary_keys=["pk_col1"],
+                    primary_key="pk_col1",
                     foreign_keys=[],
                 ),
                 DBObjectConfig(
@@ -160,7 +151,7 @@ class TestDBConfig:
                     attributes=[
                         DBAttributeConfig(name="pk_col2", datatype=DBDatatype.TEXT),
                     ],
-                    primary_keys=["pk_col2"],
+                    primary_key="pk_col2",
                     foreign_keys=[
                         DBForeignKey(
                             name="pk_col2",
@@ -188,7 +179,7 @@ class TestDBConfig:
                         attributes=[
                             DBAttributeConfig(name="pk_col2", datatype=DBDatatype.TEXT),
                         ],
-                        primary_keys=["pk_col2"],
+                        primary_key="pk_col2",
                         foreign_keys=[
                             DBForeignKey(
                                 name="pk_col2",
@@ -211,7 +202,7 @@ class TestDBConfig:
                         attributes=[
                             DBAttributeConfig(name="pk_col", datatype=DBDatatype.TEXT),
                         ],
-                        primary_keys=["pk_col"],
+                        primary_key="pk_col",
                         foreign_keys=[],
                     ),
                     DBObjectConfig(
@@ -219,7 +210,7 @@ class TestDBConfig:
                         attributes=[
                             DBAttributeConfig(name="pk_col2", datatype=DBDatatype.TEXT),
                         ],
-                        primary_keys=["pk_col2"],
+                        primary_key="pk_col2",
                         foreign_keys=[
                             DBForeignKey(
                                 name="pk_col2",
