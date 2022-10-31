@@ -291,10 +291,11 @@ class TestSynapseModifyRows:
         Testing for synapse.delete_all_table_rows()
         """
         obj = synapse_with_filled_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
         result1 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result1, table_one)
 
-        obj.delete_all_table_rows("table_one")
+        obj.delete_all_table_rows(synapse_id)
         result2 = obj.query_table("table_one", table_one_config)
         assert result2.empty
 
@@ -362,10 +363,11 @@ class TestSynapseModifyColumns:
         Testing for synapse.delete_all_table_columns()
         """
         obj = synapse_with_filled_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
         result1 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result1, table_one)
 
-        obj.delete_all_table_columns("table_one")
+        obj.delete_all_table_columns(synapse_id)
         with pytest.raises(
             sc.core.exceptions.SynapseHTTPError,
             match="400 Client Error",
@@ -382,6 +384,7 @@ class TestSynapseModifyColumns:
         Testing for synapse.add_table_columns()
         """
         obj = synapse_with_filled_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
         result1 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result1, table_one)
 
@@ -391,7 +394,7 @@ class TestSynapseModifyColumns:
         ):
             obj.add_table_columns("table_one", table_one)
 
-        obj.delete_all_table_columns("table_one")
+        obj.delete_all_table_columns(synapse_id)
         obj.add_table_columns("table_one", table_one)
         assert obj.get_table_column_names("table_one") == [
             "pk_one_col",

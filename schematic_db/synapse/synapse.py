@@ -346,24 +346,22 @@ class Synapse:
         table = self.execute_sql_query(query, include_row_data=True)
         return table
 
-    def delete_all_table_rows(self, table_name: str) -> None:
+    def delete_all_table_rows(self, synapse_id: str) -> None:
         """Deletes all rows in the Synapse table
 
         Args:
-            table_name (str): The name of the table to delete the rows from
+            synapse_id (str): The Synapse id of the table
         """
-        synapse_id = self.get_synapse_id_from_table_name(table_name)
         results = self.syn.tableQuery(f"select * from {synapse_id}")
         self.syn.delete(results)
         time.sleep(3)
 
-    def delete_all_table_columns(self, table_name: str) -> None:
+    def delete_all_table_columns(self, synapse_id: str) -> None:
         """Deletes all columns in the Synapse table
 
         Args:
-            table_name (str): The name of the table to delete the columns from
+            synapse_id (str): The Synapse id of the table
         """
-        synapse_id = self.get_synapse_id_from_table_name(table_name)
         table = self.syn.get(synapse_id)
         columns = self.syn.getTableColumns(table)
         for col in columns:
