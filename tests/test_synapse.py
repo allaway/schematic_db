@@ -401,3 +401,44 @@ class TestSynapseModifyColumns:
             "date_one_col",
             "bool_one_col",
         ]
+
+@pytest.mark.synapse
+class TestSynapseAnnotations:
+    """Testing for annotation methods"""
+
+    def test_get_entity_annotations(self, synapse_no_extra_tables: Synapse) -> None:
+        """Testing for Synapse.get_entity_annotations"""
+        annotations = synapse_no_extra_tables.get_entity_annotations("syn34532191")
+        assert annotations.id == "syn34532191"
+        assert annotations == {"primary_key": ["pk_one_col"]}
+
+    def test_set_entity_annotations(self, synapse_with_empty_table_one: Synapse) -> None:
+        """Testing for Synapse.set_entity_annotations"""
+        obj = synapse_with_empty_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
+        annotations = obj.get_entity_annotations(synapse_id)
+        assert annotations.id == synapse_id
+        assert annotations == {}
+
+        obj.set_entity_annotations(synapse_id, {"test_annotation": "test_value"})
+        annotations2 = obj.get_entity_annotations(synapse_id)
+        assert annotations2.id == synapse_id
+        assert annotations2 == {"test_annotation": ["test_value"]}
+
+    def test_clear_entity_annotations(self, synapse_with_empty_table_one: Synapse) -> None:
+        """Testing for Synapse.clear_entity_annotations"""
+        obj = synapse_with_empty_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
+        annotations = obj.get_entity_annotations(synapse_id)
+        assert annotations.id == synapse_id
+        assert annotations == {}
+
+        obj.set_entity_annotations(synapse_id, {"test_annotation": "test_value"})
+        annotations2 = obj.get_entity_annotations(synapse_id)
+        assert annotations2.id == synapse_id
+        assert annotations2 == {"test_annotation": ["test_value"]}
+
+        obj.clear_entity_annotations(synapse_id)
+        annotations3 = obj.get_entity_annotations(synapse_id)
+        assert annotations3.id == synapse_id
+        assert annotations3 == {}

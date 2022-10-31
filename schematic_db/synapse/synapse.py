@@ -1,9 +1,10 @@
 """Synapse
 """
+from __future__ import annotations
 import time
 from dataclasses import dataclass
 from functools import partial
-import typing
+from typing import Any
 import synapseclient as sc  # type: ignore
 import pandas as pd  # type: ignore
 from schematic_db.db_config import DBObjectConfig, DBDatatype
@@ -181,7 +182,7 @@ class Synapse:
 
     def execute_sql_statement(
         self, statement: str, include_row_data: bool = False
-    ) -> typing.Any:
+    ) -> Any:
         """Execute a SQL statement
 
         Args:
@@ -384,3 +385,37 @@ class Synapse:
             table.addColumn(col)
         self.syn.store(table)
         time.sleep(3)
+
+    def get_entity_annotations(self, synapse_id: str) -> dict[str, Any]:
+        """Gets the annotations for the Synapse entity
+
+        Args:
+            synapse_id (str): The Synapse id of the entity
+
+        Returns:
+            dict[str, Any]: The annotations of the Synapse entity in dict form.
+        """
+        return self.syn.get_annotations(synapse_id)
+
+    def set_entity_annotations(self, synapse_id: str, annotations: dict[str, Any]) -> None:
+        """Sets the entities annotations to the input annotations
+
+        Args:
+            synapse_id (str): The Synapse ID of the entity
+            annotations (dict[str, Any]): A dictionary of annotations
+        """
+        entity_annotations = self.syn.get_annotations(synapse_id)
+        entity_annotations.clear()
+        for key, value in annotations.items():
+            entity_annotations[key] = value
+        self.syn.set_annotations(entity_annotations)
+
+    def clear_entity_annotations(self, synapse_id: str) -> None:
+        """Removes all annotations from the entity
+
+        Args:
+            synapse_id (str): The Synapse ID of the entity
+        """
+        annotations = self.syn.get_annotations(synapse_id)
+        annotations.clear()
+        self.syn.set_annotations(annotations)
