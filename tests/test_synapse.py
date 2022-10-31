@@ -248,18 +248,12 @@ class TestSynapseModifyRows:
         obj = synapse_with_empty_table_one
         obj.insert_table_rows("table_one", table_one)
         result1 = obj.query_table("table_one", table_one_config)
-        import logging
-
-        logging.warning(result1)
-        logging.warning(table_one)
         pd.testing.assert_frame_equal(result1, table_one)
 
         obj.insert_table_rows("table_one", table_one)
         result2 = obj.query_table("table_one", table_one_config)
         test_table = pd.concat(objs=[table_one, table_one])
         test_table.reset_index(drop=True, inplace=True)
-        logging.warning(result2)
-        logging.warning(test_table)
         pd.testing.assert_frame_equal(result2, test_table)
 
     def test_delete_table_rows(
