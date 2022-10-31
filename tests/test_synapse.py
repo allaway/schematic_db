@@ -110,7 +110,7 @@ class TestMockSynapse:
                 DBAttributeConfig("col1", DBDatatype.TEXT),
                 DBAttributeConfig("col2", DBDatatype.INT),
             ],
-            primary_keys=["col1"],
+            primary_key="col1",
             foreign_keys=[],
         )
         mocker.patch("synapseclient.Synapse.login", return_value=None)
