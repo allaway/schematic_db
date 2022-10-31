@@ -405,6 +405,7 @@ class TestSynapseModifyColumns:
             "bool_one_col",
         ]
 
+
 @pytest.mark.synapse
 class TestSynapseAnnotations:
     """Testing for annotation methods"""
@@ -415,7 +416,9 @@ class TestSynapseAnnotations:
         assert annotations.id == "syn34532191"
         assert annotations == {"primary_key": ["pk_one_col"]}
 
-    def test_set_entity_annotations(self, synapse_with_empty_table_one: Synapse) -> None:
+    def test_set_entity_annotations(
+        self, synapse_with_empty_table_one: Synapse
+    ) -> None:
         """Testing for Synapse.set_entity_annotations"""
         obj = synapse_with_empty_table_one
         synapse_id = obj.get_synapse_id_from_table_name("table_one")
@@ -428,7 +431,9 @@ class TestSynapseAnnotations:
         assert annotations2.id == synapse_id
         assert annotations2 == {"test_annotation": ["test_value"]}
 
-    def test_clear_entity_annotations(self, synapse_with_empty_table_one: Synapse) -> None:
+    def test_clear_entity_annotations(
+        self, synapse_with_empty_table_one: Synapse
+    ) -> None:
         """Testing for Synapse.clear_entity_annotations"""
         obj = synapse_with_empty_table_one
         synapse_id = obj.get_synapse_id_from_table_name("table_one")

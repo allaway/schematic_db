@@ -37,6 +37,18 @@ class DBForeignKey:
     foreign_object_name: str
     foreign_attribute_name: str
 
+    def get_attribute_dict(self) -> dict[str, str]:
+        """Returns the foreign key in dict form
+
+        Returns:
+            dict[str, str]: A dictionary of the foriegn key attributes
+        """
+        return {
+            "name": self.name,
+            "foreign_object_name": self.foreign_object_name,
+            "foreign_attribute_name": self.foreign_attribute_name,
+        }
+
 
 class ConfigAttributeError(Exception):
     """ConfigAttributeError"""

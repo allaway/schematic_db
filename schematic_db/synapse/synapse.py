@@ -57,7 +57,7 @@ def create_synapse_column(name: str, datatype: DBDatatype) -> sc.Column:
     return func(name=name)
 
 
-class Synapse:
+class Synapse: # pylint: disable=too-many-public-methods
     """
     The Synapse class handles interactions with a project in Synapse.
     """
@@ -337,9 +337,7 @@ class Synapse:
         merged_table = pd.merge(data, table, how="inner", on=primary_key)
         return merged_table
 
-    def _get_primary_key_table(
-        self, table_name: str, primary_key: str
-    ) -> pd.DataFrame:
+    def _get_primary_key_table(self, table_name: str, primary_key: str) -> pd.DataFrame:
         table_id = self.get_synapse_id_from_table_name(table_name)
         query = f"SELECT {primary_key} FROM {table_id}"
         table = self.execute_sql_query(query, include_row_data=True)
@@ -383,18 +381,20 @@ class Synapse:
         self.syn.store(table)
         time.sleep(3)
 
-    def get_entity_annotations(self, synapse_id: str) -> dict[str, Any]:
+    def get_entity_annotations(self, synapse_id: str) -> sc.Annotations:
         """Gets the annotations for the Synapse entity
 
         Args:
             synapse_id (str): The Synapse id of the entity
 
         Returns:
-            dict[str, Any]: The annotations of the Synapse entity in dict form.
+            synapseclient.Annotations: The annotations of the Synapse entity in dict form.
         """
         return self.syn.get_annotations(synapse_id)
 
-    def set_entity_annotations(self, synapse_id: str, annotations: dict[str, Any]) -> None:
+    def set_entity_annotations(
+        self, synapse_id: str, annotations: dict[str, Any]
+    ) -> None:
         """Sets the entities annotations to the input annotations
 
         Args:

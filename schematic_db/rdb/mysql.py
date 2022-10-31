@@ -121,7 +121,9 @@ class MySQLDatabase(RelationalDatabase):
         tuples = [(f"'{i}'" for i in tup) for tup in tuples]
         tuple_strings = ["(" + ",".join(tup) + ")" for tup in tuples]
         tuple_string = ",".join(tuple_strings)
-        statement = f"DELETE FROM {table_name} WHERE ({primary_key}) IN ({tuple_string})"
+        statement = (
+            f"DELETE FROM {table_name} WHERE ({primary_key}) IN ({tuple_string})"
+        )
         self._execute_sql_statement(statement)
 
     def get_table_names(self) -> list[str]:

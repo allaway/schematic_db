@@ -450,7 +450,6 @@ def fixture_table_three_config() -> Generator:
     yield table_config
 
 
-
 @pytest.fixture(scope="session")
 def table_123_unormalized() -> Generator:
     """
