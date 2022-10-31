@@ -113,16 +113,15 @@ class MySQLDatabase(RelationalDatabase):
     def delete_table_rows(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
     ) -> None:
-        primary_keys = table_config.primary_keys
-        for key in primary_keys:
-            if key not in list(data.columns):
-                raise DataframeKeyError("Primary key missing from data:", key)
-        data = data[primary_keys]
+        primary_key = table_config.primary_key
+        if primary_key not in list(data.columns):
+            raise DataframeKeyError("Primary key missing from data:", primary_key)
+        data = data[[primary_key]]
         tuples = list(data.itertuples(index=False, name=None))
         tuples = [(f"'{i}'" for i in tup) for tup in tuples]
         tuple_strings = ["(" + ",".join(tup) + ")" for tup in tuples]
         tuple_string = ",".join(tuple_strings)
-        statement = f"DELETE FROM {table_name} WHERE ({','.join(primary_keys)}) IN ({tuple_string})"
+        statement = f"DELETE FROM {table_name} WHERE ({primary_key}) IN ({tuple_string})"
         self._execute_sql_statement(statement)
 
     def get_table_names(self) -> list[str]:
@@ -184,11 +183,11 @@ class MySQLDatabase(RelationalDatabase):
         columns = []
         for att in table_config.attributes:
             att_name = att.name
-            primary_keys = table_config.primary_keys
+            primary_key = table_config.primary_key
             foreign_keys = table_config.get_foreign_key_names()
 
             # If column is a key, set datatype to sa.String(100)
-            if att_name in primary_keys or att_name in foreign_keys:
+            if att_name == primary_key or att_name in foreign_keys:
                 sql_datatype = sa.String(100)
             else:
                 sql_datatype = MYSQL_DATATYPES.get(att.datatype)
@@ -207,6 +206,5 @@ class MySQLDatabase(RelationalDatabase):
                 col = sa.Column(att_name, sql_datatype)
             columns.append(col)
 
-        if primary_keys != []:
-            columns.append(sa.PrimaryKeyConstraint(*primary_keys))
+        columns.append(sa.PrimaryKeyConstraint(primary_key))
         return columns

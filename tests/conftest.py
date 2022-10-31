@@ -337,7 +337,7 @@ def fixture_table_one_config() -> Generator:
             DBAttributeConfig(name="date_one_col", datatype=DBDatatype.DATE),
             DBAttributeConfig(name="bool_one_col", datatype=DBDatatype.BOOLEAN),
         ],
-        primary_keys=["pk_one_col"],
+        primary_key="pk_one_col",
         foreign_keys=[],
     )
     yield table_config
@@ -382,7 +382,7 @@ def fixture_table_two_config() -> Generator:
             DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
         ],
-        primary_keys=["pk_two_col"],
+        primary_key="pk_two_col",
         foreign_keys=[],
     )
     yield table_config
@@ -399,7 +399,7 @@ def fixture_table_two_config_combined() -> Generator:
             DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
         ],
-        primary_keys=["pk_two_col"],
+        primary_key="pk_two_col",
         foreign_keys=[],
     )
     yield table_config
@@ -428,11 +428,12 @@ def fixture_table_three_config() -> Generator:
     table_config = DBObjectConfig(
         name="table_three",
         attributes=[
+            DBAttributeConfig(name="pk_zero_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
             DBAttributeConfig(name="string_three_col", datatype=DBDatatype.TEXT),
         ],
-        primary_keys=["pk_one_col", "pk_two_col"],
+        primary_key="pk_zero_col",
         foreign_keys=[
             DBForeignKey(
                 name="pk_one_col",
@@ -447,6 +448,7 @@ def fixture_table_three_config() -> Generator:
         ],
     )
     yield table_config
+
 
 
 @pytest.fixture(scope="session")
