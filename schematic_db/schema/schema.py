@@ -33,26 +33,26 @@ class NoAttributesWarning(Warning):
 
 
 class ManifestMissingPrimaryKeyError(Exception):
-    """Raised when a manifest is missing one or more primary keys"""
+    """Raised when a manifest is missing its primary key"""
 
     def __init__(
         self,
         object_name: str,
         dataset_id: str,
-        primary_keys: list[str],
+        primary_key: str,
         manifest_columns: list[str],
     ):
-        self.message = "Manifest is missing one or more primary keys"
+        self.message = "Manifest is missing its primary key"
         self.object_name = object_name
         self.dataset_id = dataset_id
-        self.primary_keys = primary_keys
+        self.primary_key = primary_key
         self.manifest_columns = manifest_columns
         super().__init__(self.message)
 
     def __str__(self) -> str:
         return (
             f"{self.message}; object name:{self.object_name}; "
-            f"dataset_id:{self.dataset_id}; primary keys:{self.primary_keys}; "
+            f"dataset_id:{self.dataset_id}; primary keys:{self.primary_key}; "
             f"manifest columns:{self.manifest_columns}"
         )
 
@@ -228,7 +228,7 @@ class Schema:
         return DBObjectConfig(
             name=object_name,
             attributes=attributes,
-            primary_keys=[primary_key],
+            primary_key=primary_key,
             foreign_keys=foreign_keys,
         )
 
@@ -337,11 +337,11 @@ class Schema:
             if att_name in config.get_attribute_names()
         }
         # Raise error if all primary keys do not appear
-        if not all(key in attribute_names.values() for key in config.primary_keys):
+        if config.primary_key not in attribute_names.values():
             raise ManifestMissingPrimaryKeyError(
                 config.name,
                 dataset_id,
-                config.primary_keys,
+                config.primary_key,
                 list(attribute_names.values()),
             )
         # select rename columns manifest and select those in the config

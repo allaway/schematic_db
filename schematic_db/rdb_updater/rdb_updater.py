@@ -84,9 +84,7 @@ class RDBUpdater:
             warnings.warn(NoManifestWarning(msg))
             return
         manifest_table = pd.concat(manifest_tables)
-        manifest_table = manifest_table.drop_duplicates(
-            subset=table_config.primary_keys
-        )
+        manifest_table = manifest_table.drop_duplicates(subset=table_config.primary_key)
         manifest_table.reset_index(inplace=True, drop=True)
 
         # If not strict try to update the table and return a warning instead of an error
