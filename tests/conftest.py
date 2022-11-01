@@ -193,7 +193,8 @@ def fixture_rdb_queryer_mysql_gff(
     yield obj
 
 
-# test database objects -------------------------------------------------------
+# test schema database objects ------------------------------------------------
+# objects involving the main schematic test schema
 
 
 @pytest.fixture(scope="session", name="mysql")
@@ -221,7 +222,7 @@ def fixture_test_synapse_project_id() -> Generator:
 
 @pytest.fixture(scope="session", name="test_synapse_asset_view_id")
 def fixture_test_synapse_asset_view_id() -> Generator:
-    """Yields the synapse id for the test schema project id"""
+    """Yields the synapse id for the test schema asset view"""
     yield "syn23643253"
 
 
@@ -243,7 +244,9 @@ def fixture_test_schema(
     yield obj
 
 
-# database objects ------------------------------------------------------------
+# other test objects ----------------------------------------------------------
+# objects that don't have a test schema or manifests, but interact with
+# config objects and pandas dataframes
 
 
 @pytest.fixture(scope="session", name="synapse_database_table_names")
@@ -283,6 +286,35 @@ def fixture_synapse(
         )
 
 
+@pytest.fixture(scope="module", name="synapse_database")
+def fixture_synapse_database(
+    secrets_dict: dict, synapse_database_table_names: list[str]
+) -> Generator:
+    """
+    Yields a SynapseDatabase object used for testing databases
+    """
+    obj = SynapseDatabase(
+        SynapseConfig(
+            project_id="syn33832432",
+            username=secrets_dict["synapse"]["username"],
+            auth_token=secrets_dict["synapse"]["auth_token"],
+        )
+    )
+    if obj.get_table_names() != synapse_database_table_names:
+        raise ValueError(
+            "SynapseDatabase has incorrect table names;",
+            f"Actual: {obj.get_table_names()}",
+            f"Expected: {synapse_database_table_names}",
+        )
+    yield obj
+    if obj.get_table_names() != synapse_database_table_names:
+        raise ValueError(
+            "SynapseDatabase has incorrect table names;",
+            f"Actual: {obj.get_table_names()}",
+            f"Expected: {synapse_database_table_names}",
+        )
+
+
 @pytest.fixture(scope="module", name="rdb_queryer_mysql")
 def fixture_rdb_queryer_mysql(
     mysql: MySQLDatabase, synapse_query_store: QueryStore
@@ -293,13 +325,6 @@ def fixture_rdb_queryer_mysql(
         query_store=synapse_query_store,
     )
     yield obj
-
-
-# config objects --------------------------------------------------------------
-@pytest.fixture(scope="session", name="gff_db_config")
-def fixture_gff_db_config(gff_schema: Schema) -> Generator:
-    """Yields a config from the GFF tools schema"""
-    yield gff_schema.create_db_config()
 
 
 @pytest.fixture(scope="session")

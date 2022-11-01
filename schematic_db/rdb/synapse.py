@@ -1,4 +1,5 @@
 """SynapseDatabase"""
+from typing import Union
 import pandas as pd
 from schematic_db.db_config import DBObjectConfig, ForeignKey
 from schematic_db.synapse import Synapse, SynapseConfig
@@ -80,10 +81,13 @@ class SynapseDatabase(RelationalDatabase):
             table_config (DBObjectConfig):The config for the table
         """
         synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
-        annotations = {"primary_key": table_config.primary_key}
+        annotations: dict[str, Union[str, list[str]]] = {
+            "primary_key": table_config.primary_key
+        }
         if len(table_config.foreign_keys) > 0:
-            annotations["foreign_keys"] = [
+            foreign_key_strings = [
                 create_foreign_key_annotation_string(key)
                 for key in table_config.foreign_keys
             ]
+            annotations["foreign_keys"] = foreign_key_strings
         self.synapse.set_entity_annotations(synapse_id, annotations)
