@@ -1,7 +1,7 @@
 """Synapse Query Store
 """
 import pandas as pd
-from schematic_db.synapse import Synapse
+from schematic_db.synapse import Synapse, SynapseConfig
 from .query_store import QueryStore
 
 
@@ -11,12 +11,12 @@ class SynapseQueryStore(QueryStore):  # pylint: disable=too-few-public-methods
     - An adaptor between Synapse class and QueryStore ABC
     """
 
-    def __init__(self, config_dict: dict):
+    def __init__(self, config: SynapseConfig):
         """Init
         Args:
-            config_dict (dict): A dict with synapse specific fields
+            config (SynapseConfig): A SynapseConfig object
         """
-        self.synapse = Synapse(config_dict)
+        self.synapse = Synapse(config)
 
     def store_query_result(self, table_name: str, query_result: pd.DataFrame) -> None:
         self.synapse.replace_table(table_name, query_result)

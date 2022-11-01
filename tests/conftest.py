@@ -15,10 +15,11 @@ from schematic_db.db_config import (
 )
 
 from schematic_db.query_store import QueryStore, SynapseQueryStore
-from schematic_db.rdb import MySQLDatabase
+from schematic_db.rdb import MySQLDatabase, MySQLConfig
+from schematic_db.rdb.synapse import SynapseDatabase
 from schematic_db.rdb_updater import RDBUpdater
 from schematic_db.rdb_queryer import RDBQueryer
-from schematic_db.synapse import Synapse
+from schematic_db.synapse import Synapse, SynapseConfig
 from schematic_db.schema import Schema
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -48,44 +49,64 @@ def fixture_query_csv_path() -> Generator:
 # gff database objects --------------------------------------------------------
 
 
+@pytest.fixture(scope="session", name="gff_database_table_names")
+def fixture_gff_database_table_names() -> Generator:
+    """
+    Yields a list of table names the gff database should have.
+    """
+    table_names = [
+        "AnimalModel",
+        "Antibody",
+        "Biobank",
+        "CellLine",
+        "Development",
+        "Donor",
+        "Funder",
+        "GeneticReagent",
+        "Investigator",
+        "Mutation",
+        "MutationDetails",
+        "Observation",
+        "Publication",
+        "Resource",
+        "ResourceApplication",
+        "Usage",
+        "Vendor",
+        "VendorItem",
+    ]
+    yield table_names
+
+
 @pytest.fixture(scope="session", name="gff_mysql")
 def fixture_gff_mysql(secrets_dict: dict) -> Generator:
     """
     Yields a MYSQL object with database named 'gff_test_schema'
     """
     obj = MySQLDatabase(
-        {
-            "username": secrets_dict["mysql"]["username"],
-            "password": secrets_dict["mysql"]["password"],
-            "host": secrets_dict["mysql"]["host"],
-            "schema": "gff_test_schema",
-        }
+        MySQLConfig(
+            username=secrets_dict["mysql"]["username"],
+            password=secrets_dict["mysql"]["password"],
+            host=secrets_dict["mysql"]["host"],
+            name="gff_test_schema",
+        )
     )
     yield obj
-    table_names = [
-        "Usage",
-        "Biobank",
-        "VendorItem",
-        "Observation",
-        "ResourceApplication",
-        "Mutation",
-        "Development",
-        "Vendor",
-        "MutationDetails",
-        "Resource",
-        "Investigator",
-        "Publication",
-        "Funder",
-        "GeneticReagent",
-        "Antibody",
-        "CellLine",
-        "AnimalModel",
-        "Donor",
-    ]
-    for table_name in table_names:
-        if table_name in obj.get_table_names():
-            obj.drop_table(table_name)
-    assert obj.get_table_names() == []
+    obj.drop_database()
+
+
+@pytest.fixture(scope="session", name="gff_synapse")
+def fixture_gff_synapse(secrets_dict: dict) -> Generator:
+    """
+    Yields a Synapse object used for testing databases
+    """
+    obj = SynapseDatabase(
+        SynapseConfig(
+            project_id="syn42838499",
+            username=secrets_dict["synapse"]["username"],
+            auth_token=secrets_dict["synapse"]["auth_token"],
+        )
+    )
+    yield obj
 
 
 @pytest.fixture(scope="session", name="gff_synapse_project_id")
@@ -128,17 +149,27 @@ def fixture_rdb_updater_mysql_gff(
     yield obj
 
 
+@pytest.fixture(scope="module", name="rdb_updater_synapse_gff")
+def fixture_rdb_updater_synapse_gff(
+    gff_synapse: SynapseDatabase, gff_schema: Schema
+) -> Generator:
+    """Yields a RDBUpdater with a synapse database and gff schema with tables added"""
+    obj = RDBUpdater(rdb=gff_synapse, schema=gff_schema)
+    obj.update_all_database_tables()
+    yield obj
+
+
 @pytest.fixture(scope="session", name="synapse_gff_query_store")
 def fixture_synapse_gff_query_store(secrets_dict: dict) -> Generator:
     """
     Yields a Synapse Query Store for gff
     """
     obj = SynapseQueryStore(
-        {
-            "project_id": "syn39024404",
-            "username": secrets_dict["synapse"]["username"],
-            "auth_token": secrets_dict["synapse"]["auth_token"],
-        }
+        SynapseConfig(
+            project_id="syn39024404",
+            username=secrets_dict["synapse"]["username"],
+            auth_token=secrets_dict["synapse"]["auth_token"],
+        )
     )
     yield obj
 
@@ -171,19 +202,15 @@ def fixture_mysql(secrets_dict: dict) -> Generator:
     Yields a MYSQL object
     """
     obj = MySQLDatabase(
-        {
-            "username": secrets_dict["mysql"]["username"],
-            "password": secrets_dict["mysql"]["password"],
-            "host": secrets_dict["mysql"]["host"],
-            "schema": "test_schema",
-        }
+        MySQLConfig(
+            username=secrets_dict["mysql"]["username"],
+            password=secrets_dict["mysql"]["password"],
+            host=secrets_dict["mysql"]["host"],
+            name="test_schema",
+        )
     )
     yield obj
-    test_table_names = ["table_three", "table_one", "table_two"]
-    for table_name in test_table_names:
-        if table_name in obj.get_table_names():
-            obj.drop_table(table_name)
-    assert obj.get_table_names() == []
+    obj.drop_database()
 
 
 @pytest.fixture(scope="session", name="test_synapse_project_id")
@@ -235,11 +262,11 @@ def fixture_synapse(
     Yields a Synapse object used for testing databases
     """
     obj = Synapse(
-        {
-            "project_id": "syn33832432",
-            "username": secrets_dict["synapse"]["username"],
-            "auth_token": secrets_dict["synapse"]["auth_token"],
-        }
+        SynapseConfig(
+            project_id="syn33832432",
+            username=secrets_dict["synapse"]["username"],
+            auth_token=secrets_dict["synapse"]["auth_token"],
+        )
     )
     if obj.get_table_names() != synapse_database_table_names:
         raise ValueError(

@@ -1,5 +1,6 @@
 """MySQLDatabase"""
-from typing import Optional, Any
+from typing import Any
+from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 import sqlalchemy as sa
@@ -31,6 +32,16 @@ class DataframeKeyError(Exception):
         return f"{self.message}:{self.key}"
 
 
+@dataclass
+class MySQLConfig:
+    """A config for a MySQL database."""
+
+    username: str
+    password: str
+    host: str
+    name: str
+
+
 class MySQLDatabase(RelationalDatabase):
     """MySQLDatabase
     - Represents a mysql database.
@@ -38,31 +49,46 @@ class MySQLDatabase(RelationalDatabase):
     - Handles MYSQL specific functionality.
     """
 
-    def __init__(self, config_dict: dict, verbose: Optional[bool] = False):
+    def __init__(self, config: MySQLConfig, verbose: bool = False):
         """Init
-        An initial connection is created to the database without the schema.
-        The schema will be created if it doesn't exist.
-        A second connection is created with the schema.
+        An initial connection is created to the database server without the database.
+        The database will be created if it doesn't exist.
+        A second connection is created with the database.
         The second connection is used to create the sqlalchemy connection and metadata.
 
         Args:
-            config_dict (dict): A dict with fields ["username", "password", "host", "schema"]
+            config (MySQLConfig): A MySQL config
             verbose (bool): Sends much more to logging.info
         """
-        username = config_dict.get("username")
-        password = config_dict.get("password")
-        host = config_dict.get("host")
-        schema = config_dict.get("schema")
+        self.username = config.username
+        self.password = config.password
+        self.host = config.host
+        self.name = config.name
+        self.verbose = verbose
 
-        url = f"mysql://{username}:{password}@{host}/"
-        engine = sa.create_engine(url, encoding="utf-8", echo=verbose)
-        create_statement = f"CREATE DATABASE IF NOT EXISTS {schema};"
-        engine.execute(create_statement)
-
-        url2 = f"mysql://{username}:{password}@{host}/{schema}"
-        engine2 = sa.create_engine(url2, encoding="utf-8", echo=verbose)
-        self.engine = engine2
+        self.create_database()
         self.metadata = sa.MetaData()
+
+    def drop_database(self) -> None:
+        """Drops the database from the server"""
+        statement = f"DROP DATABASE {self.name};"
+        self.engine.execute(statement)
+
+    def create_database(self) -> None:
+        """Creates the database"""
+        url = f"mysql://{self.username}:{self.password}@{self.host}/"
+        engine = sa.create_engine(url, encoding="utf-8", echo=self.verbose)
+        statement = f"CREATE DATABASE IF NOT EXISTS {self.name};"
+        engine.execute(statement)
+
+        url2 = f"mysql://{self.username}:{self.password}@{self.host}/{self.name}"
+        engine2 = sa.create_engine(url2, encoding="utf-8", echo=self.verbose)
+        self.engine = engine2
+
+    def drop_all_tables(self) -> None:
+        self.drop_database()
+        self.metadata.clear()
+        self.create_database()
 
     def execute_sql_query(self, query: str) -> pd.DataFrame:
         result = self._execute_sql_statement(query).fetchall()

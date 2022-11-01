@@ -1,6 +1,5 @@
 """RDBUpdater"""
 import warnings
-import typing
 import pandas as pd
 from schematic_db.db_config import DBObjectConfig
 from schematic_db.rdb import RelationalDatabase, UpdateDBTableError
@@ -43,18 +42,24 @@ class RDBUpdater:
         self.rdb = rdb
         self.schema = schema
 
-    def update_all_database_tables(self, strict: typing.Optional[bool] = True) -> None:
+    def update_all_database_tables(
+        self, strict: bool = True, replace_tables: bool = False
+    ) -> None:
         """Updates all tables in the db_config
 
         Args:
             strict (bool): If false, some errors are turned into warnings.
+            replace_tables (bool): If true, all tables are dropped before update.
+
         """
         db_config = self.schema.create_db_config()
+        if replace_tables:
+            self.rdb.drop_all_tables()
         for config in db_config.configs:
             self.update_database_table(config, strict)
 
     def update_database_table(
-        self, table_config: DBObjectConfig, strict: typing.Optional[bool] = True
+        self, table_config: DBObjectConfig, strict: bool = True
     ) -> None:
         """
         Updates a table in the database based on one or more manifests.
