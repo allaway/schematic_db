@@ -80,11 +80,10 @@ class SynapseDatabase(RelationalDatabase):
             table_config (DBObjectConfig):The config for the table
         """
         synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
-        annotations = {
-            "primary_key": table_config.primary_key,
-            "foreign_keys": [
+        annotations = {"primary_key": table_config.primary_key}
+        if len(table_config.foreign_keys) > 0:
+            annotations["foreign_keys"] = [
                 create_foreign_key_annotation_string(key)
                 for key in table_config.foreign_keys
-            ],
-        }
+            ]
         self.synapse.set_entity_annotations(synapse_id, annotations)
