@@ -1,6 +1,5 @@
 """SynapseDatabase"""
 import pandas as pd
-import synapseclient as sc  # type: ignore
 from schematic_db.db_config import DBObjectConfig
 from schematic_db.synapse import Synapse, SynapseConfig
 from .rdb import RelationalDatabase
@@ -29,24 +28,25 @@ class SynapseDatabase(RelationalDatabase):
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
+
+        # table doesn't exist in Synapse, and must be built
         if table_name not in table_names:
             self.synapse.build_table(table_name, data)
             return
-        synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
-        current_table = self.synapse.syn.get(synapse_id)
-        current_columns = self.synapse.syn.getTableColumns(current_table)
+
+        # table exists but has no columns/rows, both must be added
+        current_columns = self.synapse.get_table_column_names(table_name)
         if len(list(current_columns)) == 0:
-            new_columns = sc.as_table_columns(data)
-            for col in new_columns:
-                current_table.addColumn(col)
-            self.synapse.syn.store(current_table)
+            self.synapse.add_table_columns(table_name, data)
             self.synapse.insert_table_rows(table_name, data)
             return
 
+        # table exists and possibly has data, upsert method must be used
         self.synapse.upsert_table_rows(table_name, data, table_config)
 
     def drop_table(self, table_name: str) -> None:
-        self.synapse.clear_table(table_name)
+        self.synapse.delete_all_table_rows(table_name)
+        self.synapse.delete_all_table_columns(table_name)
 
     def delete_table_rows(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig

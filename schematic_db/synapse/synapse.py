@@ -42,6 +42,20 @@ class SynapseConfig:
     project_id: str
 
 
+def create_synapse_column(name: str, datatype: DBDatatype) -> sc.Column:
+    """Creates a Synapse column object
+
+    Args:
+        name (str): The name of the column
+        datatype (DBDatatype): The datatype of the column
+
+    Returns:
+        sc.Column: _description_
+    """
+    func = SYNAPSE_DATATYPES[datatype]
+    return func(name=name)
+
+
 class Synapse:
     """
     The Synapse class handles interactions with a project in Synapse.
@@ -71,6 +85,24 @@ class Synapse:
         """
         tables = self._get_tables()
         return [table["name"] for table in tables]
+
+    def _get_tables(self) -> list[sc.Table]:
+        project = self.syn.get(self.project_id)
+        return list(self.syn.getChildren(project, includeTypes=["table"]))
+
+    def get_table_column_names(self, table_name: str) -> list[str]:
+        """Gets the column names from a synapse table
+
+        Args:
+            table_name (str): The name of the table
+
+        Returns:
+            list[str]: A list of column names
+        """
+        synapse_id = self.get_synapse_id_from_table_name(table_name)
+        table = self.syn.get(synapse_id)
+        columns = list(self.syn.getTableColumns(table))
+        return [column.name for column in columns]
 
     def get_synapse_id_from_table_name(self, table_name: str) -> str:
         """Gets the synapse id from the table name
@@ -107,26 +139,6 @@ class Synapse:
         tables = self._get_tables()
         return [table["name"] for table in tables if table["id"] == synapse_id][0]
 
-    def execute_sql_statement(
-        self, statement: str, include_row_data: bool = False
-    ) -> typing.Any:
-        """Execute a SQL statement
-
-        Args:
-            statement (str): A SQL statement that can be run by Synapse
-            include_row_data (bool, optional): Include row_id and row_etag. Defaults to False.
-
-        Returns:
-            any: An object from
-        """
-        return self.syn.tableQuery(
-            statement, includeRowIdAndRowVersion=include_row_data
-        )
-
-    def _get_tables(self) -> list[sc.Table]:
-        project = self.syn.get(self.project_id)
-        return list(self.syn.getChildren(project, includeTypes=["table"]))
-
     def query_table(
         self, table_name: str, table_config: DBObjectConfig
     ) -> pd.DataFrame:
@@ -158,7 +170,7 @@ class Synapse:
 
         Args:
             query (str): A SQL statement that can be run by Synapse
-            include_row_data (bool, optional): Include row_id and row_etag. Defaults to False.
+            include_row_data (bool): Include row_id and row_etag. Defaults to False.
 
         Returns:
             pd.DataFrame: The queried table
@@ -166,6 +178,34 @@ class Synapse:
         result = self.execute_sql_statement(query, include_row_data)
         table = pd.read_csv(result.filepath)
         return table
+
+    def execute_sql_statement(
+        self, statement: str, include_row_data: bool = False
+    ) -> typing.Any:
+        """Execute a SQL statement
+
+        Args:
+            statement (str): A SQL statement that can be run by Synapse
+            include_row_data (bool): Include row_id and row_etag. Defaults to False.
+
+        Returns:
+            any: An object from
+        """
+        return self.syn.tableQuery(
+            statement, includeRowIdAndRowVersion=include_row_data
+        )
+
+    def build_table(self, table_name: str, table: pd.DataFrame) -> None:
+        """Adds a table to the project based on the input table
+
+        Args:
+            table_name (str): The name fo the table
+            table (pd.DataFrame): A dataframe of the table
+        """
+        table_copy = table.copy(deep=False)
+        project = self.syn.get(self.project_id)
+        table_copy = sc.table.build_table(table_name, project, table_copy)
+        self.syn.store(table_copy)
 
     def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
         """Adds a synapse table
@@ -177,7 +217,7 @@ class Synapse:
         columns: list[sc.Column] = []
         values: dict[str, list] = {}
         for att in table_config.attributes:
-            column = self._create_synapse_column(att.name, att.datatype)
+            column = create_synapse_column(att.name, att.datatype)
             columns.append(column)
             values[att.name] = []
 
@@ -194,32 +234,40 @@ class Synapse:
         synapse_id = self.get_synapse_id_from_table_name(table_name)
         self.syn.delete(synapse_id)
 
-    def clear_table(self, table_name: str) -> None:
+    def replace_table(self, table_name: str, table: pd.DataFrame) -> None:
         """
-        Removes all rows and columns from a Synapse table.
-        This preserves the table name and Synapse ID
-
+        Replaces synapse table with table made in table.
+        The synapse id is preserved.
         Args:
-            table_name (str): The name of the table to be cleared
+            table_name (str): The name of the table to be replaced
+            data (pd.DataFrame): A dataframe of the table to replace to old table with
         """
-        synapse_id = self.get_synapse_id_from_table_name(table_name)
+        if table_name not in self.get_table_names():
+            self.build_table(table_name, table)
+        else:
+            synapse_id = self.get_synapse_id_from_table_name(table_name)
 
-        # deletes all current rows
-        results = self.syn.tableQuery(f"select * from {synapse_id}")
-        self.syn.delete(results)
+            # deletes all current rows
+            results = self.syn.tableQuery(f"select * from {synapse_id}")
+            self.syn.delete(results)
 
-        # wait for Synapse to catch up
-        time.sleep(1)
+            # wait for Synapse to catch up
+            time.sleep(5)
 
-        # removes all current columns
-        current_table = self.syn.get(synapse_id)
-        current_columns = self.syn.getTableColumns(current_table)
-        for col in current_columns:
-            current_table.removeColumn(col)
-        self.syn.store(current_table)
+            # removes all current columns
+            current_table = self.syn.get(synapse_id)
+            current_columns = self.syn.getTableColumns(current_table)
+            for col in current_columns:
+                current_table.removeColumn(col)
 
-        # wait for synapse to catch up
-        time.sleep(3)
+            # adds new columns to schema
+            new_columns = sc.as_table_columns(table)
+            for col in new_columns:
+                current_table.addColumn(col)
+            self.syn.store(current_table)
+
+            # inserts new rows
+            self.insert_table_rows(table_name, table)
 
     def insert_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
         """Insert table rows
@@ -280,64 +328,6 @@ class Synapse:
         merged_table = pd.merge(data, table, how="left", on=primary_keys)
         self.syn.store(sc.Table(table_id, merged_table))
 
-    def replace_table(self, table_name: str, table: pd.DataFrame) -> None:
-        """
-        Replaces synapse table with table made in table.
-        The synapse id is preserved.
-        Args:
-            table_name (str): The name of the table to be replaced
-            data (pd.DataFrame): A dataframe of the table to replace to old table with
-        """
-        if table_name not in self.get_table_names():
-            self.build_table(table_name, table)
-        else:
-            synapse_id = self.get_synapse_id_from_table_name(table_name)
-
-            # deletes all current rows
-            results = self.syn.tableQuery(f"select * from {synapse_id}")
-            self.syn.delete(results)
-
-            # wait for Synapse to catch up
-            time.sleep(5)
-
-            # removes all current columns
-            current_table = self.syn.get(synapse_id)
-            current_columns = self.syn.getTableColumns(current_table)
-            for col in current_columns:
-                current_table.removeColumn(col)
-
-            # adds new columns to schema
-            new_columns = sc.as_table_columns(table)
-            for col in new_columns:
-                current_table.addColumn(col)
-            self.syn.store(current_table)
-
-            # inserts new rows
-            self.insert_table_rows(table_name, table)
-
-    def build_table(self, table_name: str, table: pd.DataFrame) -> None:
-        """Adds a table to the project based on the input table
-
-        Args:
-            table_name (str): The name fo the table
-            table (pd.DataFrame): A dataframe of the table
-        """
-        project = self.syn.get(self.project_id)
-        table = sc.table.build_table(table_name, project, table)
-        self.syn.store(table)
-
-    def read_csv_file(self, synapse_id: str) -> pd.DataFrame:
-        """Gets a csv file in synapse and returns a dataframe
-
-        Args:
-            synapse_id (str): The synapse id of the csv
-
-        Returns:
-            pd.DataFrame: the csv in pandas.Dataframe form
-        """
-        path = self.syn.get(synapse_id).path
-        return pd.read_csv(path)
-
     def _merge_dataframe_with_primary_key_table(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
     ) -> pd.DataFrame:
@@ -355,6 +345,42 @@ class Synapse:
         table = self.execute_sql_query(query, include_row_data=True)
         return table
 
-    def _create_synapse_column(self, name: str, datatype: DBDatatype) -> sc.Column:
-        func = SYNAPSE_DATATYPES[datatype]
-        return func(name=name)
+    def delete_all_table_rows(self, table_name: str) -> None:
+        """Deletes all rows in the Synapse table
+
+        Args:
+            table_name (str): The name of the table to delete the rows from
+        """
+        synapse_id = self.get_synapse_id_from_table_name(table_name)
+        results = self.syn.tableQuery(f"select * from {synapse_id}")
+        self.syn.delete(results)
+        time.sleep(3)
+
+    def delete_all_table_columns(self, table_name: str) -> None:
+        """Deletes all columns in the Synapse table
+
+        Args:
+            table_name (str): The name of the table to delete the columns from
+        """
+        synapse_id = self.get_synapse_id_from_table_name(table_name)
+        table = self.syn.get(synapse_id)
+        columns = self.syn.getTableColumns(table)
+        for col in columns:
+            table.removeColumn(col)
+        self.syn.store(table)
+        time.sleep(3)
+
+    def add_table_columns(self, table_name: str, data: pd.DataFrame) -> None:
+        """Add columns to synapse table from pandas.DataFrame
+
+        Args:
+            table_name (str): The name of the table to add the columns to
+            data (pd.DataFrame): The dataframe to get the columns from
+        """
+        new_columns = sc.as_table_columns(data)
+        synapse_id = self.get_synapse_id_from_table_name(table_name)
+        table = self.syn.get(synapse_id)
+        for col in new_columns:
+            table.addColumn(col)
+        self.syn.store(table)
+        time.sleep(3)

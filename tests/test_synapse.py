@@ -2,6 +2,7 @@
 from typing import Any, Generator
 import pytest
 import pandas as pd
+import synapseclient as sc  # type: ignore
 from schematic_db.db_config.db_config import (
     DBAttributeConfig,
     DBDatatype,
@@ -125,8 +126,25 @@ class TestMockSynapse:
 
 
 @pytest.mark.synapse
-class TestSynapse:
-    """Testing for Synapse class"""
+class TestSynapseGetters:
+    """Testing for Synapse class getters"""
+
+    def test_get_table_names(
+        self, synapse_database_project: Synapse, synapse_database_table_names: list[str]
+    ) -> None:
+        """Testing for Synapse.get_table_names()"""
+        assert (
+            synapse_database_project.get_table_names() == synapse_database_table_names
+        )
+
+    def test_get_column_table_names(
+        self, synapse_database_project: Synapse, table_one_config: DBObjectConfig
+    ) -> None:
+        """Testing for Synapse.get_table_column_names()"""
+        assert (
+            synapse_database_project.get_table_column_names("test_table_one")
+            == table_one_config.get_attribute_names()
+        )
 
     def test_get_table_id_from_name(self, synapse_database_project: Synapse) -> None:
         """Testing for Synapse.get_table_id_from_name()"""
@@ -161,9 +179,21 @@ class TestSynapseModifyTables:
     Testing for methods that add or drop tables
     """
 
+    def test_build_table(
+        self,
+        synapse_no_extra_tables: Synapse,
+        table_one: pd.DataFrame,
+        synapse_database_table_names: list[str],
+    ) -> None:
+        """Testing for Synapse.add_table()"""
+        obj = synapse_no_extra_tables
+        assert obj.get_table_names() == synapse_database_table_names
+        obj.build_table("table_one", table_one)
+        assert obj.get_table_names() == ["table_one"] + synapse_database_table_names
+
     def test_add_table(
         self,
-        synapse_no_extra_tables: pd.DataFrame,
+        synapse_no_extra_tables: Synapse,
         table_one_config: DBObjectConfig,
         synapse_database_table_names: list[str],
     ) -> None:
@@ -175,7 +205,7 @@ class TestSynapseModifyTables:
 
     def test_delete_table(
         self,
-        synapse_with_empty_table_one: pd.DataFrame,
+        synapse_with_empty_table_one: Synapse,
         synapse_database_table_names: list[str],
     ) -> None:
         """Testing for Synapse.delete_table()"""
@@ -186,7 +216,7 @@ class TestSynapseModifyTables:
 
     def test_replace_table(
         self,
-        synapse_with_filled_table_one: pd.DataFrame,
+        synapse_with_filled_table_one: Synapse,
         table_two: pd.DataFrame,
         table_two_config: DBObjectConfig,
     ) -> None:
@@ -208,7 +238,7 @@ class TestSynapseModifyRows:
 
     def test_insert_table_rows(
         self,
-        synapse_with_empty_table_one: pd.DataFrame,
+        synapse_with_empty_table_one: Synapse,
         table_one: pd.DataFrame,
         table_one_config: DBObjectConfig,
     ) -> None:
@@ -228,7 +258,7 @@ class TestSynapseModifyRows:
 
     def test_delete_table_rows(
         self,
-        synapse_with_filled_table_one: pd.DataFrame,
+        synapse_with_filled_table_one: Synapse,
         table_one: pd.DataFrame,
         table_one_config: DBObjectConfig,
     ) -> None:
@@ -251,9 +281,26 @@ class TestSynapseModifyRows:
         test_table2.reset_index(drop=True, inplace=True)
         pd.testing.assert_frame_equal(result3, test_table2)
 
+    def test_delete_all_table_rows(
+        self,
+        synapse_with_filled_table_one: Synapse,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
+        """
+        Testing for synapse.delete_all_table_rows()
+        """
+        obj = synapse_with_filled_table_one
+        result1 = obj.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result1, table_one)
+
+        obj.delete_all_table_rows("table_one")
+        result2 = obj.query_table("table_one", table_one_config)
+        assert result2.empty
+
     def test_update_table_rows(
         self,
-        synapse_with_filled_table_one: pd.DataFrame,
+        synapse_with_filled_table_one: Synapse,
         table_one: pd.DataFrame,
         table_one_config: DBObjectConfig,
     ) -> None:
@@ -277,7 +324,7 @@ class TestSynapseModifyRows:
 
     def test_upsert_table_rows(
         self,
-        synapse_with_filled_table_one: pd.DataFrame,
+        synapse_with_filled_table_one: Synapse,
         table_one: pd.DataFrame,
         table_one_config: DBObjectConfig,
     ) -> None:
@@ -297,3 +344,60 @@ class TestSynapseModifyRows:
         obj.update_table_rows("table_one", upsert_table, table_one_config)
         result3 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result3, upsert_table)
+
+
+@pytest.mark.synapse
+class TestSynapseModifyColumns:
+    """
+    Testing for synapse methods that modify table columns
+    """
+
+    def test_delete_all_table_columns(
+        self,
+        synapse_with_filled_table_one: Synapse,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
+        """
+        Testing for synapse.delete_all_table_columns()
+        """
+        obj = synapse_with_filled_table_one
+        result1 = obj.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result1, table_one)
+
+        obj.delete_all_table_columns("table_one")
+        with pytest.raises(
+            sc.core.exceptions.SynapseHTTPError,
+            match="400 Client Error",
+        ):
+            obj.query_table("table_one", table_one_config)
+
+    def test_add_table_columns(
+        self,
+        synapse_with_filled_table_one: Synapse,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
+        """
+        Testing for synapse.add_table_columns()
+        """
+        obj = synapse_with_filled_table_one
+        result1 = obj.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result1, table_one)
+
+        with pytest.raises(
+            sc.core.exceptions.SynapseHTTPError,
+            match="400 Client Error",
+        ):
+            obj.add_table_columns("table_one", table_one)
+
+        obj.delete_all_table_columns("table_one")
+        obj.add_table_columns("table_one", table_one)
+        assert obj.get_table_column_names("table_one") == [
+            "pk_one_col",
+            "string_one_col",
+            "int_one_col",
+            "double_one_col",
+            "date_one_col",
+            "bool_one_col",
+        ]
