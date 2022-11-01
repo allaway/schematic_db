@@ -110,7 +110,7 @@ class TestMockSynapse:
                 DBAttributeConfig("col1", DBDatatype.TEXT),
                 DBAttributeConfig("col2", DBDatatype.INT),
             ],
-            primary_keys=["col1"],
+            primary_key="col1",
             foreign_keys=[],
         )
         mocker.patch("synapseclient.Synapse.login", return_value=None)
@@ -291,10 +291,11 @@ class TestSynapseModifyRows:
         Testing for synapse.delete_all_table_rows()
         """
         obj = synapse_with_filled_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
         result1 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result1, table_one)
 
-        obj.delete_all_table_rows("table_one")
+        obj.delete_all_table_rows(synapse_id)
         result2 = obj.query_table("table_one", table_one_config)
         assert result2.empty
 
@@ -362,10 +363,11 @@ class TestSynapseModifyColumns:
         Testing for synapse.delete_all_table_columns()
         """
         obj = synapse_with_filled_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
         result1 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result1, table_one)
 
-        obj.delete_all_table_columns("table_one")
+        obj.delete_all_table_columns(synapse_id)
         with pytest.raises(
             sc.core.exceptions.SynapseHTTPError,
             match="400 Client Error",
@@ -382,6 +384,7 @@ class TestSynapseModifyColumns:
         Testing for synapse.add_table_columns()
         """
         obj = synapse_with_filled_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
         result1 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result1, table_one)
 
@@ -391,7 +394,7 @@ class TestSynapseModifyColumns:
         ):
             obj.add_table_columns("table_one", table_one)
 
-        obj.delete_all_table_columns("table_one")
+        obj.delete_all_table_columns(synapse_id)
         obj.add_table_columns("table_one", table_one)
         assert obj.get_table_column_names("table_one") == [
             "pk_one_col",
@@ -401,3 +404,49 @@ class TestSynapseModifyColumns:
             "date_one_col",
             "bool_one_col",
         ]
+
+
+@pytest.mark.synapse
+class TestSynapseAnnotations:
+    """Testing for annotation methods"""
+
+    def test_get_entity_annotations(self, synapse_no_extra_tables: Synapse) -> None:
+        """Testing for Synapse.get_entity_annotations"""
+        annotations = synapse_no_extra_tables.get_entity_annotations("syn34532191")
+        assert annotations.id == "syn34532191"
+        assert annotations == {"primary_key": ["pk_one_col"]}
+
+    def test_set_entity_annotations(
+        self, synapse_with_empty_table_one: Synapse
+    ) -> None:
+        """Testing for Synapse.set_entity_annotations"""
+        obj = synapse_with_empty_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
+        annotations = obj.get_entity_annotations(synapse_id)
+        assert annotations.id == synapse_id
+        assert annotations == {}
+
+        obj.set_entity_annotations(synapse_id, {"test_annotation": "test_value"})
+        annotations2 = obj.get_entity_annotations(synapse_id)
+        assert annotations2.id == synapse_id
+        assert annotations2 == {"test_annotation": ["test_value"]}
+
+    def test_clear_entity_annotations(
+        self, synapse_with_empty_table_one: Synapse
+    ) -> None:
+        """Testing for Synapse.clear_entity_annotations"""
+        obj = synapse_with_empty_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
+        annotations = obj.get_entity_annotations(synapse_id)
+        assert annotations.id == synapse_id
+        assert annotations == {}
+
+        obj.set_entity_annotations(synapse_id, {"test_annotation": "test_value"})
+        annotations2 = obj.get_entity_annotations(synapse_id)
+        assert annotations2.id == synapse_id
+        assert annotations2 == {"test_annotation": ["test_value"]}
+
+        obj.clear_entity_annotations(synapse_id)
+        annotations3 = obj.get_entity_annotations(synapse_id)
+        assert annotations3.id == synapse_id
+        assert annotations3 == {}

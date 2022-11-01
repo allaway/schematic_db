@@ -1,9 +1,10 @@
 """Synapse
 """
+from __future__ import annotations
 import time
 from dataclasses import dataclass
 from functools import partial
-import typing
+from typing import Any
 import synapseclient as sc  # type: ignore
 import pandas as pd  # type: ignore
 from schematic_db.db_config import DBObjectConfig, DBDatatype
@@ -56,7 +57,7 @@ def create_synapse_column(name: str, datatype: DBDatatype) -> sc.Column:
     return func(name=name)
 
 
-class Synapse:
+class Synapse:  # pylint: disable=too-many-public-methods
     """
     The Synapse class handles interactions with a project in Synapse.
     """
@@ -181,7 +182,7 @@ class Synapse:
 
     def execute_sql_statement(
         self, statement: str, include_row_data: bool = False
-    ) -> typing.Any:
+    ) -> Any:
         """Execute a SQL statement
 
         Args:
@@ -323,46 +324,41 @@ class Synapse:
                 DBObjectConfig object.
         """
         table_id = self.get_synapse_id_from_table_name(table_name)
-        primary_keys = table_config.primary_keys
-        table = self._get_primary_key_table(table_name, primary_keys)
-        merged_table = pd.merge(data, table, how="left", on=primary_keys)
+        primary_key = table_config.primary_key
+        table = self._get_primary_key_table(table_name, primary_key)
+        merged_table = pd.merge(data, table, how="left", on=primary_key)
         self.syn.store(sc.Table(table_id, merged_table))
 
     def _merge_dataframe_with_primary_key_table(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
     ) -> pd.DataFrame:
-        primary_keys = table_config.primary_keys
-        table = self._get_primary_key_table(table_name, primary_keys)
-        merged_table = pd.merge(data, table, how="inner", on=primary_keys)
+        primary_key = table_config.primary_key
+        table = self._get_primary_key_table(table_name, primary_key)
+        merged_table = pd.merge(data, table, how="inner", on=primary_key)
         return merged_table
 
-    def _get_primary_key_table(
-        self, table_name: str, primary_keys: list[str]
-    ) -> pd.DataFrame:
-        primary_key_string = ",".join(primary_keys)
+    def _get_primary_key_table(self, table_name: str, primary_key: str) -> pd.DataFrame:
         table_id = self.get_synapse_id_from_table_name(table_name)
-        query = f"SELECT {primary_key_string} FROM {table_id}"
+        query = f"SELECT {primary_key} FROM {table_id}"
         table = self.execute_sql_query(query, include_row_data=True)
         return table
 
-    def delete_all_table_rows(self, table_name: str) -> None:
+    def delete_all_table_rows(self, synapse_id: str) -> None:
         """Deletes all rows in the Synapse table
 
         Args:
-            table_name (str): The name of the table to delete the rows from
+            synapse_id (str): The Synapse id of the table
         """
-        synapse_id = self.get_synapse_id_from_table_name(table_name)
         results = self.syn.tableQuery(f"select * from {synapse_id}")
         self.syn.delete(results)
         time.sleep(3)
 
-    def delete_all_table_columns(self, table_name: str) -> None:
+    def delete_all_table_columns(self, synapse_id: str) -> None:
         """Deletes all columns in the Synapse table
 
         Args:
-            table_name (str): The name of the table to delete the columns from
+            synapse_id (str): The Synapse id of the table
         """
-        synapse_id = self.get_synapse_id_from_table_name(table_name)
         table = self.syn.get(synapse_id)
         columns = self.syn.getTableColumns(table)
         for col in columns:
@@ -384,3 +380,39 @@ class Synapse:
             table.addColumn(col)
         self.syn.store(table)
         time.sleep(3)
+
+    def get_entity_annotations(self, synapse_id: str) -> sc.Annotations:
+        """Gets the annotations for the Synapse entity
+
+        Args:
+            synapse_id (str): The Synapse id of the entity
+
+        Returns:
+            synapseclient.Annotations: The annotations of the Synapse entity in dict form.
+        """
+        return self.syn.get_annotations(synapse_id)
+
+    def set_entity_annotations(
+        self, synapse_id: str, annotations: dict[str, Any]
+    ) -> None:
+        """Sets the entities annotations to the input annotations
+
+        Args:
+            synapse_id (str): The Synapse ID of the entity
+            annotations (dict[str, Any]): A dictionary of annotations
+        """
+        entity_annotations = self.syn.get_annotations(synapse_id)
+        entity_annotations.clear()
+        for key, value in annotations.items():
+            entity_annotations[key] = value
+        self.syn.set_annotations(entity_annotations)
+
+    def clear_entity_annotations(self, synapse_id: str) -> None:
+        """Removes all annotations from the entity
+
+        Args:
+            synapse_id (str): The Synapse ID of the entity
+        """
+        annotations = self.syn.get_annotations(synapse_id)
+        annotations.clear()
+        self.syn.set_annotations(annotations)

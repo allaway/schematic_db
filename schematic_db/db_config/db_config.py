@@ -37,6 +37,18 @@ class DBForeignKey:
     foreign_object_name: str
     foreign_attribute_name: str
 
+    def get_attribute_dict(self) -> dict[str, str]:
+        """Returns the foreign key in dict form
+
+        Returns:
+            dict[str, str]: A dictionary of the foriegn key attributes
+        """
+        return {
+            "name": self.name,
+            "foreign_object_name": self.foreign_object_name,
+            "foreign_attribute_name": self.foreign_attribute_name,
+        }
+
 
 class ConfigAttributeError(Exception):
     """ConfigAttributeError"""
@@ -71,12 +83,12 @@ class DBObjectConfig:
 
     name: str
     attributes: list[DBAttributeConfig]
-    primary_keys: list[str]
+    primary_key: str
     foreign_keys: list[DBForeignKey]
 
     def __post_init__(self) -> None:
         self._check_attributes()
-        self._check_primary_keys()
+        self._check_primary_key()
         self._check_foreign_keys()
 
     def get_attribute_names(self) -> list[str]:
@@ -112,16 +124,10 @@ class DBObjectConfig:
         if len(self.get_attribute_names()) != len(set(self.get_attribute_names())):
             raise ConfigAttributeError("Attributes has duplicates", self.name)
 
-    def _check_primary_keys(self) -> None:
-        if len(self.primary_keys) == 0:
-            raise ConfigKeyError("Primary keys is empty", self.name)
-        for key in self.primary_keys:
-            self._check_primary_key(key)
-
-    def _check_primary_key(self, key: ForeignKey) -> None:
-        if key not in self.get_attribute_names():
+    def _check_primary_key(self) -> None:
+        if self.primary_key not in self.get_attribute_names():
             raise ConfigKeyError(
-                "Primary key is missing from attributes", self.name, key
+                "Primary key is missing from attributes", self.name, self.primary_key
             )
 
     def _check_foreign_keys(self) -> None:
