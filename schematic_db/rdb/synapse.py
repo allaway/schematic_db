@@ -195,9 +195,11 @@ class SynapseDatabase(RelationalDatabase):
         """
         db_config = self.get_db_config()
         primary_key = db_config.get_config_by_name(table_name).primary_key
-        data = data[[primary_key]]
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
-        self._delete_table_rows(table_name, table_id, data, db_config)
+        merged_data = self._merge_dataframe_with_primary_key_table(
+            table_id, data, primary_key
+        )
+        self._delete_table_rows(table_name, table_id, merged_data, db_config)
 
     def _delete_table_rows(
         self,
@@ -211,15 +213,13 @@ class SynapseDatabase(RelationalDatabase):
         Args:
             table_name (str): The name of the table the rows will be deleted from
             table_id (str): The id of the table the rows will be deleted from
-            data (pd.DataFrame): A pandas.DataFrame, of just it's primary key.
+            data (pd.DataFrame): A pandas.DataFrame, of just it's primary key, ROW_ID, and
+             ROW_VERSION
             db_config (DBConfig): The configuration for the database
         """
-        self._delete_table_dependency_rows(table_name, db_config, data)
         primary_key = db_config.get_config_by_name(table_name).primary_key
-        merged_table = self._merge_dataframe_with_primary_key_table(
-            table_id, data, primary_key
-        )
-        self.synapse.delete_table_rows(table_id, merged_table)
+        self._delete_table_dependency_rows(table_name, db_config, data[[primary_key]])
+        self.synapse.delete_table_rows(table_id, data)
 
     def _delete_table_dependency_rows(
         self,
@@ -237,6 +237,7 @@ class SynapseDatabase(RelationalDatabase):
         """
         reverse_dependencies = db_config.get_reverse_dependencies(table_name)
         for rd_table_name in reverse_dependencies:
+
             # gathering data about the reverse dependency
             table_id = self.synapse.get_synapse_id_from_table_name(rd_table_name)
             primary_key = db_config.get_config_by_name(rd_table_name).primary_key
@@ -247,7 +248,7 @@ class SynapseDatabase(RelationalDatabase):
 
             # get the reverse dependency data with just its primary and foreign key
             query = f"SELECT {primary_key}, {foreign_key.name} FROM {table_id}"
-            rd_data = self.execute_sql_query(query)
+            rd_data = self.execute_sql_query(query, include_row_data=True)
 
             # merge the reverse dependency data with the input data
             data = pd.merge(
@@ -258,9 +259,11 @@ class SynapseDatabase(RelationalDatabase):
                 right_on=foreign_key.foreign_attribute_name,
             )
 
-            # reduce data to just its primary key
-            data = data[[primary_key]]
+            # if data has no rows continue to next reverse dependency
+            if len(data.index) == 0:
+                continue
 
+            data = data[[primary_key, "ROW_ID", "ROW_VERSION"]]
             self._delete_table_rows(rd_table_name, table_id, data, db_config)
 
     def _merge_dataframe_with_primary_key_table(
