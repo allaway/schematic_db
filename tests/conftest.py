@@ -139,6 +139,12 @@ def fixture_gff_schema(
     yield obj
 
 
+@pytest.fixture(scope="session", name="gff_db_config")
+def fixture_gff_db_config(gff_schema: Schema) -> Generator:
+    """Yields a config from the GFF tools schema"""
+    yield gff_schema.create_db_config()
+
+
 @pytest.fixture(scope="module", name="rdb_updater_mysql_gff")
 def fixture_rdb_updater_mysql_gff(
     gff_mysql: MySQLDatabase, gff_schema: Schema
