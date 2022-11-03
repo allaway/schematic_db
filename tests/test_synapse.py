@@ -405,7 +405,7 @@ class TestSynapseAnnotations:
         """Testing for Synapse.get_entity_annotations"""
         annotations = synapse_no_extra_tables.get_entity_annotations("syn34532191")
         assert annotations.id == "syn34532191"
-        assert annotations == {"primary_key": ["pk_one_col"]}
+        assert list(annotations.keys()) == [ "attributes", "primary_key"]
 
     def test_set_entity_annotations(
         self, synapse_with_empty_table_one: Synapse
