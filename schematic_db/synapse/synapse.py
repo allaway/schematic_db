@@ -18,7 +18,6 @@ SYNAPSE_DATATYPES = {
     DBDatatype.BOOLEAN: partial(sc.Column, columnType="BOOLEAN"),
 }
 
-
 PANDAS_DATATYPES = {DBDatatype.INT: "Int64", DBDatatype.BOOLEAN: "boolean"}
 
 
@@ -32,6 +31,19 @@ class SynapseTableNameError(Exception):
 
     def __str__(self) -> str:
         return f"{self.message}:{self.table_name}"
+
+
+class SynapseDeleteRowsError(Exception):
+    """SynapseDeleteRowsError"""
+
+    def __init__(self, message: str, table_id: str, columns: list[str]) -> None:
+        self.message = message
+        self.table_id = table_id
+        self.columns = columns
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return f"{self.message}; table_id:{self.table_id}; columns: {', '.join(self.columns)}"
 
 
 @dataclass
@@ -280,21 +292,23 @@ class Synapse:  # pylint: disable=too-many-public-methods
         table = self.syn.get(synapse_id)
         self.syn.store(sc.Table(table, data))
 
-    def delete_table_rows(
-        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ) -> None:
+    def delete_table_rows(self, table_id: str, data: pd.DataFrame) -> None:
         """Deletes rows from the given table
         Args:
-            table_name (str): The name of the table the rows will be deleted from
-            data (pd.DataFrame): A pandas.DataFrame. It must contain the primary keys of the table
-            table_config (DBObjectConfig): A generic representation of the table as a
-                DBObjectConfig object.
+            table_id (str): The synapse of the table the rows will be deleted from
+            data (pd.DataFrame): A pandas.DataFrame. Columns must include "ROW_ID",
+             and "ROW_VERSION"
         """
-        table_id = self.get_synapse_id_from_table_name(table_name)
-        merged_table = self._merge_dataframe_with_primary_key_table(
-            table_name, data, table_config
-        )
-        self.syn.delete(sc.Table(table_id, merged_table))
+        columns = list(data.columns)
+        if "ROW_ID" not in columns:
+            raise SynapseDeleteRowsError(
+                "ROW_ID missing from input data", table_id, columns
+            )
+        if "ROW_VERSION" not in columns:
+            raise SynapseDeleteRowsError(
+                "ROW_VERSION missing from input data", table_id, columns
+            )
+        self.syn.delete(sc.Table(table_id, data))
 
     def update_table_rows(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig

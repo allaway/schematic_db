@@ -259,27 +259,18 @@ class TestSynapseModifyRows:
     def test_delete_table_rows(
         self,
         synapse_with_filled_table_one: Synapse,
-        table_one: pd.DataFrame,
         table_one_config: DBObjectConfig,
     ) -> None:
-        """
-        Testing for synapse.delete_table_rows()
-        """
+        """Testing for Synapse.delete_table_rows()"""
         obj = synapse_with_filled_table_one
-        result1 = obj.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result1, table_one)
+        table_id = obj.get_synapse_id_from_table_name("table_one")
+        query = f"SELECT {table_one_config.primary_key} FROM {table_id}"
+        table = obj.execute_sql_query(query, include_row_data=True)
+        assert table["ROW_ID"].tolist() == [1, 2, 3]
 
-        obj.delete_table_rows("table_one", table_one.iloc[[0]], table_one_config)
-        result2 = obj.query_table("table_one", table_one_config)
-        test_table = table_one.iloc[1:]
-        test_table.reset_index(drop=True, inplace=True)
-        pd.testing.assert_frame_equal(result2, test_table)
-
-        obj.delete_table_rows("table_one", table_one.iloc[[0]], table_one_config)
-        result3 = obj.query_table("table_one", table_one_config)
-        test_table2 = table_one.iloc[1:]
-        test_table2.reset_index(drop=True, inplace=True)
-        pd.testing.assert_frame_equal(result3, test_table2)
+        obj.delete_table_rows(table_id, table.iloc[[0]])
+        table2 = obj.execute_sql_query(query, include_row_data=True)
+        assert table2["ROW_ID"].tolist() == [2, 3]
 
     def test_delete_all_table_rows(
         self,

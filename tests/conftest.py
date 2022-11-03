@@ -437,6 +437,7 @@ def table_three() -> Generator:
     """
     dataframe = pd.DataFrame(
         {
+            "pk_zero_col": ["keyA", "keyB", "keyC", "keyD"],
             "pk_one_col": ["key1", "key1", "key2", "key2"],
             "pk_two_col": ["key1", "key2", "key1", "key2"],
             "string_three_col": ["a", "b", "c", "d"],
