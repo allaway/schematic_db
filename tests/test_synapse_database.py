@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Generator
 import pytest
 import pandas as pd
-from schematic_db.rdb.synapse import SynapseDatabase
+from schematic_db.rdb.synapse import SynapseDatabase, SynapseDatabaseDropTableError
 from schematic_db.db_config.db_config import DBObjectConfig
 
 
@@ -56,6 +56,26 @@ def fixture_synapse_with_filled_table_one(
 @pytest.mark.synapse
 class TestSynapseDatabase:
     """Testing for SynapseDatabase"""
+
+    def test_drop_table(self, synapse_with_empty_tables: SynapseDatabase) -> None:
+        """Testing for SynapseDatabase.drop_table()"""
+        obj = synapse_with_empty_tables
+        with pytest.raises(
+            SynapseDatabaseDropTableError,
+            match="Can not drop database table, other tables exists that depend on it",
+        ):
+            obj.drop_table("table_one")
+
+        synapse_id = obj.synapse.get_synapse_id_from_table_name("table_three")
+        annos1 = obj.synapse.get_entity_annotations(synapse_id)
+        assert list(annos1.keys()) == [
+            "attributes",
+            "primary_key",
+            "foreign_keys",
+        ]
+        obj.drop_table("table_three")
+        annos2 = obj.synapse.get_entity_annotations(synapse_id)
+        assert not list(annos2.keys())
 
     def test_annotate_table(
         self,

@@ -20,6 +20,21 @@ CONFIG_DATATYPES = {
 }
 
 
+class SynapseDatabaseDropTableError(Exception):
+    """SynapseDatabaseDropTableError"""
+
+    def __init__(
+        self, message: str, table_name: str, reverse_dependencies: list[str]
+    ) -> None:
+        self.message = message
+        self.table_name = table_name
+        self.reverse_dependencies = reverse_dependencies
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return f"{self.message}; name: {self.table_name}; reverse_dependencies: {self.reverse_dependencies}"
+
+
 def create_foreign_key_annotation_string(key: DBForeignKey) -> str:
     """Creates a string that will serve as a foreign key Synapse annotation
 
@@ -124,6 +139,15 @@ class SynapseDatabase(RelationalDatabase):
         self.synapse.upsert_table_rows(table_name, data, table_config)
 
     def drop_table(self, table_name: str) -> None:
+        db_config = self.get_db_config()
+        reverse_dependencies = db_config.get_reverse_dependencies(table_name)
+        if len(reverse_dependencies) != 0:
+            raise SynapseDatabaseDropTableError(
+                "Can not drop database table, other tables exists that depend on it.",
+                table_name,
+                reverse_dependencies,
+            )
+
         synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
         self.synapse.delete_all_table_rows(synapse_id)
         self.synapse.delete_all_table_columns(synapse_id)
