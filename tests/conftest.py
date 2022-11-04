@@ -254,19 +254,8 @@ def fixture_test_schema(
 # objects that don't have a test schema or manifests, but interact with
 # config objects and pandas dataframes
 
-
-@pytest.fixture(scope="session", name="synapse_database_table_names")
-def fixture_synapse_database_table_names() -> Generator:
-    """
-    Yields a list of table names the database testing project should start out with.
-    """
-    yield ["test_table_one"]
-
-
 @pytest.fixture(scope="session", name="synapse_database_project")
-def fixture_synapse(
-    secrets_dict: dict, synapse_database_table_names: list[str]
-) -> Generator:
+def fixture_synapse(secrets_dict) -> Generator:
     """
     Yields a Synapse object used for testing databases
     """
@@ -277,25 +266,11 @@ def fixture_synapse(
             auth_token=secrets_dict["synapse"]["auth_token"],
         )
     )
-    if obj.get_table_names() != synapse_database_table_names:
-        raise ValueError(
-            "Synapse_database_project has incorrect table names;",
-            f"Actual: {obj.get_table_names()}",
-            f"Expected: {synapse_database_table_names}",
-        )
     yield obj
-    if obj.get_table_names() != synapse_database_table_names:
-        raise ValueError(
-            "Synapse_database_project has incorrect table names;",
-            f"Actual: {obj.get_table_names()}",
-            f"Expected: {synapse_database_table_names}",
-        )
 
 
 @pytest.fixture(scope="module", name="synapse_database")
-def fixture_synapse_database(
-    secrets_dict: dict, synapse_database_table_names: list[str]
-) -> Generator:
+def fixture_synapse_database(secrets_dict: dict) -> Generator:
     """
     Yields a SynapseDatabase object used for testing databases
     """
@@ -306,19 +281,7 @@ def fixture_synapse_database(
             auth_token=secrets_dict["synapse"]["auth_token"],
         )
     )
-    if obj.get_table_names() != synapse_database_table_names:
-        raise ValueError(
-            "SynapseDatabase has incorrect table names;",
-            f"Actual: {obj.get_table_names()}",
-            f"Expected: {synapse_database_table_names}",
-        )
     yield obj
-    if obj.get_table_names() != synapse_database_table_names:
-        raise ValueError(
-            "SynapseDatabase has incorrect table names;",
-            f"Actual: {obj.get_table_names()}",
-            f"Expected: {synapse_database_table_names}",
-        )
 
 
 @pytest.fixture(scope="module", name="rdb_queryer_mysql")

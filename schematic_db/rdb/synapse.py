@@ -32,7 +32,11 @@ class SynapseDatabaseDropTableError(Exception):
         super().__init__(self.message)
 
     def __str__(self) -> str:
-        return f"{self.message}; name: {self.table_name}; reverse_dependencies: {self.reverse_dependencies}"
+        return (
+            f"{self.message}; "
+            f"name: {self.table_name}; "
+            f"reverse_dependencies: {self.reverse_dependencies}"
+        )
 
 
 def create_foreign_key_annotation_string(key: DBForeignKey) -> str:
@@ -108,9 +112,67 @@ class SynapseDatabase(RelationalDatabase):
         self.synapse = Synapse(config)
 
     def drop_all_tables(self) -> None:
-        table_names = self.synapse.get_table_names()
-        for name in table_names:
-            self.drop_table(name)
+        db_config = self.get_db_config()
+        deps = {
+            table: db_config.get_dependencies(table)
+            for table in db_config.get_config_names()
+        }
+        tables_with_no_deps = [key for key, value in deps.items() if value == []]
+        for table in tables_with_no_deps:
+            self._drop_table_and_dependencies(table, db_config)
+
+    def drop_table_and_dependencies(self, table_name: str) -> None:
+        """Drops the table and any tables that depend on it.
+
+        Args:
+            table_name (str): The name of the table
+        """
+        db_config = self.get_db_config()
+        self._drop_table_and_dependencies(table_name, db_config)
+
+    def _drop_table_and_dependencies(
+        self, table_name: str, db_config: DBConfig
+    ) -> None:
+        """Drops the table and any tables that depend on it.
+
+        Args:
+            table_name (str): The name of the table
+            db_config (DBConfig): The configuration for the database
+        """
+        self._drop_all_table_dependencies(table_name, db_config)
+        table_id = self.synapse.get_synapse_id_from_table_name(table_name)
+        self._drop_table(table_id)
+
+    def _drop_all_table_dependencies(
+        self, table_name: str, db_config: DBConfig
+    ) -> None:
+        """Drops all tables that depend on the input table
+
+        Args:
+            table_name (str): The name of the table whose dependent table will be dropped
+            db_config (DBConfig): The configuration fo the database
+        """
+        reverse_dependencies = db_config.get_reverse_dependencies(table_name)
+        for rd_table_name in reverse_dependencies:
+            self._drop_table_and_dependencies(rd_table_name, db_config)
+
+    def drop_table(self, table_name: str) -> None:
+        db_config = self.get_db_config()
+        reverse_dependencies = db_config.get_reverse_dependencies(table_name)
+        if len(reverse_dependencies) != 0:
+            raise SynapseDatabaseDropTableError(
+                "Can not drop database table, other tables exists that depend on it.",
+                table_name,
+                reverse_dependencies,
+            )
+
+        table_id = self.synapse.get_synapse_id_from_table_name(table_name)
+        self._drop_table(table_id)
+
+    def _drop_table(self, table_id: str) -> None:
+        self.synapse.delete_all_table_rows(table_id)
+        self.synapse.delete_all_table_columns(table_id)
+        self.synapse.clear_entity_annotations(table_id)
 
     def execute_sql_query(
         self, query: str, include_row_data: bool = False
@@ -137,21 +199,6 @@ class SynapseDatabase(RelationalDatabase):
 
         # table exists and possibly has data, upsert method must be used
         self.synapse.upsert_table_rows(table_name, data, table_config)
-
-    def drop_table(self, table_name: str) -> None:
-        db_config = self.get_db_config()
-        reverse_dependencies = db_config.get_reverse_dependencies(table_name)
-        if len(reverse_dependencies) != 0:
-            raise SynapseDatabaseDropTableError(
-                "Can not drop database table, other tables exists that depend on it.",
-                table_name,
-                reverse_dependencies,
-            )
-
-        synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
-        self.synapse.delete_all_table_rows(synapse_id)
-        self.synapse.delete_all_table_columns(synapse_id)
-        self.synapse.clear_entity_annotations(synapse_id)
 
     def get_table_names(self) -> list[str]:
         return self.synapse.get_table_names()

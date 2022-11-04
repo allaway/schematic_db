@@ -363,9 +363,12 @@ class Synapse:  # pylint: disable=too-many-public-methods
         Args:
             synapse_id (str): The Synapse id of the table
         """
-        results = self.syn.tableQuery(f"select * from {synapse_id}")
-        self.syn.delete(results)
-        time.sleep(3)
+        table = self.syn.get(synapse_id)
+        columns = self.syn.getTableColumns(table)
+        if len(list(columns)) > 0:
+            results = self.syn.tableQuery(f"select * from {synapse_id}")
+            self.syn.delete(results)
+            time.sleep(5)
 
     def delete_all_table_columns(self, synapse_id: str) -> None:
         """Deletes all columns in the Synapse table

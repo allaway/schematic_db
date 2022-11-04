@@ -209,6 +209,17 @@ class DBConfig:
         for config in self.configs:
             self._check_foreign_keys(config)
 
+    def get_dependencies(self, object_name: str) -> list[str]:
+        """Gets the objects dependencies
+
+        Args:
+            object_name (str): The name of the object
+
+        Returns:
+            list[str]: A list of objects names the object depends on
+        """
+        return self.get_config_by_name(object_name).get_foreign_key_dependencies()
+
     def get_reverse_dependencies(self, object_name: str) -> list[str]:
         """Gets the names of Objects that depend on the input object
 

@@ -57,6 +57,60 @@ def fixture_synapse_with_filled_table_one(
 class TestSynapseDatabase:
     """Testing for SynapseDatabase"""
 
+    def test_drop_all_tables(self, synapse_with_empty_tables: SynapseDatabase) -> None:
+        """Testing for SynapseDatabase.drop_all_tables()"""
+        obj = synapse_with_empty_tables
+        synapse_id1 = obj.synapse.get_synapse_id_from_table_name("table_one")
+        synapse_id2 = obj.synapse.get_synapse_id_from_table_name("table_two")
+        synapse_id3 = obj.synapse.get_synapse_id_from_table_name("table_three")
+
+        annos1a = obj.synapse.get_entity_annotations(synapse_id1)
+        annos2a = obj.synapse.get_entity_annotations(synapse_id2)
+        annos3a = obj.synapse.get_entity_annotations(synapse_id3)
+        assert list(annos1a.keys()) == ["attributes", "primary_key"]
+        assert list(annos2a.keys()) == ["attributes", "primary_key"]
+        assert list(annos3a.keys()) == [
+            "attributes",
+            "primary_key",
+            "foreign_keys",
+        ]
+
+        obj.drop_all_tables()
+        annos1b = obj.synapse.get_entity_annotations(synapse_id1)
+        annos2b = obj.synapse.get_entity_annotations(synapse_id2)
+        annos3b = obj.synapse.get_entity_annotations(synapse_id3)
+        assert not list(annos1b.keys())
+        assert not list(annos2b.keys())
+        assert not list(annos3b.keys())
+
+    def test_drop_table_and_dependencies(
+        self, synapse_with_empty_tables: SynapseDatabase
+    ) -> None:
+        """Testing for SynapseDatabase.drop_table_and_dependencies()"""
+        obj = synapse_with_empty_tables
+        synapse_id1 = obj.synapse.get_synapse_id_from_table_name("table_one")
+        synapse_id2 = obj.synapse.get_synapse_id_from_table_name("table_two")
+        synapse_id3 = obj.synapse.get_synapse_id_from_table_name("table_three")
+
+        annos1a = obj.synapse.get_entity_annotations(synapse_id1)
+        annos2a = obj.synapse.get_entity_annotations(synapse_id2)
+        annos3a = obj.synapse.get_entity_annotations(synapse_id3)
+        assert list(annos1a.keys()) == ["attributes", "primary_key"]
+        assert list(annos2a.keys()) == ["attributes", "primary_key"]
+        assert list(annos3a.keys()) == [
+            "attributes",
+            "primary_key",
+            "foreign_keys",
+        ]
+
+        obj.drop_table_and_dependencies("table_one")
+        annos1b = obj.synapse.get_entity_annotations(synapse_id1)
+        annos2b = obj.synapse.get_entity_annotations(synapse_id2)
+        annos3b = obj.synapse.get_entity_annotations(synapse_id3)
+        assert not list(annos1b.keys())
+        assert list(annos2b.keys()) == ["attributes", "primary_key"]
+        assert not list(annos3b.keys())
+
     def test_drop_table(self, synapse_with_empty_tables: SynapseDatabase) -> None:
         """Testing for SynapseDatabase.drop_table()"""
         obj = synapse_with_empty_tables

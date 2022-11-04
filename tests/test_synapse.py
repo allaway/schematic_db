@@ -10,11 +10,25 @@ from schematic_db.db_config.db_config import (
 )
 from schematic_db.synapse import Synapse, SynapseConfig
 
-
-@pytest.fixture(name="synapse_no_extra_tables")
-def fixture_synapse_no_extra_tables(
-    synapse_database_project: Synapse, synapse_database_table_names: list[str]
+@pytest.fixture(name="synapse_with_test_table_one", scope="class")
+def fixture_synapse_with_test_table_one(
+    synapse_database_project: Synapse, table_one_config: DBObjectConfig, table_one: pd.DataFrame
 ) -> Generator:
+    """
+    Yields a Synapse object with "test_table_one" added, used only for tests that
+     don't alter the state
+    """
+    obj = synapse_database_project
+    obj.add_table("test_table_one", table_one_config)
+    synapse_id = obj.get_synapse_id_from_table_name("test_table_one")
+    obj.insert_table_rows("test_table_one", table_one)
+    obj.set_entity_annotations(synapse_id, {"test_annotation": "test_value"})
+    yield obj
+    obj.delete_table("test_table_one")
+
+
+@pytest.fixture(name="synapse_with_no_tables")
+def fixture_synapse_with_no_tables(synapse_database_project) -> Generator:
     """
     Yields a Synapse object
     """
@@ -22,18 +36,17 @@ def fixture_synapse_no_extra_tables(
     yield obj
     table_names = obj.get_table_names()
     for name in table_names:
-        if name not in synapse_database_table_names:
-            obj.delete_table(name)
+        obj.delete_table(name)
 
 
 @pytest.fixture(name="synapse_with_empty_table_one")
 def fixture_synapse_with_empty_table_one(
-    synapse_no_extra_tables: Synapse, table_one_config: DBObjectConfig
+    synapse_with_no_tables: Synapse, table_one_config: DBObjectConfig
 ) -> Generator:
     """
     Yields a Synapse object with table one added
     """
-    obj = synapse_no_extra_tables
+    obj = synapse_with_no_tables
     obj.add_table("table_one", table_one_config)
     yield obj
 
@@ -130,47 +143,47 @@ class TestSynapseGetters:
     """Testing for Synapse class getters"""
 
     def test_get_table_names(
-        self, synapse_database_project: Synapse, synapse_database_table_names: list[str]
+        self, synapse_with_test_table_one: Synapse
     ) -> None:
         """Testing for Synapse.get_table_names()"""
         assert (
-            synapse_database_project.get_table_names() == synapse_database_table_names
+            synapse_with_test_table_one.get_table_names() == ["test_table_one"]
         )
 
     def test_get_column_table_names(
-        self, synapse_database_project: Synapse, table_one_config: DBObjectConfig
+        self, synapse_with_test_table_one: Synapse, table_one_config: DBObjectConfig
     ) -> None:
         """Testing for Synapse.get_table_column_names()"""
         assert (
-            synapse_database_project.get_table_column_names("test_table_one")
+            synapse_with_test_table_one.get_table_column_names("test_table_one")
             == table_one_config.get_attribute_names()
         )
 
-    def test_get_table_id_from_name(self, synapse_database_project: Synapse) -> None:
+    def test_get_table_id_and_name(self, synapse_with_test_table_one: Synapse) -> None:
         """Testing for Synapse.get_table_id_from_name()"""
-        assert (
-            synapse_database_project.get_synapse_id_from_table_name("test_table_one")
-            == "syn34532191"
-        )
-
-    def test_get_table_name_from_id(self, synapse_database_project: Synapse) -> None:
-        """Testing for Synapse.get_table_name_from_id()"""
-        assert (
-            synapse_database_project.get_table_name_from_synapse_id("syn34532191")
-            == "test_table_one"
-        )
+        synapse_id = synapse_with_test_table_one.get_synapse_id_from_table_name("test_table_one")
+        table_name = synapse_with_test_table_one.get_table_name_from_synapse_id(synapse_id)
+        assert table_name == "test_table_one"
 
     def test_query_table(
         self,
-        synapse_database_project: Synapse,
+        synapse_with_test_table_one: Synapse,
         table_one: pd.DataFrame,
         table_one_config: DBObjectConfig,
     ) -> None:
         """Testing for synapse.query_table()"""
-        result = synapse_database_project.query_table(
+        result = synapse_with_test_table_one.query_table(
             "test_table_one", table_one_config
         )
         pd.testing.assert_frame_equal(result, table_one)
+
+    def test_get_entity_annotations(self, synapse_with_test_table_one: Synapse) -> None:
+        """Testing for Synapse.get_entity_annotations"""
+        obj = synapse_with_test_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("test_table_one")
+        annotations = obj.get_entity_annotations(synapse_id)
+        assert annotations.id == synapse_id
+        assert annotations == {"test_annotation": ["test_value"]}
 
 
 @pytest.mark.synapse
@@ -181,38 +194,35 @@ class TestSynapseModifyTables:
 
     def test_build_table(
         self,
-        synapse_no_extra_tables: Synapse,
+        synapse_with_no_tables: Synapse,
         table_one: pd.DataFrame,
-        synapse_database_table_names: list[str],
     ) -> None:
         """Testing for Synapse.add_table()"""
-        obj = synapse_no_extra_tables
-        assert obj.get_table_names() == synapse_database_table_names
+        obj = synapse_with_no_tables
+        assert obj.get_table_names() == []
         obj.build_table("table_one", table_one)
-        assert obj.get_table_names() == ["table_one"] + synapse_database_table_names
+        assert obj.get_table_names() == ["table_one"]
 
     def test_add_table(
         self,
-        synapse_no_extra_tables: Synapse,
+        synapse_with_no_tables: Synapse,
         table_one_config: DBObjectConfig,
-        synapse_database_table_names: list[str],
     ) -> None:
         """Testing for Synapse.add_table()"""
-        obj = synapse_no_extra_tables
-        assert obj.get_table_names() == synapse_database_table_names
+        obj = synapse_with_no_tables
+        assert obj.get_table_names() == []
         obj.add_table("table_one", table_one_config)
-        assert obj.get_table_names() == ["table_one"] + synapse_database_table_names
+        assert obj.get_table_names() == ["table_one"]
 
     def test_delete_table(
         self,
         synapse_with_empty_table_one: Synapse,
-        synapse_database_table_names: list[str],
     ) -> None:
         """Testing for Synapse.delete_table()"""
         obj = synapse_with_empty_table_one
-        assert obj.get_table_names() == ["table_one"] + synapse_database_table_names
+        assert obj.get_table_names() == ["table_one"]
         obj.delete_table("table_one")
-        assert obj.get_table_names() == synapse_database_table_names
+        assert obj.get_table_names() == []
 
     def test_replace_table(
         self,
@@ -400,12 +410,6 @@ class TestSynapseModifyColumns:
 @pytest.mark.synapse
 class TestSynapseAnnotations:
     """Testing for annotation methods"""
-
-    def test_get_entity_annotations(self, synapse_no_extra_tables: Synapse) -> None:
-        """Testing for Synapse.get_entity_annotations"""
-        annotations = synapse_no_extra_tables.get_entity_annotations("syn34532191")
-        assert annotations.id == "syn34532191"
-        assert list(annotations.keys()) == ["attributes", "primary_key"]
 
     def test_set_entity_annotations(
         self, synapse_with_empty_table_one: Synapse
