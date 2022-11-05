@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Generator
 import pytest
 import pandas as pd
-from schematic_db.rdb.synapse import SynapseDatabase, SynapseDatabaseDropTableError
+from schematic_db.rdb.synapse_database import SynapseDatabase, SynapseDatabaseDropTableError
 from schematic_db.db_config.db_config import DBObjectConfig
 
 

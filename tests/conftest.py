@@ -16,7 +16,7 @@ from schematic_db.db_config import (
 
 from schematic_db.query_store import QueryStore, SynapseQueryStore
 from schematic_db.rdb import MySQLDatabase, MySQLConfig
-from schematic_db.rdb.synapse import SynapseDatabase
+from schematic_db.rdb.synapse_database import SynapseDatabase
 from schematic_db.rdb_updater import RDBUpdater
 from schematic_db.rdb_queryer import RDBQueryer
 from schematic_db.synapse import Synapse, SynapseConfig
