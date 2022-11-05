@@ -24,7 +24,7 @@ def fixture_synapse_with_test_table_one(
     obj = synapse_database_project
     obj.add_table("test_table_one", table_one_config)
     synapse_id = obj.get_synapse_id_from_table_name("test_table_one")
-    obj.insert_table_rows("test_table_one", table_one)
+    obj.insert_table_rows(synapse_id, table_one)
     obj.set_entity_annotations(synapse_id, {"test_annotation": "test_value"})
     yield obj
     obj.delete_table("test_table_one")
@@ -62,7 +62,8 @@ def fixture_synapse_with_filled_table_one(
     Yields a Synapse object with table one filled
     """
     obj = synapse_with_empty_table_one
-    obj.insert_table_rows("table_one", table_one)
+    synapse_id = obj.get_synapse_id_from_table_name("table_one")
+    obj.insert_table_rows(synapse_id, table_one)
     yield obj
 
 
@@ -259,11 +260,13 @@ class TestSynapseModifyRows:
         Testing for synapse.insert_table_rows()
         """
         obj = synapse_with_empty_table_one
-        obj.insert_table_rows("table_one", table_one)
+        synapse_id = obj.get_synapse_id_from_table_name("table_one")
+
+        obj.insert_table_rows(synapse_id, table_one)
         result1 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result1, table_one)
 
-        obj.insert_table_rows("table_one", table_one)
+        obj.insert_table_rows(synapse_id, table_one)
         result2 = obj.query_table("table_one", table_one_config)
         test_table = pd.concat(objs=[table_one, table_one])
         test_table.reset_index(drop=True, inplace=True)
@@ -303,30 +306,6 @@ class TestSynapseModifyRows:
         result2 = obj.query_table("table_one", table_one_config)
         assert result2.empty
 
-    def test_update_table_rows(
-        self,
-        synapse_with_filled_table_one: Synapse,
-        table_one: pd.DataFrame,
-        table_one_config: DBObjectConfig,
-    ) -> None:
-        """
-        Testing for synapse.update_table_rows()
-        """
-        obj = synapse_with_filled_table_one
-        result1 = obj.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result1, table_one)
-
-        obj.update_table_rows("table_one", table_one, table_one_config)
-        result2 = obj.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result2, table_one)
-
-        update_table = pd.DataFrame({"pk_one_col": ["key1"], "string_one_col": ["x"]})
-        test_table = table_one
-        test_table.at[0, "string_one_col"] = "x"
-        obj.update_table_rows("table_one", update_table, table_one_config)
-        result3 = obj.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result3, test_table)
-
     def test_upsert_table_rows(
         self,
         synapse_with_filled_table_one: Synapse,
@@ -343,12 +322,6 @@ class TestSynapseModifyRows:
         obj.upsert_table_rows("table_one", table_one, table_one_config)
         result2 = obj.query_table("table_one", table_one_config)
         pd.testing.assert_frame_equal(result2, table_one)
-
-        upsert_table = table_one
-        upsert_table.at[0, "string_one_col"] = "x"
-        obj.update_table_rows("table_one", upsert_table, table_one_config)
-        result3 = obj.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result3, upsert_table)
 
 
 @pytest.mark.synapse

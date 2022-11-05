@@ -1,6 +1,4 @@
-"""Synapse
-"""
-from __future__ import annotations
+"""Synapse"""
 import time
 from dataclasses import dataclass
 from functools import partial
@@ -280,15 +278,15 @@ class Synapse:  # pylint: disable=too-many-public-methods
             self.syn.store(current_table)
 
             # inserts new rows
-            self.insert_table_rows(table_name, table)
+            synapse_id = self.get_synapse_id_from_table_name(table_name)
+            self.insert_table_rows(synapse_id, table)
 
-    def insert_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
-        """Insert table rows
+    def insert_table_rows(self, synapse_id: str, data: pd.DataFrame) -> None:
+        """Insert table rows into Synapse table
         Args:
-            table_name (str): The name of the table to add rows into
+            synapse_id (str): The Synapse id of the table to add rows into
             data (pd.DataFrame): The rows to be added.
         """
-        synapse_id = self.get_synapse_id_from_table_name(table_name)
         table = self.syn.get(synapse_id)
         self.syn.store(sc.Table(table, data))
 
@@ -309,22 +307,6 @@ class Synapse:  # pylint: disable=too-many-public-methods
                 "ROW_VERSION missing from input data", table_id, columns
             )
         self.syn.delete(sc.Table(table_id, data))
-
-    def update_table_rows(
-        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ) -> None:
-        """Updates rows from the given table
-        Args:
-            table_name (str): The name of the table to be updated
-            data (pd.DataFrame): A pandas.DataFrame. It must contain the primary keys of the table
-            table_config (DBObjectConfig): A generic representation of the table as a
-                DBObjectConfig object.
-        """
-        table_id = self.get_synapse_id_from_table_name(table_name)
-        merged_table = self._merge_dataframe_with_primary_key_table(
-            table_name, data, table_config
-        )
-        self.syn.store(sc.Table(table_id, merged_table))
 
     def upsert_table_rows(
         self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig

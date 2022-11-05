@@ -182,6 +182,7 @@ class SynapseDatabase(RelationalDatabase):
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
+        synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
 
         # table doesn't exist in Synapse, and must be built
         if table_name not in table_names:
@@ -193,7 +194,7 @@ class SynapseDatabase(RelationalDatabase):
         current_columns = self.synapse.get_table_column_names(table_name)
         if len(list(current_columns)) == 0:
             self.synapse.add_table_columns(table_name, data)
-            self.synapse.insert_table_rows(table_name, data)
+            self.synapse.insert_table_rows(synapse_id, data)
             self.annotate_table(table_name, table_config)
             return
 
