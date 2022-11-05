@@ -239,7 +239,7 @@ def fixture_test_schema(
     """Yields a Schema using the database specific test schema"""
     schema_url = (
         "https://raw.githubusercontent.com/Sage-Bionetworks/"
-        "schematic/develop-rdb-export-joins/tests/data/example.rdb.model.jsonld"
+        "schematic/develop-rdb-merge-develop/tests/data/example.rdb.model.jsonld"
     )
     obj = Schema(
         schema_url,
@@ -253,6 +253,7 @@ def fixture_test_schema(
 # other test objects ----------------------------------------------------------
 # objects that don't have a test schema or manifests, but interact with
 # config objects and pandas dataframes
+
 
 @pytest.fixture(scope="session", name="synapse_database_project")
 def fixture_synapse(secrets_dict) -> Generator:

@@ -10,9 +10,12 @@ from schematic_db.db_config.db_config import (
 )
 from schematic_db.synapse import Synapse, SynapseConfig
 
+
 @pytest.fixture(name="synapse_with_test_table_one", scope="class")
 def fixture_synapse_with_test_table_one(
-    synapse_database_project: Synapse, table_one_config: DBObjectConfig, table_one: pd.DataFrame
+    synapse_database_project: Synapse,
+    table_one_config: DBObjectConfig,
+    table_one: pd.DataFrame,
 ) -> Generator:
     """
     Yields a Synapse object with "test_table_one" added, used only for tests that
@@ -142,13 +145,9 @@ class TestMockSynapse:
 class TestSynapseGetters:
     """Testing for Synapse class getters"""
 
-    def test_get_table_names(
-        self, synapse_with_test_table_one: Synapse
-    ) -> None:
+    def test_get_table_names(self, synapse_with_test_table_one: Synapse) -> None:
         """Testing for Synapse.get_table_names()"""
-        assert (
-            synapse_with_test_table_one.get_table_names() == ["test_table_one"]
-        )
+        assert synapse_with_test_table_one.get_table_names() == ["test_table_one"]
 
     def test_get_column_table_names(
         self, synapse_with_test_table_one: Synapse, table_one_config: DBObjectConfig
@@ -161,8 +160,12 @@ class TestSynapseGetters:
 
     def test_get_table_id_and_name(self, synapse_with_test_table_one: Synapse) -> None:
         """Testing for Synapse.get_table_id_from_name()"""
-        synapse_id = synapse_with_test_table_one.get_synapse_id_from_table_name("test_table_one")
-        table_name = synapse_with_test_table_one.get_table_name_from_synapse_id(synapse_id)
+        synapse_id = synapse_with_test_table_one.get_synapse_id_from_table_name(
+            "test_table_one"
+        )
+        table_name = synapse_with_test_table_one.get_table_name_from_synapse_id(
+            synapse_id
+        )
         assert table_name == "test_table_one"
 
     def test_query_table(

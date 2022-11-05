@@ -8,16 +8,13 @@ from schematic_db.db_config.db_config import DBObjectConfig
 
 
 @pytest.fixture(name="synapse_database")
-def fixture_synapse_no_extra_tables(
-    synapse_database: SynapseDatabase, synapse_database_table_names: list[str]
-) -> Generator:
+def fixture_synapse_no_extra_tables(synapse_database: SynapseDatabase) -> Generator:
     """Yields a SynapseDatabase object"""
     obj = synapse_database
     yield obj
     table_names = obj.get_table_names()
     for name in table_names:
-        if name not in synapse_database_table_names:
-            obj.synapse.delete_table(name)
+        obj.synapse.delete_table(name)
 
 
 @pytest.fixture(name="synapse_with_empty_tables")
@@ -139,11 +136,10 @@ class TestSynapseDatabase:
     ) -> None:
         """Testing for SynapseDatabase.annotate_table()"""
         obj = synapse_database
-        assert obj.get_table_names() == ["test_table_one"]
+        assert obj.get_table_names() == []
 
         obj.synapse.add_table("table_one", table_one_config)
         obj.synapse.add_table("table_three", table_three_config)
-        assert obj.get_table_names() == ["table_one", "table_three", "test_table_one"]
 
         synapse_id1 = obj.synapse.get_synapse_id_from_table_name("table_one")
         annotations = obj.synapse.get_entity_annotations(synapse_id1)
