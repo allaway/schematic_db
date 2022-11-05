@@ -290,54 +290,32 @@ class Synapse:  # pylint: disable=too-many-public-methods
         table = self.syn.get(synapse_id)
         self.syn.store(sc.Table(table, data))
 
-    def delete_table_rows(self, table_id: str, data: pd.DataFrame) -> None:
+    def upsert_table_rows(self, synapse_id: str, data: pd.DataFrame) -> None:
+        """Upserts rows from  the given table
+
+        Args:
+            synapse_id (str): The Synapse ID fo the table to be upserted into
+            data (pd.DataFrame): The table the rows will come from
+        """
+        self.syn.store(sc.Table(synapse_id, data))
+
+    def delete_table_rows(self, synapse_id: str, data: pd.DataFrame) -> None:
         """Deletes rows from the given table
         Args:
-            table_id (str): The synapse of the table the rows will be deleted from
+            synapse_id (str): The Synapse id of the table the rows will be deleted from
             data (pd.DataFrame): A pandas.DataFrame. Columns must include "ROW_ID",
              and "ROW_VERSION"
         """
         columns = list(data.columns)
         if "ROW_ID" not in columns:
             raise SynapseDeleteRowsError(
-                "ROW_ID missing from input data", table_id, columns
+                "ROW_ID missing from input data", synapse_id, columns
             )
         if "ROW_VERSION" not in columns:
             raise SynapseDeleteRowsError(
-                "ROW_VERSION missing from input data", table_id, columns
+                "ROW_VERSION missing from input data", synapse_id, columns
             )
-        self.syn.delete(sc.Table(table_id, data))
-
-    def upsert_table_rows(
-        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ) -> None:
-        """Upserts rows from  the given table
-
-        Args:
-            table_name (str): The name fo the table to be upserted into
-            data (pd.DataFrame): The table the rows will come from
-            table_config (DBObjectConfig): A generic representation of the table as a
-                DBObjectConfig object.
-        """
-        table_id = self.get_synapse_id_from_table_name(table_name)
-        primary_key = table_config.primary_key
-        table = self._get_primary_key_table(table_name, primary_key)
-        merged_table = pd.merge(data, table, how="left", on=primary_key)
-        self.syn.store(sc.Table(table_id, merged_table))
-
-    def _merge_dataframe_with_primary_key_table(
-        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ) -> pd.DataFrame:
-        primary_key = table_config.primary_key
-        table = self._get_primary_key_table(table_name, primary_key)
-        merged_table = pd.merge(data, table, how="inner", on=primary_key)
-        return merged_table
-
-    def _get_primary_key_table(self, table_name: str, primary_key: str) -> pd.DataFrame:
-        table_id = self.get_synapse_id_from_table_name(table_name)
-        query = f"SELECT {primary_key} FROM {table_id}"
-        table = self.execute_sql_query(query, include_row_data=True)
-        return table
+        self.syn.delete(sc.Table(synapse_id, data))
 
     def delete_all_table_rows(self, synapse_id: str) -> None:
         """Deletes all rows in the Synapse table
@@ -363,22 +341,21 @@ class Synapse:  # pylint: disable=too-many-public-methods
         for col in columns:
             table.removeColumn(col)
         self.syn.store(table)
-        time.sleep(3)
+        time.sleep(5)
 
-    def add_table_columns(self, table_name: str, data: pd.DataFrame) -> None:
+    def add_table_columns(self, synapse_id: str, data: pd.DataFrame) -> None:
         """Add columns to synapse table from pandas.DataFrame
 
         Args:
-            table_name (str): The name of the table to add the columns to
+            synapse_id (str): The Synapse id of the table to add the columns to
             data (pd.DataFrame): The dataframe to get the columns from
         """
         new_columns = sc.as_table_columns(data)
-        synapse_id = self.get_synapse_id_from_table_name(table_name)
         table = self.syn.get(synapse_id)
         for col in new_columns:
             table.addColumn(col)
         self.syn.store(table)
-        time.sleep(3)
+        time.sleep(5)
 
     def get_entity_annotations(self, synapse_id: str) -> sc.Annotations:
         """Gets the annotations for the Synapse entity

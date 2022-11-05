@@ -47,9 +47,12 @@ def fixture_synapse_with_filled_table_one(
 ) -> Generator:
     """Yields a SynapseDatabase object with tables added and filled"""
     obj = synapse_with_empty_tables
-    obj.synapse.insert_table_rows("table_one", table_one)
-    obj.synapse.insert_table_rows("table_two", table_two)
-    obj.synapse.insert_table_rows("table_three", table_three)
+    synapse_id1 = obj.synapse.get_synapse_id_from_table_name("table_one")
+    synapse_id2 = obj.synapse.get_synapse_id_from_table_name("table_two")
+    synapse_id3 = obj.synapse.get_synapse_id_from_table_name("table_three")
+    obj.synapse.insert_table_rows(synapse_id1, table_one)
+    obj.synapse.insert_table_rows(synapse_id2, table_two)
+    obj.synapse.insert_table_rows(synapse_id3, table_three)
     yield obj
 
 
@@ -228,6 +231,21 @@ class TestSynapseDatabase:
         table3b = obj.synapse.query_table("table_three", table_three_config)
         assert table1b["pk_one_col"].tolist() == ["key2"]
         assert table3b["pk_zero_col"].tolist() == ["keyC", "keyD"]
+
+    def test_upsert_table_rows(
+        self,
+        synapse_with_filled_tables: SynapseDatabase,
+        table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
+    ) -> None:
+        """Testing for SynapseDatabase.upsert_table_rows()"""
+        obj = synapse_with_filled_tables
+        result1 = obj.synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result1, table_one)
+
+        obj.upsert_table_rows("table_one", table_one, table_one_config)
+        result2 = obj.synapse.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(result2, table_one)
 
     def test_create_primary_key_table(
         self,

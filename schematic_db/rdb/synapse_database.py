@@ -199,7 +199,7 @@ class SynapseDatabase(RelationalDatabase):
             return
 
         # table exists and possibly has data, upsert method must be used
-        self.synapse.upsert_table_rows(table_name, data, table_config)
+        self.upsert_table_rows(table_name, data, table_config)
 
     def get_table_names(self) -> list[str]:
         return self.synapse.get_table_names()
@@ -337,6 +337,23 @@ class SynapseDatabase(RelationalDatabase):
 
             data = data[[primary_key, "ROW_ID", "ROW_VERSION"]]
             self._delete_table_rows(rd_table_name, table_id, data, db_config)
+
+    def upsert_table_rows(
+        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
+    ) -> None:
+        """Upserts rows from  the given table
+
+        Args:
+            table_name (str): The name fo the table to be upserted into
+            data (pd.DataFrame): The table the rows will come from
+            table_config (DBObjectConfig): A generic representation of the table as a
+                DBObjectConfig object.
+        """
+        table_id = self.synapse.get_synapse_id_from_table_name(table_name)
+        primary_key = table_config.primary_key
+        table = self._create_primary_key_table(table_id, primary_key)
+        merged_table = pd.merge(data, table, how="left", on=primary_key)
+        self.synapse.upsert_table_rows(table_id, merged_table)
 
     def _merge_dataframe_with_primary_key_table(
         self, table_id: str, data: pd.DataFrame, primary_key: str
