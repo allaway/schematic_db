@@ -19,7 +19,7 @@ def fixture_synapse_with_test_table_one(
 ) -> Generator:
     """
     Yields a Synapse object with "test_table_one" added, used only for tests that
-     don't alter the state
+     don't alter the state of the Synapse project
     """
     obj = synapse_database_project
     obj.add_table("test_table_one", table_one_config)
@@ -27,11 +27,11 @@ def fixture_synapse_with_test_table_one(
     obj.insert_table_rows(synapse_id, table_one)
     obj.set_entity_annotations(synapse_id, {"test_annotation": "test_value"})
     yield obj
-    obj.delete_table("test_table_one")
+    obj.delete_table(synapse_id)
 
 
 @pytest.fixture(name="synapse_with_no_tables")
-def fixture_synapse_with_no_tables(synapse_database_project) -> Generator:
+def fixture_synapse_with_no_tables(synapse_database_project: Synapse) -> Generator:
     """
     Yields a Synapse object
     """
@@ -39,7 +39,8 @@ def fixture_synapse_with_no_tables(synapse_database_project) -> Generator:
     yield obj
     table_names = obj.get_table_names()
     for name in table_names:
-        obj.delete_table(name)
+        synapse_id = obj.get_synapse_id_from_table_name(name)
+        obj.delete_table(synapse_id)
 
 
 @pytest.fixture(name="synapse_with_empty_table_one")
@@ -69,9 +70,7 @@ def fixture_synapse_with_filled_table_one(
 
 @pytest.fixture(name="mock_synapse_config")
 def fixture_mock_synapse_config() -> Generator:
-    """
-    Yields a Synapse object with table one filled
-    """
+    """Yields a SynapseConfig with no real data"""
     yield SynapseConfig(username="", auth_token="", project_id="")
 
 
@@ -179,7 +178,8 @@ class TestSynapseGetters:
         result = synapse_with_test_table_one.query_table(
             "test_table_one", table_one_config
         )
-        pd.testing.assert_frame_equal(result, table_one)
+        assert list(result.columns) == list(table_one.columns)
+        assert result["pk_one_col"].values.tolist() == table_one["pk_one_col"].values.tolist()
 
     def test_get_entity_annotations(self, synapse_with_test_table_one: Synapse) -> None:
         """Testing for Synapse.get_entity_annotations"""
@@ -217,16 +217,6 @@ class TestSynapseModifyTables:
         assert obj.get_table_names() == []
         obj.add_table("table_one", table_one_config)
         assert obj.get_table_names() == ["table_one"]
-
-    def test_delete_table(
-        self,
-        synapse_with_empty_table_one: Synapse,
-    ) -> None:
-        """Testing for Synapse.delete_table()"""
-        obj = synapse_with_empty_table_one
-        assert obj.get_table_names() == ["table_one"]
-        obj.delete_table("table_one")
-        assert obj.get_table_names() == []
 
     def test_replace_table(
         self,

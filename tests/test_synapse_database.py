@@ -17,7 +17,8 @@ def fixture_synapse_no_extra_tables(synapse_database: SynapseDatabase) -> Genera
     yield obj
     table_names = obj.get_table_names()
     for name in table_names:
-        obj.synapse.delete_table(name)
+        synapse_id = obj.synapse.get_synapse_id_from_table_name(name)
+        obj.synapse.delete_table(synapse_id)
 
 
 @pytest.fixture(name="synapse_with_empty_tables")

@@ -236,13 +236,11 @@ class Synapse:
         table = sc.Table(schema, values)
         table = self.syn.store(table)
 
-    def delete_table(self, table_name: str) -> None:
+    def delete_table(self, synapse_id: str) -> None:
         """Deletes a Synapse table
-
         Args:
-            table_name (str): The name of the table to be dropped
+            synapse_id (str): The Synapse id of the table to delete
         """
-        synapse_id = self.get_synapse_id_from_table_name(table_name)
         self.syn.delete(synapse_id)
 
     def replace_table(self, table_name: str, table: pd.DataFrame) -> None:
