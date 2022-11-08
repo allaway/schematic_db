@@ -193,7 +193,7 @@ class SynapseDatabase(RelationalDatabase):
         # table exists but has no columns/rows, both must be added
         current_columns = self.synapse.get_table_column_names(table_name)
         if len(list(current_columns)) == 0:
-            self.synapse.add_table_columns(table_name, data)
+            self.synapse.add_table_columns(synapse_id, data)
             self.synapse.insert_table_rows(synapse_id, data)
             self.annotate_table(table_name, table_config)
             return

@@ -150,29 +150,18 @@ class Synapse:
         tables = self._get_tables()
         return [table["name"] for table in tables if table["id"] == synapse_id][0]
 
-    def query_table(
-        self, table_name: str, table_config: DBObjectConfig
-    ) -> pd.DataFrame:
+    def query_table(self, synapse_id: str) -> pd.DataFrame:
         """Queries a whole table
 
         Args:
-            table_name (str): The name of the table to query
+            synapse_id (str): The Synapse id of the table to delete
             table_config (DBObjectConfig): The config for the table
 
         Returns:
             pd.DataFrame: The queried table
         """
-        table_id = self.get_synapse_id_from_table_name(table_name)
-        query = f"SELECT * FROM {table_id}"
-        table = self.execute_sql_query(query)
-        for att in table_config.attributes:
-            if att.datatype == DBDatatype.INT:
-                table = table.astype({att.name: "Int64"})
-            elif att.datatype == DBDatatype.DATE:
-                table[att.name] = pd.to_datetime(table[att.name], unit="ms").dt.date
-            elif att.datatype == DBDatatype.BOOLEAN:
-                table = table.astype({att.name: "boolean"})
-        return table
+        query = f"SELECT * FROM {synapse_id}"
+        return self.execute_sql_query(query)
 
     def execute_sql_query(
         self, query: str, include_row_data: bool = False

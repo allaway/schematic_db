@@ -3,11 +3,7 @@ from typing import Any, Generator
 import pytest
 import pandas as pd
 import synapseclient as sc  # type: ignore
-from schematic_db.db_config.db_config import (
-    DBAttributeConfig,
-    DBDatatype,
-    DBObjectConfig,
-)
+from schematic_db.db_config.db_config import DBObjectConfig
 from schematic_db.synapse import Synapse, SynapseConfig
 
 
@@ -120,15 +116,6 @@ class TestMockSynapse:
         """Testing for Synapse.query_table"""
         tables = [{"name": "table1", "id": "syn1"}, {"name": "table2", "id": "syn2"}]
         query_result = pd.DataFrame({"col1": ["a", "b"], "col2": [1, 2]})
-        config = DBObjectConfig(
-            name="tbl1",
-            attributes=[
-                DBAttributeConfig("col1", DBDatatype.TEXT),
-                DBAttributeConfig("col2", DBDatatype.INT),
-            ],
-            primary_key="col1",
-            foreign_keys=[],
-        )
         mocker.patch("synapseclient.Synapse.login", return_value=None)
         mocker.patch(
             "schematic_db.synapse.synapse.Synapse._get_tables", return_value=tables
@@ -138,7 +125,7 @@ class TestMockSynapse:
             return_value=query_result,
         )
         obj = Synapse(mock_synapse_config)
-        assert isinstance(obj.query_table("table1", config), pd.DataFrame)
+        assert isinstance(obj.query_table("syn1"), pd.DataFrame)
 
 
 @pytest.mark.synapse
@@ -172,14 +159,16 @@ class TestSynapseGetters:
         self,
         synapse_with_test_table_one: Synapse,
         table_one: pd.DataFrame,
-        table_one_config: DBObjectConfig,
     ) -> None:
         """Testing for synapse.query_table()"""
-        result = synapse_with_test_table_one.query_table(
-            "test_table_one", table_one_config
-        )
+        obj = synapse_with_test_table_one
+        synapse_id = obj.get_synapse_id_from_table_name("test_table_one")
+        result = synapse_with_test_table_one.query_table(synapse_id)
         assert list(result.columns) == list(table_one.columns)
-        assert result["pk_one_col"].values.tolist() == table_one["pk_one_col"].values.tolist()
+        assert (
+            result["pk_one_col"].values.tolist()
+            == table_one["pk_one_col"].values.tolist()
+        )
 
     def test_get_entity_annotations(self, synapse_with_test_table_one: Synapse) -> None:
         """Testing for Synapse.get_entity_annotations"""
@@ -222,13 +211,12 @@ class TestSynapseModifyTables:
         self,
         synapse_with_filled_table_one: Synapse,
         table_two: pd.DataFrame,
-        table_two_config: DBObjectConfig,
     ) -> None:
         """Testing for synapse.replace_table()"""
         obj = synapse_with_filled_table_one
         table_id1 = obj.get_synapse_id_from_table_name("table_one")
         obj.replace_table("table_one", table_two)
-        result1 = obj.query_table("table_one", table_two_config)
+        result1 = obj.query_table(table_id1)
         pd.testing.assert_frame_equal(result1, table_two)
         table_id2 = obj.get_synapse_id_from_table_name("table_one")
         assert table_id1 == table_id2
@@ -244,7 +232,6 @@ class TestSynapseModifyRows:
         self,
         synapse_with_empty_table_one: Synapse,
         table_one: pd.DataFrame,
-        table_one_config: DBObjectConfig,
     ) -> None:
         """
         Testing for synapse.insert_table_rows()
@@ -252,15 +239,12 @@ class TestSynapseModifyRows:
         obj = synapse_with_empty_table_one
         synapse_id = obj.get_synapse_id_from_table_name("table_one")
 
-        obj.insert_table_rows(synapse_id, table_one)
-        result1 = obj.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result1, table_one)
+        result1 = obj.query_table(synapse_id)
+        assert result1.empty
 
         obj.insert_table_rows(synapse_id, table_one)
-        result2 = obj.query_table("table_one", table_one_config)
-        test_table = pd.concat(objs=[table_one, table_one])
-        test_table.reset_index(drop=True, inplace=True)
-        pd.testing.assert_frame_equal(result2, test_table)
+        result2 = obj.query_table(synapse_id)
+        assert not result2.empty
 
     def test_delete_table_rows(
         self,
@@ -281,19 +265,18 @@ class TestSynapseModifyRows:
     def test_delete_all_table_rows(
         self,
         synapse_with_filled_table_one: Synapse,
-        table_one: pd.DataFrame,
-        table_one_config: DBObjectConfig,
     ) -> None:
         """
         Testing for synapse.delete_all_table_rows()
         """
         obj = synapse_with_filled_table_one
         synapse_id = obj.get_synapse_id_from_table_name("table_one")
-        result1 = obj.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result1, table_one)
+
+        result1 = obj.query_table(synapse_id)
+        assert not result1.empty
 
         obj.delete_all_table_rows(synapse_id)
-        result2 = obj.query_table("table_one", table_one_config)
+        result2 = obj.query_table(synapse_id)
         assert result2.empty
 
 
@@ -305,32 +288,23 @@ class TestSynapseModifyColumns:
         self,
         synapse_with_filled_table_one: Synapse,
         table_one: pd.DataFrame,
-        table_one_config: DBObjectConfig,
     ) -> None:
         """Testing for synapse.delete_all_table_columns()"""
         obj = synapse_with_filled_table_one
         synapse_id = obj.get_synapse_id_from_table_name("table_one")
-        result1 = obj.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result1, table_one)
-
+        assert obj.get_table_column_names("table_one") == list(table_one.columns)
         obj.delete_all_table_columns(synapse_id)
-        with pytest.raises(
-            sc.core.exceptions.SynapseHTTPError,
-            match="400 Client Error",
-        ):
-            obj.query_table("table_one", table_one_config)
+        assert obj.get_table_column_names("table_one") == []
 
     def test_add_table_columns(
         self,
         synapse_with_filled_table_one: Synapse,
         table_one: pd.DataFrame,
-        table_one_config: DBObjectConfig,
     ) -> None:
         """Testing for synapse.add_table_columns()"""
         obj = synapse_with_filled_table_one
         synapse_id = obj.get_synapse_id_from_table_name("table_one")
-        result1 = obj.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(result1, table_one)
+        assert obj.get_table_column_names("table_one") == list(table_one.columns)
 
         with pytest.raises(
             sc.core.exceptions.SynapseHTTPError,
@@ -339,15 +313,9 @@ class TestSynapseModifyColumns:
             obj.add_table_columns(synapse_id, table_one)
 
         obj.delete_all_table_columns(synapse_id)
+        assert obj.get_table_column_names("table_one") == []
         obj.add_table_columns(synapse_id, table_one)
-        assert obj.get_table_column_names("table_one") == [
-            "pk_one_col",
-            "string_one_col",
-            "int_one_col",
-            "double_one_col",
-            "date_one_col",
-            "bool_one_col",
-        ]
+        assert obj.get_table_column_names("table_one") == list(table_one.columns)
 
 
 @pytest.mark.synapse
