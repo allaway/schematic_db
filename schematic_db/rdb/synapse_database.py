@@ -254,17 +254,7 @@ class SynapseDatabase(RelationalDatabase):
             attributes=create_attributes(annotations["attributes"]),
         )
 
-    def delete_table_rows(
-        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ) -> None:
-        """Deletes rows from the given table
-
-        Args:
-            table_name (str): The name of the table the rows will be deleted from
-            data (pd.DataFrame): A pandas.DataFrame. It must include the primary key of the table
-            table_config (DBObjectConfig): A generic representation of the table as a
-                DBObjectConfig object.
-        """
+    def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
         db_config = self.get_db_config()
         primary_key = db_config.get_config_by_name(table_name).primary_key
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)

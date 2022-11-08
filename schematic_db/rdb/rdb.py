@@ -58,16 +58,12 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def delete_table_rows(
-        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ) -> None:
+    def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
         """Deletes rows from the given table
 
         Args:
             table_name (str): The name of the table the rows will be deleted from
             data (pd.DataFrame): A pandas.DataFrame. It must contain the primary keys of the table
-            table_config (DBObjectConfig): A generic representation of the table as a
-                DBObjectConfig object.
         """
 
     @abstractmethod

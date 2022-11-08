@@ -205,14 +205,13 @@ class TestSynapseDatabase:
         table = obj.execute_sql_query(query)
         assert table["pk_zero_col"].tolist() == ["keyA", "keyB", "keyC", "keyD"]
 
-        obj.delete_table_rows("table_three", table.iloc[[0]], table_three_config)
+        obj.delete_table_rows("table_three", table.iloc[[0]])
         table2 = obj.execute_sql_query(query)
         assert table2["pk_zero_col"].tolist() == ["keyB", "keyC", "keyD"]
 
     def test_delete_table_rows2(
         self,
         synapse_with_filled_tables: SynapseDatabase,
-        table_one_config: DBObjectConfig,
     ) -> None:
         """Testing for SynapseDatabase.delete_table_rows()"""
         obj = synapse_with_filled_tables
@@ -224,13 +223,13 @@ class TestSynapseDatabase:
         assert table1a["pk_one_col"].tolist() == ["key1", "key2", "key3"]
         assert table3a["pk_zero_col"].tolist() == ["keyA", "keyB", "keyC", "keyD"]
 
-        obj.delete_table_rows("table_one", table1a.iloc[[2]], table_one_config)
+        obj.delete_table_rows("table_one", table1a.iloc[[2]])
         table1b = obj.synapse.query_table(synapse_id1)
         table3b = obj.synapse.query_table(synapse_id3)
         assert table1b["pk_one_col"].tolist() == ["key1", "key2"]
         assert table3b["pk_zero_col"].tolist() == ["keyA", "keyB", "keyC", "keyD"]
 
-        obj.delete_table_rows("table_one", table1a.iloc[[0]], table_one_config)
+        obj.delete_table_rows("table_one", table1a.iloc[[0]])
         table1b = obj.synapse.query_table(synapse_id1)
         table3b = obj.synapse.query_table(synapse_id3)
         assert table1b["pk_one_col"].tolist() == ["key2"]

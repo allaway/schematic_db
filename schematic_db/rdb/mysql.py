@@ -137,19 +137,14 @@ class MySQLDatabase(RelationalDatabase):
         self._execute_sql_statement(f"DROP TABLE IF EXISTS `{table_name}`;")
         self.metadata.clear()
 
-    def delete_table_rows(
-        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ) -> None:
-        primary_key = table_config.primary_key
-        if primary_key not in list(data.columns):
-            raise DataframeKeyError("Primary key missing from data:", primary_key)
-        data = data[[primary_key]]
-        tuples = list(data.itertuples(index=False, name=None))
-        tuples = [(f"'{i}'" for i in tup) for tup in tuples]
-        tuple_strings = ["(" + ",".join(tup) + ")" for tup in tuples]
-        tuple_string = ",".join(tuple_strings)
+    def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
+        query = f"SHOW KEYS FROM {table_name} WHERE Key_name = 'PRIMARY'"
+        table = self.execute_sql_query(query)
+        primary_key = table["Column_name"].tolist()[0]
+        values = data[primary_key].tolist()
+        values = [f"'{i}'" for i in values]
         statement = (
-            f"DELETE FROM {table_name} WHERE ({primary_key}) IN ({tuple_string})"
+            f"DELETE FROM {table_name} WHERE {primary_key} IN ({','.join(values)})"
         )
         self._execute_sql_statement(statement)
 
