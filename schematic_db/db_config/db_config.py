@@ -99,6 +99,14 @@ class DBObjectConfig:
         """
         return [att.name for att in self.attributes]
 
+    def get_foreign_key_dependencies(self) -> list[str]:
+        """Returns a list of object names the current object depends on
+
+        Returns:
+            list[str]: A list of object names
+        """
+        return [key.foreign_object_name for key in self.foreign_keys]
+
     def get_foreign_key_names(self) -> list[str]:
         """Returns a list of names of the foreign keys
 
@@ -200,6 +208,32 @@ class DBConfig:
     def __post_init__(self) -> None:
         for config in self.configs:
             self._check_foreign_keys(config)
+
+    def get_dependencies(self, object_name: str) -> list[str]:
+        """Gets the objects dependencies
+
+        Args:
+            object_name (str): The name of the object
+
+        Returns:
+            list[str]: A list of objects names the object depends on
+        """
+        return self.get_config_by_name(object_name).get_foreign_key_dependencies()
+
+    def get_reverse_dependencies(self, object_name: str) -> list[str]:
+        """Gets the names of Objects that depend on the input object
+
+        Args:
+            object_name (str): The name of the object
+
+        Returns:
+            list[str]: A list of object names that depend on the input object
+        """
+        return [
+            config.name
+            for config in self.configs
+            if object_name in config.get_foreign_key_dependencies()
+        ]
 
     def get_config_names(self) -> list[str]:
         """Returns a list of names of the configs

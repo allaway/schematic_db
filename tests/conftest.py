@@ -139,6 +139,12 @@ def fixture_gff_schema(
     yield obj
 
 
+@pytest.fixture(scope="session", name="gff_db_config")
+def fixture_gff_db_config(gff_schema: Schema) -> Generator:
+    """Yields a config from the GFF tools schema"""
+    yield gff_schema.create_db_config()
+
+
 @pytest.fixture(scope="module", name="rdb_updater_mysql_gff")
 def fixture_rdb_updater_mysql_gff(
     gff_mysql: MySQLDatabase, gff_schema: Schema
@@ -233,7 +239,7 @@ def fixture_test_schema(
     """Yields a Schema using the database specific test schema"""
     schema_url = (
         "https://raw.githubusercontent.com/Sage-Bionetworks/"
-        "schematic/develop-rdb-export-joins/tests/data/example.rdb.model.jsonld"
+        "schematic/develop-rdb-merge-develop/tests/data/example.rdb.model.jsonld"
     )
     obj = Schema(
         schema_url,
@@ -249,18 +255,8 @@ def fixture_test_schema(
 # config objects and pandas dataframes
 
 
-@pytest.fixture(scope="session", name="synapse_database_table_names")
-def fixture_synapse_database_table_names() -> Generator:
-    """
-    Yields a list of table names the database testing project should start out with.
-    """
-    yield ["test_table_one"]
-
-
 @pytest.fixture(scope="session", name="synapse_database_project")
-def fixture_synapse(
-    secrets_dict: dict, synapse_database_table_names: list[str]
-) -> Generator:
+def fixture_synapse(secrets_dict) -> Generator:
     """
     Yields a Synapse object used for testing databases
     """
@@ -271,25 +267,11 @@ def fixture_synapse(
             auth_token=secrets_dict["synapse"]["auth_token"],
         )
     )
-    if obj.get_table_names() != synapse_database_table_names:
-        raise ValueError(
-            "Synapse_database_project has incorrect table names;",
-            f"Actual: {obj.get_table_names()}",
-            f"Expected: {synapse_database_table_names}",
-        )
     yield obj
-    if obj.get_table_names() != synapse_database_table_names:
-        raise ValueError(
-            "Synapse_database_project has incorrect table names;",
-            f"Actual: {obj.get_table_names()}",
-            f"Expected: {synapse_database_table_names}",
-        )
 
 
 @pytest.fixture(scope="module", name="synapse_database")
-def fixture_synapse_database(
-    secrets_dict: dict, synapse_database_table_names: list[str]
-) -> Generator:
+def fixture_synapse_database(secrets_dict: dict) -> Generator:
     """
     Yields a SynapseDatabase object used for testing databases
     """
@@ -300,19 +282,7 @@ def fixture_synapse_database(
             auth_token=secrets_dict["synapse"]["auth_token"],
         )
     )
-    if obj.get_table_names() != synapse_database_table_names:
-        raise ValueError(
-            "SynapseDatabase has incorrect table names;",
-            f"Actual: {obj.get_table_names()}",
-            f"Expected: {synapse_database_table_names}",
-        )
     yield obj
-    if obj.get_table_names() != synapse_database_table_names:
-        raise ValueError(
-            "SynapseDatabase has incorrect table names;",
-            f"Actual: {obj.get_table_names()}",
-            f"Expected: {synapse_database_table_names}",
-        )
 
 
 @pytest.fixture(scope="module", name="rdb_queryer_mysql")
@@ -437,6 +407,7 @@ def table_three() -> Generator:
     """
     dataframe = pd.DataFrame(
         {
+            "pk_zero_col": ["keyA", "keyB", "keyC", "keyD"],
             "pk_one_col": ["key1", "key1", "key2", "key2"],
             "pk_two_col": ["key1", "key2", "key1", "key2"],
             "string_three_col": ["a", "b", "c", "d"],

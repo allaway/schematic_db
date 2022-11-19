@@ -7,6 +7,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy import exc
 from schematic_db.db_config import DBObjectConfig, DBDatatype
+from schematic_db.db_config.db_config import DBAttributeConfig
 from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
@@ -30,6 +31,32 @@ class DataframeKeyError(Exception):
 
     def __str__(self) -> str:
         return f"{self.message}:{self.key}"
+
+
+def create_foreign_key_column(
+    name: str, datatype: str, foreign_table_name: str, foreign_table_column: str
+) -> sa.Column:
+    """Creates a sqlalchemy.column that is a foreign key
+
+    Args:
+        name (str): The name of the column
+        datatype (str): The SQL datatype of the column
+        foreign_table_name (str): The name of the table the foreign key is referencing
+        foreign_table_column (str): The name of the column the foreign key is referencing
+
+    Returns:
+        sa.Column: A sqlalchemy.column
+    """
+    col = sa.Column(
+        name,
+        datatype,
+        sa.ForeignKey(
+            f"{foreign_table_name}.{foreign_table_column}",
+            ondelete="CASCADE",
+        ),
+        nullable=True,
+    )
+    return col
 
 
 @dataclass
@@ -182,31 +209,31 @@ class MySQLDatabase(RelationalDatabase):
         return result
 
     def _create_columns(self, table_config: DBObjectConfig) -> list[sa.Column]:
-        columns = []
-        for att in table_config.attributes:
-            att_name = att.name
-            primary_key = table_config.primary_key
-            foreign_keys = table_config.get_foreign_key_names()
-
-            # If column is a key, set datatype to sa.String(100)
-            if att_name == primary_key or att_name in foreign_keys:
-                sql_datatype = sa.String(100)
-            else:
-                sql_datatype = MYSQL_DATATYPES.get(att.datatype)
-
-            if att_name in foreign_keys:
-                key = table_config.get_foreign_key_by_name(att_name)
-                col = sa.Column(
-                    att_name,
-                    sql_datatype,
-                    sa.ForeignKey(
-                        f"{key.foreign_object_name}.{key.foreign_attribute_name}"
-                    ),
-                    nullable=True,
-                )
-            else:
-                col = sa.Column(att_name, sql_datatype)
-            columns.append(col)
-
-        columns.append(sa.PrimaryKeyConstraint(primary_key))
+        columns = [
+            self._create_column(att, table_config) for att in table_config.attributes
+        ]
+        columns.append(sa.PrimaryKeyConstraint(table_config.primary_key))
         return columns
+
+    def _create_column(
+        self, attribute: DBAttributeConfig, table_config: DBObjectConfig
+    ) -> sa.Column:
+        att_name = attribute.name
+        primary_key = table_config.primary_key
+        foreign_keys = table_config.get_foreign_key_names()
+
+        # If column is a key, set datatype to sa.String(100)
+        if att_name == primary_key or att_name in foreign_keys:
+            sql_datatype = sa.String(100)
+        else:
+            sql_datatype = MYSQL_DATATYPES.get(attribute.datatype)
+
+        if att_name in foreign_keys:
+            key = table_config.get_foreign_key_by_name(att_name)
+            return create_foreign_key_column(
+                att_name,
+                sql_datatype,
+                key.foreign_object_name,
+                key.foreign_attribute_name,
+            )
+        return sa.Column(att_name, sql_datatype)
