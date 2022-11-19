@@ -1,7 +1,7 @@
 """Fixtures for all tests"""
 import os
 from datetime import datetime
-from typing import Generator
+from typing import Generator, Any
 import pytest
 import pandas as pd
 import numpy as np
@@ -16,7 +16,7 @@ from schematic_db.db_config import (
 
 from schematic_db.query_store import QueryStore, SynapseQueryStore
 from schematic_db.rdb import MySQLDatabase, MySQLConfig
-from schematic_db.rdb.synapse import SynapseDatabase
+from schematic_db.rdb.synapse_database import SynapseDatabase
 from schematic_db.rdb_updater import RDBUpdater
 from schematic_db.rdb_queryer import RDBQueryer
 from schematic_db.synapse import Synapse, SynapseConfig
@@ -256,7 +256,7 @@ def fixture_test_schema(
 
 
 @pytest.fixture(scope="session", name="synapse_database_project")
-def fixture_synapse(secrets_dict) -> Generator:
+def fixture_synapse(secrets_dict: dict[str, Any]) -> Generator:
     """
     Yields a Synapse object used for testing databases
     """
@@ -271,7 +271,7 @@ def fixture_synapse(secrets_dict) -> Generator:
 
 
 @pytest.fixture(scope="module", name="synapse_database")
-def fixture_synapse_database(secrets_dict: dict) -> Generator:
+def fixture_synapse_database(secrets_dict: dict[str, Any]) -> Generator:
     """
     Yields a SynapseDatabase object used for testing databases
     """

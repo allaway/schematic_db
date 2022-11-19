@@ -182,6 +182,7 @@ class SynapseDatabase(RelationalDatabase):
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
+        synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
 
         # table doesn't exist in Synapse, and must be built
         if table_name not in table_names:
@@ -192,13 +193,13 @@ class SynapseDatabase(RelationalDatabase):
         # table exists but has no columns/rows, both must be added
         current_columns = self.synapse.get_table_column_names(table_name)
         if len(list(current_columns)) == 0:
-            self.synapse.add_table_columns(table_name, data)
-            self.synapse.insert_table_rows(table_name, data)
+            self.synapse.add_table_columns(synapse_id, data)
+            self.synapse.insert_table_rows(synapse_id, data)
             self.annotate_table(table_name, table_config)
             return
 
         # table exists and possibly has data, upsert method must be used
-        self.synapse.upsert_table_rows(table_name, data, table_config)
+        self.upsert_table_rows(table_name, data, table_config)
 
     def get_table_names(self) -> list[str]:
         return self.synapse.get_table_names()
@@ -253,17 +254,7 @@ class SynapseDatabase(RelationalDatabase):
             attributes=create_attributes(annotations["attributes"]),
         )
 
-    def delete_table_rows(
-        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
-    ) -> None:
-        """Deletes rows from the given table
-
-        Args:
-            table_name (str): The name of the table the rows will be deleted from
-            data (pd.DataFrame): A pandas.DataFrame. It must include the primary key of the table
-            table_config (DBObjectConfig): A generic representation of the table as a
-                DBObjectConfig object.
-        """
+    def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
         db_config = self.get_db_config()
         primary_key = db_config.get_config_by_name(table_name).primary_key
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
@@ -336,6 +327,23 @@ class SynapseDatabase(RelationalDatabase):
 
             data = data[[primary_key, "ROW_ID", "ROW_VERSION"]]
             self._delete_table_rows(rd_table_name, table_id, data, db_config)
+
+    def upsert_table_rows(
+        self, table_name: str, data: pd.DataFrame, table_config: DBObjectConfig
+    ) -> None:
+        """Upserts rows from  the given table
+
+        Args:
+            table_name (str): The name fo the table to be upserted into
+            data (pd.DataFrame): The table the rows will come from
+            table_config (DBObjectConfig): A generic representation of the table as a
+                DBObjectConfig object.
+        """
+        table_id = self.synapse.get_synapse_id_from_table_name(table_name)
+        primary_key = table_config.primary_key
+        table = self._create_primary_key_table(table_id, primary_key)
+        merged_table = pd.merge(data, table, how="left", on=primary_key)
+        self.synapse.upsert_table_rows(table_id, merged_table)
 
     def _merge_dataframe_with_primary_key_table(
         self, table_id: str, data: pd.DataFrame, primary_key: str
