@@ -206,7 +206,7 @@ def fixture_rdb_queryer_mysql_gff(
 @pytest.fixture(scope="session", name="test_schema_json_url")
 def fixture_test_schema_json_url() -> Generator:
     """Yields the url for the main test schema json"""
-    url =  (
+    url = (
         "https://raw.githubusercontent.com/Sage-Bionetworks/"
         "schematic/develop-rdb-merge-develop/tests/data/example.rdb.model.jsonld"
     )

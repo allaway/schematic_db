@@ -34,7 +34,11 @@ class DataframeKeyError(Exception):
 
 
 def create_foreign_key_column(
-    name: str, datatype: str, foreign_table_name: str, foreign_table_column: str
+    name: str,
+    datatype: str,
+    foreign_table_name: str,
+    foreign_table_column: str,
+    nullable: bool,
 ) -> sa.Column:
     """Creates a sqlalchemy.column that is a foreign key
 
@@ -43,6 +47,7 @@ def create_foreign_key_column(
         datatype (str): The SQL datatype of the column
         foreign_table_name (str): The name of the table the foreign key is referencing
         foreign_table_column (str): The name of the column the foreign key is referencing
+        nullable (bool): If the column is nullable
 
     Returns:
         sa.Column: A sqlalchemy.column
@@ -54,7 +59,7 @@ def create_foreign_key_column(
             f"{foreign_table_name}.{foreign_table_column}",
             ondelete="CASCADE",
         ),
-        nullable=True,
+        nullable=nullable,
     )
     return col
 
@@ -216,6 +221,7 @@ class MySQLDatabase(RelationalDatabase):
         att_name = attribute.name
         primary_key = table_config.primary_key
         foreign_keys = table_config.get_foreign_key_names()
+        nullable = not attribute.required
 
         # If column is a key, set datatype to sa.String(100)
         if att_name == primary_key or att_name in foreign_keys:
@@ -230,5 +236,6 @@ class MySQLDatabase(RelationalDatabase):
                 sql_datatype,
                 key.foreign_object_name,
                 key.foreign_attribute_name,
+                nullable,
             )
-        return sa.Column(att_name, sql_datatype)
+        return sa.Column(att_name, sql_datatype, nullable=nullable)
