@@ -325,12 +325,12 @@ def fixture_table_one_config() -> Generator:
     table_config = DBObjectConfig(
         name="table_one",
         attributes=[
-            DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="string_one_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="int_one_col", datatype=DBDatatype.INT),
-            DBAttributeConfig(name="double_one_col", datatype=DBDatatype.FLOAT),
-            DBAttributeConfig(name="date_one_col", datatype=DBDatatype.DATE),
-            DBAttributeConfig(name="bool_one_col", datatype=DBDatatype.BOOLEAN),
+            DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT, required=True),
+            DBAttributeConfig(name="string_one_col", datatype=DBDatatype.TEXT, required=False),
+            DBAttributeConfig(name="int_one_col", datatype=DBDatatype.INT, required=False),
+            DBAttributeConfig(name="double_one_col", datatype=DBDatatype.FLOAT, required=False),
+            DBAttributeConfig(name="date_one_col", datatype=DBDatatype.DATE, required=False),
+            DBAttributeConfig(name="bool_one_col", datatype=DBDatatype.BOOLEAN, required=False),
         ],
         primary_key="pk_one_col",
         foreign_keys=[],
@@ -374,8 +374,8 @@ def fixture_table_two_config() -> Generator:
     table_config = DBObjectConfig(
         name="table_two",
         attributes=[
-            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT, required=True),
+            DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT, required=False),
         ],
         primary_key="pk_two_col",
         foreign_keys=[],
@@ -391,8 +391,8 @@ def fixture_table_two_config_combined() -> Generator:
     table_config = DBObjectConfig(
         name="table_two",
         attributes=[
-            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT, required=True),
+            DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT, required=False),
         ],
         primary_key="pk_two_col",
         foreign_keys=[],
@@ -424,10 +424,10 @@ def fixture_table_three_config() -> Generator:
     table_config = DBObjectConfig(
         name="table_three",
         attributes=[
-            DBAttributeConfig(name="pk_zero_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="string_three_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(name="pk_zero_col", datatype=DBDatatype.TEXT, required=True),
+            DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT, required=True),
+            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT, required=True),
+            DBAttributeConfig(name="string_three_col", datatype=DBDatatype.TEXT, required=False),
         ],
         primary_key="pk_zero_col",
         foreign_keys=[
