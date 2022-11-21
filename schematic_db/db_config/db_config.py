@@ -23,6 +23,7 @@ class DBAttributeConfig:
 
     name: str
     datatype: DBDatatype
+    required: bool
 
     def __post_init__(self) -> None:
         if not isinstance(self.datatype, DBDatatype):
