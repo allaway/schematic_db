@@ -245,3 +245,19 @@ def get_manifest(
     }
     response = create_schematic_api_response("manifest/download", params)
     return pandas.DataFrame(response.json())
+
+
+def is_node_required(schema_url: str, node_label: str) -> bool:
+    """hecks if node is required
+
+    Args:
+        schema_url (str): Data Model URL
+        node_label (str): Label/display name for the node to check
+
+    Returns:
+        bool: Wether or not the node is required
+    """
+
+    params = {"schema_url": schema_url, "node_label": node_label}
+    response = create_schematic_api_response("explorer/get_node_range", params)
+    return response.json()
