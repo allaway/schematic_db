@@ -258,6 +258,6 @@ def is_node_required(schema_url: str, node_label: str) -> bool:
         bool: Wether or not the node is required
     """
 
-    params = {"schema_url": schema_url, "node_label": node_label}
-    response = create_schematic_api_response("explorer/get_node_range", params)
+    params = {"schema_url": schema_url, "node_display_name": node_label}
+    response = create_schematic_api_response("schemas/is_node_required", params)
     return response.json()
