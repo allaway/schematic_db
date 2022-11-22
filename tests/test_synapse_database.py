@@ -72,13 +72,10 @@ class TestSynapseDatabase:
         annos1a = obj.synapse.get_entity_annotations(synapse_id1)
         annos2a = obj.synapse.get_entity_annotations(synapse_id2)
         annos3a = obj.synapse.get_entity_annotations(synapse_id3)
-        assert list(annos1a.keys()) == ["attributes", "primary_key"]
-        assert list(annos2a.keys()) == ["attributes", "primary_key"]
-        assert list(annos3a.keys()) == [
-            "attributes",
-            "primary_key",
-            "foreign_keys",
-        ]
+        assert "primary_key" in list(annos1a.keys())
+        assert "primary_key" in list(annos2a.keys())
+        assert "primary_key" in list(annos3a.keys())
+        assert "foreign_keys" in list(annos3a.keys())
 
         obj.drop_all_tables()
         annos1b = obj.synapse.get_entity_annotations(synapse_id1)
@@ -100,20 +97,17 @@ class TestSynapseDatabase:
         annos1a = obj.synapse.get_entity_annotations(synapse_id1)
         annos2a = obj.synapse.get_entity_annotations(synapse_id2)
         annos3a = obj.synapse.get_entity_annotations(synapse_id3)
-        assert list(annos1a.keys()) == ["attributes", "primary_key"]
-        assert list(annos2a.keys()) == ["attributes", "primary_key"]
-        assert list(annos3a.keys()) == [
-            "attributes",
-            "primary_key",
-            "foreign_keys",
-        ]
+        assert "primary_key" in list(annos1a.keys())
+        assert "primary_key" in list(annos2a.keys())
+        assert "primary_key" in list(annos3a.keys())
+        assert "foreign_keys" in list(annos3a.keys())
 
         obj.drop_table_and_dependencies("table_one")
         annos1b = obj.synapse.get_entity_annotations(synapse_id1)
         annos2b = obj.synapse.get_entity_annotations(synapse_id2)
         annos3b = obj.synapse.get_entity_annotations(synapse_id3)
         assert not list(annos1b.keys())
-        assert list(annos2b.keys()) == ["attributes", "primary_key"]
+        assert "primary_key" in list(annos2b.keys())
         assert not list(annos3b.keys())
 
     def test_drop_table(self, synapse_with_empty_tables: SynapseDatabase) -> None:
@@ -127,11 +121,7 @@ class TestSynapseDatabase:
 
         synapse_id = obj.synapse.get_synapse_id_from_table_name("table_three")
         annos1 = obj.synapse.get_entity_annotations(synapse_id)
-        assert list(annos1.keys()) == [
-            "attributes",
-            "primary_key",
-            "foreign_keys",
-        ]
+        assert "primary_key" in list(annos1.keys())
         obj.drop_table("table_three")
         annos2 = obj.synapse.get_entity_annotations(synapse_id)
         assert not list(annos2.keys())
@@ -155,7 +145,15 @@ class TestSynapseDatabase:
 
         obj.annotate_table("table_one", table_one_config)
         annotations2 = obj.synapse.get_entity_annotations(synapse_id1)
-        assert list(annotations2.keys()) == ["attributes", "primary_key"]
+        assert list(annotations2.keys()) == [
+            "attribute0",
+            "attribute1",
+            "attribute2",
+            "attribute3",
+            "attribute4",
+            "attribute5",
+            "primary_key"
+        ]
 
         synapse_id3 = obj.synapse.get_synapse_id_from_table_name("table_three")
         annotations3 = obj.synapse.get_entity_annotations(synapse_id3)
@@ -164,7 +162,10 @@ class TestSynapseDatabase:
         obj.annotate_table("table_three", table_three_config)
         annotations4 = obj.synapse.get_entity_annotations(synapse_id3)
         assert list(annotations4.keys()) == [
-            "attributes",
+            "attribute0",
+            "attribute1",
+            "attribute2",
+            "attribute3",
             "primary_key",
             "foreign_keys",
         ]
@@ -187,11 +188,13 @@ class TestSynapseDatabase:
         assert table_config1.name == "table_one"
         assert table_config1.primary_key == "pk_one_col"
         assert table_config1.foreign_keys == []
+        assert table_config1.attributes != []
 
         table_config3 = obj.get_table_config("table_three")
         assert table_config3.name == "table_three"
         assert table_config3.primary_key == "pk_zero_col"
         assert table_config3.foreign_keys != []
+        assert table_config1.attributes != []
 
     def test_delete_table_rows(
         self,

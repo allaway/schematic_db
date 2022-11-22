@@ -60,7 +60,7 @@ def create_attribute_annotation_string(attribute: DBAttributeConfig) -> str:
     Returns:
         str: The attribute in string form.
     """
-    return f"{attribute.name};{attribute.datatype.value}"
+    return f"{attribute.name};{attribute.datatype.value};{str(attribute.required)}"
 
 
 def create_foreign_keys(strings: list[str]) -> list[DBForeignKey]:
@@ -96,7 +96,9 @@ def create_attributes(strings: list[str]) -> list[DBAttributeConfig]:
     """
     attribute_lists = [att.split(";") for att in strings]
     return [
-        DBAttributeConfig(name=att[0], datatype=CONFIG_DATATYPES[att[1]])
+        DBAttributeConfig(
+            name=att[0], datatype=CONFIG_DATATYPES[att[1]], required=bool(att[2])
+        )
         for att in attribute_lists
     ]
 
@@ -182,7 +184,6 @@ class SynapseDatabase(RelationalDatabase):
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
-        synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
 
         # table doesn't exist in Synapse, and must be built
         if table_name not in table_names:
@@ -193,6 +194,7 @@ class SynapseDatabase(RelationalDatabase):
         # table exists but has no columns/rows, both must be added
         current_columns = self.synapse.get_table_column_names(table_name)
         if len(list(current_columns)) == 0:
+            synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
             self.synapse.add_table_columns(synapse_id, data)
             self.synapse.insert_table_rows(synapse_id, data)
             self.annotate_table(table_name, table_config)
@@ -213,12 +215,10 @@ class SynapseDatabase(RelationalDatabase):
         """
         synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
         annotations: dict[str, Union[str, list[str]]] = {
-            "primary_key": table_config.primary_key,
-            "attributes": [
-                create_attribute_annotation_string(att)
-                for att in table_config.attributes
-            ],
+            f"attribute{str(i)}": create_attribute_annotation_string(att)
+            for i, att in enumerate(table_config.attributes)
         }
+        annotations["primary_key"] = table_config.primary_key
         if len(table_config.foreign_keys) > 0:
             foreign_key_strings = [
                 create_foreign_key_annotation_string(key)
@@ -247,11 +247,12 @@ class SynapseDatabase(RelationalDatabase):
         """
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
         annotations = self.synapse.get_entity_annotations(table_id)
+        attribute_annotations = [v[0] for k, v in annotations.items() if k.startswith('attribute')]
         return DBObjectConfig(
             name=table_name,
             primary_key=annotations["primary_key"][0],
             foreign_keys=create_foreign_keys(annotations.get("foreign_keys")),
-            attributes=create_attributes(annotations["attributes"]),
+            attributes=create_attributes(attribute_annotations),
         )
 
     def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
