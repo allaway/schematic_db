@@ -152,7 +152,7 @@ class TestSynapseDatabase:
             "attribute3",
             "attribute4",
             "attribute5",
-            "primary_key"
+            "primary_key",
         ]
 
         synapse_id3 = obj.synapse.get_synapse_id_from_table_name("table_three")

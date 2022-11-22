@@ -247,7 +247,9 @@ class SynapseDatabase(RelationalDatabase):
         """
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
         annotations = self.synapse.get_entity_annotations(table_id)
-        attribute_annotations = [v[0] for k, v in annotations.items() if k.startswith('attribute')]
+        attribute_annotations = [
+            v[0] for k, v in annotations.items() if k.startswith("attribute")
+        ]
         return DBObjectConfig(
             name=table_name,
             primary_key=annotations["primary_key"][0],

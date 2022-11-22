@@ -285,15 +285,6 @@ class Synapse:
             data (pd.DataFrame): The table the rows will come from
         """
         self.syn.store(sc.Table(synapse_id, data))
-        """
-        try:
-        except sc.core.exceptions.SynapseHTTPError as error:
-            import logging
-            logging.warning(synapse_id)
-            logging.warning(error)
-            #error_msg = str(error.__dict__["orig"])
-            #raise UpdateDBTableError(synapse_id, error_msg) from error
-        """
 
     def delete_table_rows(self, synapse_id: str, data: pd.DataFrame) -> None:
         """Deletes rows from the given table
