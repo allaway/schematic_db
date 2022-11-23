@@ -300,6 +300,7 @@ class TestSynapseModifyColumns:
         self,
         synapse_with_filled_table_one: Synapse,
         table_one: pd.DataFrame,
+        table_one_config: DBObjectConfig,
     ) -> None:
         """Testing for synapse.add_table_columns()"""
         obj = synapse_with_filled_table_one
@@ -310,11 +311,11 @@ class TestSynapseModifyColumns:
             sc.core.exceptions.SynapseHTTPError,
             match="400 Client Error",
         ):
-            obj.add_table_columns(synapse_id, table_one)
+            obj.add_table_columns(synapse_id, table_one_config)
 
         obj.delete_all_table_columns(synapse_id)
         assert obj.get_table_column_names("table_one") == []
-        obj.add_table_columns(synapse_id, table_one)
+        obj.add_table_columns(synapse_id, table_one_config)
         assert obj.get_table_column_names("table_one") == list(table_one.columns)
 
 

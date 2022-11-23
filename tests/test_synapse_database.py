@@ -231,11 +231,11 @@ class TestSynapseDatabase:
         assert table_config1.attributes != []
 
         table_config3 = obj.get_table_config("table_three")
-        assert table_config1 is not None
+        assert table_config3 is not None
         assert table_config3.name == "table_three"
         assert table_config3.primary_key == "pk_zero_col"
         assert table_config3.foreign_keys != []
-        assert table_config1.attributes != []
+        assert table_config3.attributes != []
 
     def test_delete_table_rows(
         self,

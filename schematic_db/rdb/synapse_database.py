@@ -197,7 +197,7 @@ class SynapseDatabase(RelationalDatabase):
         current_columns = self.synapse.get_table_column_names(table_name)
         if len(list(current_columns)) == 0:
             synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
-            self.synapse.add_table_columns(synapse_id, data)
+            self.synapse.add_table_columns(synapse_id, table_config)
             self.synapse.insert_table_rows(synapse_id, data)
             self.annotate_table(table_name, table_config)
             return
