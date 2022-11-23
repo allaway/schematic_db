@@ -1,5 +1,5 @@
 """SynapseDatabase"""
-from typing import Union
+from typing import Union, Optional
 import pandas as pd
 from schematic_db.db_config import (
     DBConfig,
@@ -187,7 +187,9 @@ class SynapseDatabase(RelationalDatabase):
 
         # table doesn't exist in Synapse, and must be built
         if table_name not in table_names:
-            self.synapse.build_table(table_name, data)
+            self.synapse.add_table(table_name, table_config)
+            synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
+            self.synapse.insert_table_rows(synapse_id, data)
             self.annotate_table(table_name, table_config)
             return
 
@@ -228,16 +230,18 @@ class SynapseDatabase(RelationalDatabase):
         self.synapse.set_entity_annotations(synapse_id, annotations)
 
     def get_db_config(self) -> DBConfig:
-        """Gets all the table annotations
+        """Returns a DBConfig created from the current table annotations
 
         Returns:
-            dict[str, dict[str, Union[str, dict[str, str]]]]: A dict of table annotations
+            DBConfig: a DBConfig object
         """
         table_names = self.synapse.get_table_names()
-        return DBConfig([self.get_table_config(name) for name in table_names])
+        result_list = [self.get_table_config(name) for name in table_names]
+        config_list = [config for config in result_list if config is not None]
+        return DBConfig(config_list)
 
-    def get_table_config(self, table_name: str) -> DBObjectConfig:
-        """Creates
+    def get_table_config(self, table_name: str) -> Optional[DBObjectConfig]:
+        """Creates a DBObjectConfig if the table is annotated, otherwise None
 
         Args:
             table_name (str): The name fo the table
@@ -247,6 +251,8 @@ class SynapseDatabase(RelationalDatabase):
         """
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
         annotations = self.synapse.get_entity_annotations(table_id)
+        if not annotations:
+            return None
         attribute_annotations = [
             v[0] for k, v in annotations.items() if k.startswith("attribute")
         ]

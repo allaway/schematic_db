@@ -9,7 +9,7 @@ from schematic_db.db_config import DBObjectConfig, DBDatatype
 
 
 SYNAPSE_DATATYPES = {
-    DBDatatype.TEXT: partial(sc.Column, columnType="STRING", maximumSize=100),
+    DBDatatype.TEXT: partial(sc.Column, columnType="STRING", maximumSize=1000),
     DBDatatype.DATE: partial(sc.Column, columnType="DATE"),
     DBDatatype.INT: partial(sc.Column, columnType="INTEGER"),
     DBDatatype.FLOAT: partial(sc.Column, columnType="DOUBLE"),

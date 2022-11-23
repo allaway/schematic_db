@@ -1,5 +1,4 @@
 """Fixtures for all tests"""
-from __future__ import annotations
 from typing import Generator
 import pytest
 import pandas as pd
@@ -41,7 +40,7 @@ def fixture_synapse_with_empty_tables(
 
 
 @pytest.fixture(name="synapse_with_filled_tables")
-def fixture_synapse_with_filled_table_one(
+def fixture_synapse_with_filled_tables(
     synapse_with_empty_tables: SynapseDatabase,
     table_one: pd.DataFrame,
     table_two: pd.DataFrame,
@@ -113,18 +112,58 @@ class TestSynapseDatabase:
     def test_drop_table(self, synapse_with_empty_tables: SynapseDatabase) -> None:
         """Testing for SynapseDatabase.drop_table()"""
         obj = synapse_with_empty_tables
+        synapse_id1 = obj.synapse.get_synapse_id_from_table_name("table_one")
+        synapse_id3 = obj.synapse.get_synapse_id_from_table_name("table_three")
+
         with pytest.raises(
             SynapseDatabaseDropTableError,
             match="Can not drop database table, other tables exists that depend on it",
         ):
             obj.drop_table("table_one")
 
-        synapse_id = obj.synapse.get_synapse_id_from_table_name("table_three")
-        annos1 = obj.synapse.get_entity_annotations(synapse_id)
-        assert "primary_key" in list(annos1.keys())
+        annos1a = obj.synapse.get_entity_annotations(synapse_id1)
+        assert list(annos1a.keys())
+
         obj.drop_table("table_three")
-        annos2 = obj.synapse.get_entity_annotations(synapse_id)
-        assert not list(annos2.keys())
+        annos3 = obj.synapse.get_entity_annotations(synapse_id3)
+        assert not list(annos3.keys())
+
+        obj.drop_table("table_one")
+        annos1b = obj.synapse.get_entity_annotations(synapse_id1)
+        assert not list(annos1b.keys())
+
+    def test_update_table(
+        self,
+        synapse_database: SynapseDatabase,
+        table_one_config: DBObjectConfig,
+        table_one: pd.DataFrame,
+    ) -> None:
+        """Testing for SynapseDatabase.update_table()"""
+        obj = synapse_database
+        table_one_keys = table_one[table_one_config.primary_key].to_list()
+        assert obj.synapse.get_table_names() == []
+
+        obj.update_table(table_one, table_one_config)
+        synapse_id1 = obj.synapse.get_synapse_id_from_table_name("table_one")
+        result1 = obj.synapse.query_table(synapse_id1)
+        assert result1[table_one_config.primary_key].to_list() == table_one_keys
+
+        obj.drop_table("table_one")
+        assert obj.synapse.get_table_column_names("table_one") == []
+
+        obj.update_table(table_one, table_one_config)
+        result3 = obj.synapse.query_table(synapse_id1)
+        assert result3[table_one_config.primary_key].to_list() == table_one_keys
+
+        table_one_x = table_one.copy()
+        table_one_x.loc[2] = ["key3", "c", np.NaN, np.NaN, np.NaN, np.NaN]
+        table_one_x.loc[3] = ["key_x", "d", np.NaN, np.NaN, np.NaN, np.NaN]
+        obj.update_table(table_one_x, table_one_config)
+        result4 = obj.synapse.query_table(synapse_id1)
+        assert result4[table_one_config.primary_key].to_list() == table_one_keys + [
+            "key_x"
+        ]
+        assert result4["string_one_col"].to_list() == ["a", "b", "c", "d"]
 
     def test_annotate_table(
         self,
@@ -185,12 +224,14 @@ class TestSynapseDatabase:
         """Testing for SynapseDatabase.get_table_config()"""
         obj = synapse_with_empty_tables
         table_config1 = obj.get_table_config("table_one")
+        assert table_config1 is not None
         assert table_config1.name == "table_one"
         assert table_config1.primary_key == "pk_one_col"
         assert table_config1.foreign_keys == []
         assert table_config1.attributes != []
 
         table_config3 = obj.get_table_config("table_three")
+        assert table_config1 is not None
         assert table_config3.name == "table_three"
         assert table_config3.primary_key == "pk_zero_col"
         assert table_config3.foreign_keys != []
