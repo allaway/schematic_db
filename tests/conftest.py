@@ -16,6 +16,7 @@ from schematic_db.db_config import (
 
 from schematic_db.query_store import QueryStore, SynapseQueryStore
 from schematic_db.rdb import MySQLDatabase, MySQLConfig
+from schematic_db.rdb.postgres import PostgresDatabase
 from schematic_db.rdb.synapse_database import SynapseDatabase
 from schematic_db.rdb_updater import RDBUpdater
 from schematic_db.rdb_queryer import RDBQueryer
@@ -223,6 +224,23 @@ def fixture_mysql(secrets_dict: dict) -> Generator:
             username=secrets_dict["mysql"]["username"],
             password=secrets_dict["mysql"]["password"],
             host=secrets_dict["mysql"]["host"],
+            name="test_schema",
+        )
+    )
+    yield obj
+    obj.drop_database()
+
+
+@pytest.fixture(scope="session", name="postgres")
+def fixture_postgres(secrets_dict: dict) -> Generator:
+    """
+    Yields a MYSQL object
+    """
+    obj = PostgresDatabase(
+        MySQLConfig(
+            username=secrets_dict["postgres"]["username"],
+            password=secrets_dict["postgres"]["password"],
+            host=secrets_dict["postgres"]["host"],
             name="test_schema",
         )
     )

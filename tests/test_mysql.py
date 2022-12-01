@@ -85,9 +85,20 @@ class TestMYSQLUpdateRows:
         assert mysql.get_table_names() == []
         mysql.add_table("table_one", table_one_config)
         assert mysql.get_table_names() == ["table_one"]
+
         mysql.upsert_table_rows("table_one", table_one)
-        query_result = mysql.query_table("table_one", table_one_config)
-        pd.testing.assert_frame_equal(query_result, table_one)
+        query_result1 = mysql.query_table("table_one", table_one_config)
+
+        mysql.upsert_table_rows("table_one", table_one)
+        query_result2 = mysql.query_table("table_one", table_one_config)
+        pd.testing.assert_frame_equal(query_result1, query_result2)
+
+        table_one_copy = table_one.copy()
+        table_one_copy["string_one_col"] = ["a", "b", "c"]
+        mysql.upsert_table_rows("table_one", table_one_copy)
+        query_result3 = mysql.query_table("table_one", table_one_config)
+        assert query_result3["string_one_col"].values.tolist() == ["a", "b", "c"]
+
         mysql.drop_table("table_one")
         assert mysql.get_table_names() == []
 

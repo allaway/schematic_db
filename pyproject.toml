@@ -19,6 +19,7 @@ networkx = "^2.8.6"
 pylint = "^2.15.4"
 mypy = "^0.982"
 pytest-mock = "^3.10.0"
+psycopg2 = "^2.9.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
