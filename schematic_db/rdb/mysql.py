@@ -230,3 +230,6 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
                 key.foreign_attribute_name,
             )
         return sa.Column(att_name, sql_datatype, nullable=nullable)
+
+    def _get_datatype(self, attribute: DBAttributeConfig) -> Any:
+        MYSQL_DATATYPES.get(attribute.datatype)
