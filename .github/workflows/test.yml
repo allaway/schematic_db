@@ -10,11 +10,6 @@ jobs:
 
       - uses: actions/checkout@v2
 
-      # setup mysql
-      - name: Set up MySQL
-        run: |
-          sudo /etc/init.d/mysql start
-
       # Create the secrets config file
       - name: create secrets config
         run: |
@@ -38,6 +33,15 @@ jobs:
           with open('tests/data/secrets.yml', 'w') as file:
               yaml.dump(dict, file)
         shell: python
+
+      - name: Set up MySQL
+        run: |
+          sudo /etc/init.d/mysql start
+
+      - name: Set up Postgres
+        run: |
+          apt install postgresql postgresql-contrib
+          systemctl start postgresql.service
 
       # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
       # reference the matrix python version here.
