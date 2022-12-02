@@ -98,23 +98,20 @@ jobs:
       # they'll be installed and working.
       - run: poetry install --no-interaction
 
-      - name: pytest
-        run: poetry run pytest tests/test_sql.py::TestSQLUpdateRows
-        #run: poetry run pytest -vvs -m "not schematic"
-
-      # This checks if code if statically typed
       - name: Static typing with mypy
         run: |
           mkdir .mypy_cache
           poetry run mypy --install-types --non-interactive ./
           poetry run mypy --disallow-untyped-defs .
-      # This checks if code has been formatted with black
+
       - name: Code formatting with black
         uses: psf/black@stable
         with:
           options: "--check --verbose"
 
-      # This checks for pylint score
       - name: Code formatting with pylint
         run: poetry run pylint schematic_db/* tests/*
+
+      - name: pytest
+        run: poetry run pytest -vvs -m "not schematic"
 
