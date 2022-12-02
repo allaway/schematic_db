@@ -15,13 +15,12 @@ postgres:
   host: "localhost"
 
 """
-from typing import Generator
+from typing import Generator, Any
 import pytest
 import pandas as pd
 from schematic_db.db_config.db_config import DBObjectConfig
 from schematic_db.rdb.mysql import MySQLDatabase
 from schematic_db.rdb.postgres import PostgresDatabase
-from schematic_db.rdb.rdb import RelationalDatabase
 
 
 @pytest.fixture(name="sql_databases", scope="module")
@@ -38,7 +37,7 @@ class TestSQLGetters:  # pylint: disable=too-few-public-methods
     """Testing for RelationalDatabase getters"""
 
     def test_get_table_names(
-        self, sql_databases: list[RelationalDatabase], table_one_config: DBObjectConfig
+        self, sql_databases: Any, table_one_config: DBObjectConfig
     ):
         """Tests RelationalDatabase.get_table_names()"""
         for obj in sql_databases:
@@ -55,7 +54,7 @@ class TestSQLUpdateTables:  # pylint: disable=too-few-public-methods
 
     def test_add_drop_table(
         self,
-        sql_databases: list[RelationalDatabase],
+        sql_databases: Any,
         table_one_config: DBObjectConfig,
         table_two_config: DBObjectConfig,
         table_three_config: DBObjectConfig,
@@ -83,7 +82,7 @@ class TestSQLUpdateRows:
 
     def test_upsert_table_rows1(
         self,
-        sql_databases: list[RelationalDatabase],
+        sql_databases: Any,
         table_one: pd.DataFrame,
         table_one_config: DBObjectConfig,
     ) -> None:
@@ -114,7 +113,7 @@ class TestSQLUpdateRows:
 
     def test_upsert_table_rows2(
         self,
-        sql_databases: list[RelationalDatabase],
+        sql_databases: Any,
         table_one: pd.DataFrame,
         table_one_config: DBObjectConfig,
     ) -> None:
@@ -142,7 +141,7 @@ class TestSQLUpdateRows:
 
     def test_upsert_table_rows3(
         self,
-        sql_databases: list[RelationalDatabase],
+        sql_databases: Any,
         table_two: pd.DataFrame,
         table_two_config: DBObjectConfig,
     ) -> None:
@@ -191,10 +190,9 @@ class TestSQLUpdateRows:
             obj.drop_table("table_two")
             assert obj.get_table_names() == []
 
-
     def test_delete_table_rows1(
         self,
-        sql_databases: list[RelationalDatabase],
+        sql_databases: Any,
         table_one_config: DBObjectConfig,
         table_one: pd.DataFrame,
     ) -> None:
