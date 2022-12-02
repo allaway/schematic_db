@@ -40,8 +40,8 @@ jobs:
 
       - name: Set up Postgres
         run: |
-          apt install postgresql postgresql-contrib
-          systemctl start postgresql.service
+          sudo apt install postgresql postgresql-contrib
+          sudo systemctl start postgresql.service
 
       # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
       # reference the matrix python version here.
