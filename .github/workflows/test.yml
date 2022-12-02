@@ -39,10 +39,13 @@ jobs:
           sudo /etc/init.d/mysql start
 
       - name: Set up Postgres
+        env:
+          username: ${{secrets.POSTGRES_USERNAME}}
+          password: ${{secrets.POSTGRES_PASSWORD}}
         run: |
           sudo apt install postgresql postgresql-contrib
           sudo systemctl start postgresql.service
-          sudo -u postgres psql -c "ALTER USER ${{secrets.POSTGRES_USERNAME}} PASSWORD '${{secrets.POSTGRES_PASSWORD}}';"
+          sudo -u postgres psql -c "ALTER USER $username PASSWORD '$password';"
 
       # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
       # reference the matrix python version here.
