@@ -38,7 +38,7 @@ class TestSQLGetters:  # pylint: disable=too-few-public-methods
 
     def test_get_table_names(
         self, sql_databases: Any, table_one_config: DBObjectConfig
-    ):
+    ) -> None:
         """Tests RelationalDatabase.get_table_names()"""
         for obj in sql_databases:
             assert obj.get_table_names() == []
