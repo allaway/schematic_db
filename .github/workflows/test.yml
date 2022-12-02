@@ -42,6 +42,7 @@ jobs:
         run: |
           sudo apt install postgresql postgresql-contrib
           sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD pass;"
 
       # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
       # reference the matrix python version here.
@@ -97,6 +98,10 @@ jobs:
       # they'll be installed and working.
       - run: poetry install --no-interaction
 
+      - name: pytest
+        run: poetry run pytest tests/test_sql.py::TestSQLUpdateRows
+        #run: poetry run pytest -vvs -m "not schematic"
+
       # This checks if code if statically typed
       - name: Static typing with mypy
         run: |
@@ -113,6 +118,3 @@ jobs:
       - name: Code formatting with pylint
         run: poetry run pylint schematic_db/* tests/*
 
-      # And finally run tests. I'm using pytest and all my pytest config is in my `pyproject.toml`
-      # so this line is super-simple. But it could be as complex as you need.
-      - run: poetry run pytest -vvs -m "not schematic"
