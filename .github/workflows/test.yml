@@ -42,7 +42,7 @@ jobs:
         run: |
           sudo apt install postgresql postgresql-contrib
           sudo systemctl start postgresql.service
-          sudo -u postgres psql -c "ALTER USER postgres PASSWORD pass;"
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'pass';"
 
       # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
       # reference the matrix python version here.
