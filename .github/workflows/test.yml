@@ -14,6 +14,7 @@ jobs:
       - name: Set up MySQL
         run: |
           sudo /etc/init.d/mysql start
+
       # Create the secrets config file
       - name: create secrets config
         run: |
@@ -27,6 +28,11 @@ jobs:
               "username": "${{secrets.MYSQL_USERNAME}}",
               "password": "${{secrets.MYSQL_PASSWORD}}",
               "host": "${{secrets.MYSQL_HOST}}"
+            },
+            "postgres": {
+                "username": "${{secrets.POSTGRES_USERNAME}}",
+                "password": "${{secrets.POSTGRES_PASSWORD}}",
+                "host": "${{secrets.POSTGRES_HOST}}"
             }
           }
           with open('tests/data/secrets.yml', 'w') as file:
