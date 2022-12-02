@@ -3,6 +3,7 @@ import pytest
 from schematic_db.rdb_updater import RDBUpdater
 
 
+@pytest.mark.gff
 @pytest.mark.schematic
 class TestRDBUpdaterMySQL:
     """Testing for RDB with MySQL database"""
@@ -22,6 +23,7 @@ class TestRDBUpdaterMySQL:
         assert obj.rdb.get_table_names() == gff_database_table_names
 
 
+@pytest.mark.gff
 @pytest.mark.schematic
 @pytest.mark.synapse
 class TestRDBUpdaterSynapse:
