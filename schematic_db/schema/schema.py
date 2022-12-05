@@ -19,8 +19,16 @@ from .api_utils import (
     get_project_manifests,
     get_manifest,
     is_node_required,
+    get_manifest_datatypes,
     ManifestSynapseConfig,
 )
+
+DATATYPES = {
+    "string": DBDatatype.TEXT,
+    "Int64": DBDatatype.INT,
+    "float64": DBDatatype.FLOAT,
+    "datetime[ns]": DBDatatype.DATE,
+}
 
 
 class NoAttributesWarning(Warning):
@@ -248,14 +256,29 @@ class Schema:
         Returns:
             Union[list[DBAttributeConfig], None]: A list of attributes in DBAttributeConfig form
         """
+        import logging
+        logging.warning(object_name)
+        logging.warning(self.schema_url)
+        # the names of the attributes to be created, in label(not display) form
         attribute_names = find_class_specific_properties(self.schema_url, object_name)
+        logging.warning(attribute_names)
+        # the id of the first manifest for the object
+        manifest_id = get_manifest_ids_for_object(object_name, self.manifests)[0]
+        logging.warning(manifest_id)
+        logging.warning(self.synapse_asset_view_id)
+        # a dictionary of all the attributes in display form, and their attribute types
+        datatypes = get_manifest_datatypes(
+            self.synapse_input_token, manifest_id, self.synapse_asset_view_id
+        )
+        logging.warning(datatypes)
+        # converts the display names to labels
+        datatypes = {
+            get_property_label_from_display_name(self.schema_url, k): v
+            for (k, v) in datatypes.items()
+        }
+        logging.warning(datatypes)
         attributes = [
-            DBAttributeConfig(
-                name=name,
-                datatype=DBDatatype.TEXT,
-                required=is_node_required(self.schema_url, name),
-            )
-            for name in attribute_names
+            self.create_attribute(name, datatypes) for name in attribute_names
         ]
         # Some components will not have any attributes for various reasons
         if not attributes:
@@ -266,6 +289,22 @@ class Schema:
             )
             return None
         return attributes
+
+    def create_attribute(self, name: str, datatypes: dict[str, str]) -> DBAttributeConfig:
+        """Creates an attribute
+
+        Args:
+            name (str): The name of the attribute
+            datatypes (dict[str, str]): A dictionary of attributes and their types
+
+        Returns:
+            DBAttributeConfig: The DBAttributeConfig for the attribute
+        """
+        return DBAttributeConfig(
+            name=name,
+            datatype=DATATYPES[datatypes[name]],
+            required=is_node_required(self.schema_url, name),
+        )
 
     def create_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
         """Creates a list of foreign keys for an object in the database
