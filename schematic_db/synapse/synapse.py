@@ -9,7 +9,7 @@ from schematic_db.db_config import DBObjectConfig, DBDatatype
 
 
 SYNAPSE_DATATYPES = {
-    DBDatatype.TEXT: partial(sc.Column, columnType="STRING", maximumSize=100),
+    DBDatatype.TEXT: partial(sc.Column, columnType="STRING", maximumSize=50),
     DBDatatype.DATE: partial(sc.Column, columnType="DATE"),
     DBDatatype.INT: partial(sc.Column, columnType="INTEGER"),
     DBDatatype.FLOAT: partial(sc.Column, columnType="DOUBLE"),
@@ -330,14 +330,18 @@ class Synapse:
         self.syn.store(table)
         time.sleep(5)
 
-    def add_table_columns(self, synapse_id: str, data: pd.DataFrame) -> None:
-        """Add columns to synapse table from pandas.DataFrame
+    def add_table_columns(self, synapse_id: str, table_config: DBObjectConfig) -> None:
+        """Add columns to synapse table from config
 
         Args:
             synapse_id (str): The Synapse id of the table to add the columns to
-            data (pd.DataFrame): The dataframe to get the columns from
+            table_config (pd.DataFrame): The config for the table to add the columns to
         """
-        new_columns = sc.as_table_columns(data)
+        new_columns = [
+            create_synapse_column(att.name, att.datatype)
+            for att in table_config.attributes
+        ]
+
         table = self.syn.get(synapse_id)
         for col in new_columns:
             table.addColumn(col)
