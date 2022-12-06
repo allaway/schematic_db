@@ -282,7 +282,6 @@ class TestSynapseDatabase:
     def test_upsert_table_rows(
         self,
         synapse_with_filled_tables: SynapseDatabase,
-        table_one_config: DBObjectConfig,
     ) -> None:
         """Testing for SynapseDatabase.upsert_table_rows()"""
         obj = synapse_with_filled_tables
@@ -293,7 +292,7 @@ class TestSynapseDatabase:
         assert table1["string_one_col"].tolist() == ["a", "b", np.nan]
 
         upsert_table1 = pd.DataFrame({"pk_one_col": ["key1"], "string_one_col": ["a"]})
-        obj.upsert_table_rows("table_one", upsert_table1, table_one_config)
+        obj.upsert_table_rows("table_one", upsert_table1)
         table2 = obj.synapse.query_table(synapse_id)
         assert table2["pk_one_col"].tolist() == ["key1", "key2", "key3"]
         assert table2["string_one_col"].tolist() == ["a", "b", np.nan]
@@ -301,7 +300,7 @@ class TestSynapseDatabase:
         upsert_table2 = pd.DataFrame(
             {"pk_one_col": ["key3", "key4"], "string_one_col": ["c", "d"]}
         )
-        obj.upsert_table_rows("table_one", upsert_table2, table_one_config)
+        obj.upsert_table_rows("table_one", upsert_table2)
         table3 = obj.synapse.query_table(synapse_id)
         assert table3["pk_one_col"].tolist() == ["key1", "key2", "key3", "key4"]
         assert table3["string_one_col"].tolist() == ["a", "b", "c", "d"]
