@@ -18,6 +18,7 @@ from .api_utils import (
     get_property_label_from_display_name,
     get_project_manifests,
     get_manifest,
+    is_node_required,
     ManifestSynapseConfig,
 )
 
@@ -215,7 +216,9 @@ class Schema:
         # primary keys don't always appear in the attributes endpoint
         if primary_key not in [att.name for att in attributes]:
             attributes.append(
-                DBAttributeConfig(name=primary_key, datatype=DBDatatype.TEXT)
+                DBAttributeConfig(
+                    name=primary_key, datatype=DBDatatype.TEXT, required=True
+                )
             )
         # foreign keys don't always appear in the attributes endpoint
         foreign_keys = self.create_foreign_keys(object_name)
@@ -223,7 +226,9 @@ class Schema:
             name = key.name
             if name not in [att.name for att in attributes]:
                 attributes.append(
-                    DBAttributeConfig(name=name, datatype=DBDatatype.TEXT)
+                    DBAttributeConfig(
+                        name=name, datatype=DBDatatype.TEXT, required=False
+                    )
                 )
         return DBObjectConfig(
             name=object_name,
@@ -245,7 +250,11 @@ class Schema:
         """
         attribute_names = find_class_specific_properties(self.schema_url, object_name)
         attributes = [
-            DBAttributeConfig(name=name, datatype=DBDatatype.TEXT)
+            DBAttributeConfig(
+                name=name,
+                datatype=DBDatatype.TEXT,
+                required=is_node_required(self.schema_url, name),
+            )
             for name in attribute_names
         ]
         # Some components will not have any attributes for various reasons

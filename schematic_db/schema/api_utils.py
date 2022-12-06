@@ -46,7 +46,7 @@ def create_schematic_api_response(
         requests.Response: The response from the API
     """
     endpoint_url = f"{API_URL}/{API_SERVER}/{endpoint_path}"
-    response = requests.get(endpoint_url, params=params, timeout=30)
+    response = requests.get(endpoint_url, params=params, timeout=45)
     if response.status_code != 200:
         raise SchematicAPIError(endpoint_url, response.status_code, response.reason)
     return response
@@ -244,4 +244,21 @@ def get_manifest(
         "as_json": True,
     }
     response = create_schematic_api_response("manifest/download", params)
-    return pandas.DataFrame(response.json())
+    manifest = pandas.DataFrame(response.json())
+    return manifest
+
+
+def is_node_required(schema_url: str, node_label: str) -> bool:
+    """hecks if node is required
+
+    Args:
+        schema_url (str): Data Model URL
+        node_label (str): Label/display name for the node to check
+
+    Returns:
+        bool: Wether or not the node is required
+    """
+
+    params = {"schema_url": schema_url, "node_display_name": node_label}
+    response = create_schematic_api_response("schemas/is_node_required", params)
+    return response.json()

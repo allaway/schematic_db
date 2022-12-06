@@ -203,6 +203,16 @@ def fixture_rdb_queryer_mysql_gff(
 # objects involving the main schematic test schema
 
 
+@pytest.fixture(scope="session", name="test_schema_json_url")
+def fixture_test_schema_json_url() -> Generator:
+    """Yields the url for the main test schema json"""
+    url = (
+        "https://raw.githubusercontent.com/Sage-Bionetworks/"
+        "schematic/develop-rdb-merge-develop/tests/data/example.rdb.model.jsonld"
+    )
+    yield url
+
+
 @pytest.fixture(scope="session", name="mysql")
 def fixture_mysql(secrets_dict: dict) -> Generator:
     """
@@ -234,15 +244,14 @@ def fixture_test_synapse_asset_view_id() -> Generator:
 
 @pytest.fixture(scope="session", name="test_schema")
 def fixture_test_schema(
-    test_synapse_project_id: str, test_synapse_asset_view_id: str, secrets_dict: dict
+    test_synapse_project_id: str,
+    test_synapse_asset_view_id: str,
+    secrets_dict: dict,
+    test_schema_json_url: str,
 ) -> Generator:
     """Yields a Schema using the database specific test schema"""
-    schema_url = (
-        "https://raw.githubusercontent.com/Sage-Bionetworks/"
-        "schematic/develop-rdb-merge-develop/tests/data/example.rdb.model.jsonld"
-    )
     obj = Schema(
-        schema_url,
+        test_schema_json_url,
         test_synapse_project_id,
         test_synapse_asset_view_id,
         secrets_dict["synapse"]["auth_token"],
@@ -325,12 +334,24 @@ def fixture_table_one_config() -> Generator:
     table_config = DBObjectConfig(
         name="table_one",
         attributes=[
-            DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="string_one_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="int_one_col", datatype=DBDatatype.INT),
-            DBAttributeConfig(name="double_one_col", datatype=DBDatatype.FLOAT),
-            DBAttributeConfig(name="date_one_col", datatype=DBDatatype.DATE),
-            DBAttributeConfig(name="bool_one_col", datatype=DBDatatype.BOOLEAN),
+            DBAttributeConfig(
+                name="pk_one_col", datatype=DBDatatype.TEXT, required=True
+            ),
+            DBAttributeConfig(
+                name="string_one_col", datatype=DBDatatype.TEXT, required=False
+            ),
+            DBAttributeConfig(
+                name="int_one_col", datatype=DBDatatype.INT, required=False
+            ),
+            DBAttributeConfig(
+                name="double_one_col", datatype=DBDatatype.FLOAT, required=False
+            ),
+            DBAttributeConfig(
+                name="date_one_col", datatype=DBDatatype.DATE, required=False
+            ),
+            DBAttributeConfig(
+                name="bool_one_col", datatype=DBDatatype.BOOLEAN, required=False
+            ),
         ],
         primary_key="pk_one_col",
         foreign_keys=[],
@@ -374,8 +395,12 @@ def fixture_table_two_config() -> Generator:
     table_config = DBObjectConfig(
         name="table_two",
         attributes=[
-            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(
+                name="pk_two_col", datatype=DBDatatype.TEXT, required=True
+            ),
+            DBAttributeConfig(
+                name="string_two_col", datatype=DBDatatype.TEXT, required=False
+            ),
         ],
         primary_key="pk_two_col",
         foreign_keys=[],
@@ -391,8 +416,12 @@ def fixture_table_two_config_combined() -> Generator:
     table_config = DBObjectConfig(
         name="table_two",
         attributes=[
-            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="string_two_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(
+                name="pk_two_col", datatype=DBDatatype.TEXT, required=True
+            ),
+            DBAttributeConfig(
+                name="string_two_col", datatype=DBDatatype.TEXT, required=False
+            ),
         ],
         primary_key="pk_two_col",
         foreign_keys=[],
@@ -424,10 +453,18 @@ def fixture_table_three_config() -> Generator:
     table_config = DBObjectConfig(
         name="table_three",
         attributes=[
-            DBAttributeConfig(name="pk_zero_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="pk_one_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="pk_two_col", datatype=DBDatatype.TEXT),
-            DBAttributeConfig(name="string_three_col", datatype=DBDatatype.TEXT),
+            DBAttributeConfig(
+                name="pk_zero_col", datatype=DBDatatype.TEXT, required=True
+            ),
+            DBAttributeConfig(
+                name="pk_one_col", datatype=DBDatatype.TEXT, required=True
+            ),
+            DBAttributeConfig(
+                name="pk_two_col", datatype=DBDatatype.TEXT, required=True
+            ),
+            DBAttributeConfig(
+                name="string_three_col", datatype=DBDatatype.TEXT, required=False
+            ),
         ],
         primary_key="pk_zero_col",
         foreign_keys=[
