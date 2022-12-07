@@ -88,8 +88,6 @@ class TestSQLUpdateTables:
             obj.add_table("table_one", table_one_config)
             obj.add_table("table_two", table_two_config)
             obj.add_table("table_three", table_three_config)
-            import logging
-            logging.warning(obj.get_table_names())
             assert obj.get_table_names() == ["table_one", "table_three", "table_two"]
             obj.drop_all_tables()
             assert obj.get_table_names() == []
