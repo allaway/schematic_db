@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 import sqlalchemy as sa
+import sqlalchemy_utils.functions
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy import exc
 from schematic_db.db_config import DBObjectConfig, DBDatatype
@@ -11,7 +12,7 @@ from schematic_db.db_config.db_config import DBAttributeConfig
 from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
-    DBDatatype.TEXT: sa.Text(5000),
+    DBDatatype.TEXT: sa.VARCHAR(5000),
     DBDatatype.DATE: sa.Date,
     DBDatatype.INT: sa.Integer,
     DBDatatype.FLOAT: sa.Float,
@@ -72,53 +73,48 @@ class MySQLConfig:
     name: str
 
 
-class MySQLDatabase(RelationalDatabase):
+class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-attributes
     """MySQLDatabase
     - Represents a mysql database.
     - Implements the RelationalDatabase interface.
     - Handles MYSQL specific functionality.
     """
 
-    def __init__(self, config: MySQLConfig, verbose: bool = False):
+    def __init__(
+        self, config: MySQLConfig, verbose: bool = False, db_type_string: str = "mysql"
+    ):
         """Init
-        An initial connection is created to the database server without the database.
-        The database will be created if it doesn't exist.
-        A second connection is created with the database.
-        The second connection is used to create the sqlalchemy connection and metadata.
 
         Args:
             config (MySQLConfig): A MySQL config
             verbose (bool): Sends much more to logging.info
+            db_type_string (str): They type of database in string form
         """
         self.username = config.username
         self.password = config.password
         self.host = config.host
         self.name = config.name
         self.verbose = verbose
+        self.db_type_string = db_type_string
 
         self.create_database()
         self.metadata = sa.MetaData()
 
     def drop_database(self) -> None:
         """Drops the database from the server"""
-        statement = f"DROP DATABASE {self.name};"
-        self.engine.execute(statement)
+        sqlalchemy_utils.functions.drop_database(self.engine.url)
 
     def create_database(self) -> None:
         """Creates the database"""
-        url = f"mysql://{self.username}:{self.password}@{self.host}/"
+        url = f"{self.db_type_string}://{self.username}:{self.password}@{self.host}/{self.name}"
+        db_exists = sqlalchemy_utils.functions.database_exists(url)
+        if not db_exists:
+            sqlalchemy_utils.functions.create_database(url)
         engine = sa.create_engine(url, encoding="utf-8", echo=self.verbose)
-        statement = f"CREATE DATABASE IF NOT EXISTS {self.name};"
-        engine.execute(statement)
-
-        url2 = f"mysql://{self.username}:{self.password}@{self.host}/{self.name}"
-        engine2 = sa.create_engine(url2, encoding="utf-8", echo=self.verbose)
-        self.engine = engine2
+        self.engine = engine
 
     def drop_all_tables(self) -> None:
-        self.drop_database()
-        self.metadata.clear()
-        self.create_database()
+        self.metadata.drop_all()
 
     def execute_sql_query(self, query: str) -> pd.DataFrame:
         result = self._execute_sql_statement(query).fetchall()
@@ -137,18 +133,16 @@ class MySQLDatabase(RelationalDatabase):
             raise UpdateDBTableError(table_name, error_msg) from error
 
     def drop_table(self, table_name: str) -> None:
-        self._execute_sql_statement(f"DROP TABLE IF EXISTS `{table_name}`;")
+        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
+        table.drop(self.engine)
         self.metadata.clear()
 
     def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
-        query = f"SHOW KEYS FROM {table_name} WHERE Key_name = 'PRIMARY'"
-        table = self.execute_sql_query(query)
-        primary_key = table["Column_name"].tolist()[0]
-        values = data[primary_key].tolist()
-        values = [f"'{i}'" for i in values]
-        statement = (
-            f"DELETE FROM {table_name} WHERE {primary_key} IN ({','.join(values)})"
-        )
+        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
+        i = sa.inspect(table)
+        pkey_column = list(column for column in i.columns if column.primary_key)[0]
+        values = data[pkey_column.name].values.tolist()
+        statement = sa.delete(table).where(pkey_column.in_(values))
         self._execute_sql_statement(statement)
 
     def get_table_names(self) -> list[str]:
@@ -236,3 +230,6 @@ class MySQLDatabase(RelationalDatabase):
                 key.foreign_attribute_name,
             )
         return sa.Column(att_name, sql_datatype, nullable=nullable)
+
+    def _get_datatype(self, attribute: DBAttributeConfig) -> Any:
+        MYSQL_DATATYPES.get(attribute.datatype)

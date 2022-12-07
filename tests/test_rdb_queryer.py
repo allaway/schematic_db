@@ -3,6 +3,7 @@ import pytest
 from schematic_db.rdb_queryer import RDBQueryer
 
 
+@pytest.mark.gff
 @pytest.mark.synapse
 @pytest.mark.schematic
 class TestRDBQueryer:  # pylint: disable=too-few-public-methods

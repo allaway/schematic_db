@@ -4,3 +4,4 @@ The RelationalDatabase class is an interface representing various objects that a
 """
 from .mysql import *
 from .synapse_database import *
+from .postgres import *
