@@ -204,6 +204,19 @@ def fixture_rdb_queryer_mysql_gff(
 # objects involving the main schematic test schema
 
 
+@pytest.fixture(scope="session", name="test_schema_table_names")
+def fixture_test_schema_table_names() -> Generator:
+    """
+    Yields a list of table names the test schema database should have.
+    """
+    table_names = [
+        "Biospecimen",
+        "BulkRNA-seqAssay",
+        "Patient",
+    ]
+    yield table_names
+
+
 @pytest.fixture(scope="session", name="test_schema_json_url")
 def fixture_test_schema_json_url() -> Generator:
     """Yields the url for the main test schema json"""
@@ -234,7 +247,7 @@ def fixture_mysql(secrets_dict: dict) -> Generator:
 @pytest.fixture(scope="session", name="postgres")
 def fixture_postgres(secrets_dict: dict) -> Generator:
     """
-    Yields a MYSQL object
+    Yields a Postgres object
     """
     obj = PostgresDatabase(
         MySQLConfig(
@@ -251,13 +264,13 @@ def fixture_postgres(secrets_dict: dict) -> Generator:
 @pytest.fixture(scope="session", name="test_synapse_project_id")
 def fixture_test_synapse_project_id() -> Generator:
     """Yields the synapse id for the test schema project id"""
-    yield "syn23643250"
+    yield "syn47994571"
 
 
 @pytest.fixture(scope="session", name="test_synapse_asset_view_id")
 def fixture_test_synapse_asset_view_id() -> Generator:
     """Yields the synapse id for the test schema asset view"""
-    yield "syn23643253"
+    yield "syn47997084"
 
 
 @pytest.fixture(scope="session", name="test_schema")
@@ -277,13 +290,40 @@ def fixture_test_schema(
     yield obj
 
 
+@pytest.fixture(scope="module", name="rdb_updater_mysql_test")
+def fixture_rdb_updater_mysql_test(
+    mysql: MySQLDatabase, test_schema: Schema
+) -> Generator:
+    """Yields a RDBUpdater with a mysql database and test schema"""
+    obj = RDBUpdater(rdb=mysql, schema=test_schema)
+    yield obj
+
+
+@pytest.fixture(scope="module", name="rdb_updater_postgres_test")
+def fixture_rdb_updater_postgres_test(
+    postgres: PostgresDatabase, test_schema: Schema
+) -> Generator:
+    """Yields a RDBUpdater with a mysql database and test schema"""
+    obj = RDBUpdater(rdb=postgres, schema=test_schema)
+    yield obj
+
+
+@pytest.fixture(scope="module", name="rdb_updater_synapse_test")
+def fixture_rdb_updater_synapse_test(
+    synapse_database: SynapseDatabase, test_schema: Schema
+) -> Generator:
+    """Yields a RDBUpdater with a synapse database and test schema"""
+    obj = RDBUpdater(rdb=synapse_database, schema=test_schema)
+    yield obj
+
+
 # other test objects ----------------------------------------------------------
 # objects that don't have a test schema or manifests, but interact with
 # config objects and pandas dataframes
 
 
 @pytest.fixture(scope="session", name="synapse_database_project")
-def fixture_synapse(secrets_dict: dict[str, Any]) -> Generator:
+def fixture_synapse_project(secrets_dict: dict[str, Any]) -> Generator:
     """
     Yields a Synapse object used for testing databases
     """

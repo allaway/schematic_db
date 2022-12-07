@@ -19,12 +19,6 @@ from schematic_db.schema import (
 )
 
 
-@pytest.fixture(name="test_synapse_folder_id")
-def fixture_test_synapse_folder_id() -> Generator:
-    """Yields a synapse id for a folder in the test project"""
-    yield "syn30988314"
-
-
 @pytest.fixture(name="test_manifests")
 def fixture_test_manifests() -> Generator:
     """Yields a test set of manifests"""
@@ -95,38 +89,16 @@ class TestAPIUtils:
     def test_get_project_manifests(
         self,
         secrets_dict: dict,
-        test_synapse_folder_id: str,
+        test_synapse_project_id: str,
         test_synapse_asset_view_id: str,
     ) -> None:
         "Testing for get_project_manifests"
         manifests = get_project_manifests(
             input_token=secrets_dict["synapse"]["auth_token"],
-            project_id=test_synapse_folder_id,
+            project_id=test_synapse_project_id,
             asset_view=test_synapse_asset_view_id,
         )
-        assert manifests == [
-            ManifestSynapseConfig(
-                dataset_id="syn30988361",
-                dataset_name="TestFolder",
-                manifest_id="syn30988380",
-                manifest_name="synapse_storage_manifest (2).csv",
-                component_name="Biospecimen",
-            )
-        ]
-
-    def test_get_project_manifests2(
-        self,
-        secrets_dict: dict,
-        gff_synapse_project_id: str,
-        gff_synapse_asset_view_id: str,
-    ) -> None:
-        "Testing for get_project_manifests"
-        manifests = get_project_manifests(
-            input_token=secrets_dict["synapse"]["auth_token"],
-            project_id=gff_synapse_project_id,
-            asset_view=gff_synapse_asset_view_id,
-        )
-        assert len(manifests) == 31
+        assert len(manifests) == 4
 
     def test_get_manifest(
         self, secrets_dict: dict, gff_synapse_asset_view_id: str
