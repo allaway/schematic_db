@@ -98,7 +98,7 @@ class TestAPIUtils:
             project_id=test_synapse_project_id,
             asset_view=test_synapse_asset_view_id,
         )
-        assert len(manifests) == 4
+        assert len(manifests) == 5
 
     def test_get_manifest(
         self, secrets_dict: dict, gff_synapse_asset_view_id: str

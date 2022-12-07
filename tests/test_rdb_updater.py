@@ -17,6 +17,8 @@ class TestRDBUpdaterTestSchema:
         assert obj.rdb.get_table_names() == test_schema_table_names
         obj.update_all_database_tables(replace_tables=True)
         assert obj.rdb.get_table_names() == test_schema_table_names
+        obj.rdb.drop_all_tables()
+        assert obj.rdb.get_table_names() == []
 
     def test_postgres_update_all_database_tables(
         self, rdb_updater_postgres_test: RDBUpdater, test_schema_table_names: list[str]
@@ -28,17 +30,23 @@ class TestRDBUpdaterTestSchema:
         assert obj.rdb.get_table_names() == test_schema_table_names
         obj.update_all_database_tables(replace_tables=True)
         assert obj.rdb.get_table_names() == test_schema_table_names
+        obj.rdb.drop_all_tables()
+        assert obj.rdb.get_table_names() == []
 
     def test_synapse_update_all_database_tables(
         self, rdb_updater_synapse_test: RDBUpdater, test_schema_table_names: list[str]
     ) -> None:
-        """Creates the test database in Postgres"""
+        """Creates the test database in Synapse"""
         obj = rdb_updater_synapse_test
         assert obj.rdb.get_table_names() == []
         obj.update_all_database_tables()
         assert obj.rdb.get_table_names() == test_schema_table_names
         obj.update_all_database_tables(replace_tables=True)
         assert obj.rdb.get_table_names() == test_schema_table_names
+        table_names = obj.rdb.get_table_names()
+        for name in table_names:
+            synapse_id = obj.rdb.synapse.get_synapse_id_from_table_name(name)
+            obj.rdb.synapse.delete_table(synapse_id)
 
 
 @pytest.mark.gff
