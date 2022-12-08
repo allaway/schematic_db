@@ -290,36 +290,26 @@ def fixture_test_schema(
     yield obj
 
 
-@pytest.fixture(scope="module", name="rdb_updater_mysql_test")
-def fixture_rdb_updater_mysql_test(
-    mysql: MySQLDatabase, test_schema: Schema
-) -> Generator:
-    """Yields a RDBUpdater with a mysql database and test schema"""
-    obj = RDBUpdater(rdb=mysql, schema=test_schema)
+@pytest.fixture(scope="session", name="synapse_test_query_store")
+def fixture_synapse_test_query_store(secrets_dict: dict) -> Generator:
+    """
+    Yields a Synapse Query Store for the test schema
+    """
+    obj = SynapseQueryStore(
+        SynapseConfig(
+            project_id="syn34178981",
+            username=secrets_dict["synapse"]["username"],
+            auth_token=secrets_dict["synapse"]["auth_token"],
+        )
+    )
     yield obj
-    obj.rdb.drop_all_tables()
 
 
-@pytest.fixture(scope="module", name="rdb_updater_postgres_test")
-def fixture_rdb_updater_postgres_test(
-    postgres: PostgresDatabase, test_schema: Schema
-) -> Generator:
-    """Yields a RDBUpdater with a mysql database and test schema"""
-    obj = RDBUpdater(rdb=postgres, schema=test_schema)
-    yield obj
-    obj.rdb.drop_all_tables()
-
-
-@pytest.fixture(scope="module", name="rdb_updater_synapse_test")
-def fixture_rdb_updater_synapse_test(
-    synapse_database: SynapseDatabase, test_schema: Schema
-) -> Generator:
-    """Yields a RDBUpdater with a synapse database and test schema"""
-    obj = RDBUpdater(rdb=synapse_database, schema=test_schema)
-    yield obj
-    table_names = obj.rdb.get_table_names()
-    for name in table_names:
-        obj.rdb.delete_table(name) # type: ignore
+@pytest.fixture(scope="session", name="test_query_csv_path")
+def fixture_test_query_csv_path() -> Generator:
+    """Yields a path to a file of test SQL queries for the test schema"""
+    path = os.path.join(DATA_DIR, "test_queries.csv")
+    yield path
 
 
 # other test objects ----------------------------------------------------------
@@ -342,7 +332,7 @@ def fixture_synapse_project(secrets_dict: dict[str, Any]) -> Generator:
     yield obj
 
 
-@pytest.fixture(scope="module", name="synapse_database")
+@pytest.fixture(scope="session", name="synapse_database")
 def fixture_synapse_database(secrets_dict: dict[str, Any]) -> Generator:
     """
     Yields a SynapseDatabase object used for testing databases
