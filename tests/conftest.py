@@ -297,6 +297,7 @@ def fixture_rdb_updater_mysql_test(
     """Yields a RDBUpdater with a mysql database and test schema"""
     obj = RDBUpdater(rdb=mysql, schema=test_schema)
     yield obj
+    obj.rdb.drop_all_tables()
 
 
 @pytest.fixture(scope="module", name="rdb_updater_postgres_test")
@@ -306,6 +307,7 @@ def fixture_rdb_updater_postgres_test(
     """Yields a RDBUpdater with a mysql database and test schema"""
     obj = RDBUpdater(rdb=postgres, schema=test_schema)
     yield obj
+    obj.rdb.drop_all_tables()
 
 
 @pytest.fixture(scope="module", name="rdb_updater_synapse_test")
@@ -315,6 +317,9 @@ def fixture_rdb_updater_synapse_test(
     """Yields a RDBUpdater with a synapse database and test schema"""
     obj = RDBUpdater(rdb=synapse_database, schema=test_schema)
     yield obj
+    table_names = obj.rdb.get_table_names()
+    for name in table_names:
+        obj.rdb.delete_table(name) # type: ignore
 
 
 # other test objects ----------------------------------------------------------
