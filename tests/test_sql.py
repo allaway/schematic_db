@@ -49,17 +49,17 @@ class TestSQLGetters:  # pylint: disable=too-few-public-methods
 
 
 @pytest.mark.fast
-class TestSQLUpdateTables:  # pylint: disable=too-few-public-methods
+class TestSQLUpdateTables:
     """Testing for RelationalDatabase methods that update tables"""
 
     def test_add_drop_table(
         self,
-        sql_databases: Any,
+        sql_databases: list[MySQLDatabase],
         table_one_config: DBObjectConfig,
         table_two_config: DBObjectConfig,
         table_three_config: DBObjectConfig,
     ) -> None:
-        """Testing for RelationalDatabase.add_table() and and RelationalDatabase.drop_table()"""
+        """Testing for MySQLDatabase.add_table() and and MySQLDatabase.drop_table()"""
         for obj in sql_databases:
             assert obj.get_table_names() == []
             obj.add_table("table_one", table_one_config)
@@ -73,6 +73,23 @@ class TestSQLUpdateTables:  # pylint: disable=too-few-public-methods
             obj.drop_table("table_two")
             assert obj.get_table_names() == ["table_one"]
             obj.drop_table("table_one")
+            assert obj.get_table_names() == []
+
+    def test_drop_all_tables(
+        self,
+        sql_databases: list[MySQLDatabase],
+        table_one_config: DBObjectConfig,
+        table_two_config: DBObjectConfig,
+        table_three_config: DBObjectConfig,
+    ) -> None:
+        """Testing for MySQLDatabase.drop_all_tables()"""
+        for obj in sql_databases:
+            assert obj.get_table_names() == []
+            obj.add_table("table_one", table_one_config)
+            obj.add_table("table_two", table_two_config)
+            obj.add_table("table_three", table_three_config)
+            assert obj.get_table_names() == ["table_one", "table_three", "table_two"]
+            obj.drop_all_tables()
             assert obj.get_table_names() == []
 
 

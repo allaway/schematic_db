@@ -3,7 +3,6 @@ from typing import Generator, Any
 import pytest
 import pandas as pd
 from schematic_db.db_config import (
-    DBConfig,
     DBForeignKey,
     DBAttributeConfig,
     DBDatatype,
@@ -18,12 +17,6 @@ from schematic_db.schema import (
     get_manifest,
     get_manifest_datatypes,
 )
-
-
-@pytest.fixture(name="test_synapse_folder_id")
-def fixture_test_synapse_folder_id() -> Generator:
-    """Yields a synapse id for a folder in the test project"""
-    yield "syn30988314"
 
 
 @pytest.fixture(name="test_manifests")
@@ -96,47 +89,25 @@ class TestAPIUtils:
     def test_get_project_manifests(
         self,
         secrets_dict: dict,
-        test_synapse_folder_id: str,
+        test_synapse_project_id: str,
         test_synapse_asset_view_id: str,
     ) -> None:
         "Testing for get_project_manifests"
         manifests = get_project_manifests(
             input_token=secrets_dict["synapse"]["auth_token"],
-            project_id=test_synapse_folder_id,
+            project_id=test_synapse_project_id,
             asset_view=test_synapse_asset_view_id,
         )
-        assert manifests == [
-            ManifestSynapseConfig(
-                dataset_id="syn30988361",
-                dataset_name="TestFolder",
-                manifest_id="syn30988380",
-                manifest_name="synapse_storage_manifest (2).csv",
-                component_name="Biospecimen",
-            )
-        ]
-
-    def test_get_project_manifests2(
-        self,
-        secrets_dict: dict,
-        gff_synapse_project_id: str,
-        gff_synapse_asset_view_id: str,
-    ) -> None:
-        "Testing for get_project_manifests"
-        manifests = get_project_manifests(
-            input_token=secrets_dict["synapse"]["auth_token"],
-            project_id=gff_synapse_project_id,
-            asset_view=gff_synapse_asset_view_id,
-        )
-        assert len(manifests) == 31
+        assert len(manifests) == 5
 
     def test_get_manifest(
-        self, secrets_dict: dict, gff_synapse_asset_view_id: str
+        self, secrets_dict: dict, test_synapse_asset_view_id: str
     ) -> None:
         "Testing for get_manifest"
         manifest = get_manifest(
             secrets_dict["synapse"]["auth_token"],
-            "syn38306654",
-            gff_synapse_asset_view_id,
+            "syn47996410",
+            test_synapse_asset_view_id,
         )
         assert isinstance(manifest, pd.DataFrame)
 
@@ -147,7 +118,7 @@ class TestAPIUtils:
             get_manifest(
                 secrets_dict["synapse"]["auth_token"],
                 "1",
-                gff_synapse_asset_view_id,
+                test_synapse_asset_view_id,
             )
 
     def test_get_manifest_datatypes(
@@ -233,59 +204,10 @@ class TestSchema:
             "BulkRNA-seqAssay",
         ]
 
-
-@pytest.mark.schematic
-class TestGFFSchema:
-    """Testing for GFF Schema"""
-
-    def test_create_db_config(self, gff_db_config: DBConfig) -> None:
-        """Testing for Schema.create_db_config()"""
-        assert gff_db_config.get_config_names() == [
-            "Donor",
-            "AnimalModel",
-            "CellLine",
-            "Antibody",
-            "GeneticReagent",
-            "Funder",
-            "Publication",
-            "Investigator",
-            "Resource",
-            "MutationDetails",
-            "Vendor",
-            "Development",
-            "Mutation",
-            "ResourceApplication",
-            "Observation",
-            "VendorItem",
-            "Biobank",
-            "Usage",
-        ]
-
-    def test_get_manifests(self, gff_schema: Schema, gff_db_config: DBConfig) -> None:
+    def test_get_manifests(self, test_schema: Schema) -> None:
         """Testing for Schema.get_manifests()"""
-        manifests1 = gff_schema.get_manifests(gff_db_config.configs[0])
-        assert len(manifests1) == 2
-        assert list(manifests1[0].columns) == [
-            "age",
-            "donorId",
-            "parentDonorId",
-            "race",
-            "sex",
-            "species",
-        ]
-
-        manifests2 = gff_schema.get_manifests(gff_db_config.configs[1])
-        assert len(manifests2) == 1
-        assert list(manifests2[0].columns) == [
-            "animalModelDisease",
-            "animalModelofManifestation",
-            "animalModelId",
-            "animalState",
-            "backgroundStrain",
-            "backgroundSubstrain",
-            "donorId",
-            "generation",
-            "strainNomenclature",
-            "transplantationDonorId",
-            "transplantationType",
-        ]
+        obj = test_schema
+        db_config = obj.create_db_config()
+        patient_config = db_config.get_config_by_name("Patient")
+        manifests = test_schema.get_manifests(patient_config)
+        assert len(manifests) == 2

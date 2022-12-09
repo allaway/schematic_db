@@ -114,7 +114,8 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         self.engine = engine
 
     def drop_all_tables(self) -> None:
-        self.metadata.drop_all()
+        for tbl in reversed(self.metadata.sorted_tables):
+            self.drop_table(tbl)
 
     def execute_sql_query(self, query: str) -> pd.DataFrame:
         result = self._execute_sql_statement(query).fetchall()
@@ -147,7 +148,7 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
 
     def get_table_names(self) -> list[str]:
         inspector = sa.inspect(self.engine)
-        return inspector.get_table_names()
+        return sorted(inspector.get_table_names())
 
     def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
         """Adds a table to the schema
