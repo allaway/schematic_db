@@ -3,7 +3,6 @@ from typing import Generator, Any
 import pytest
 import pandas as pd
 from schematic_db.db_config import (
-    DBConfig,
     DBForeignKey,
     DBAttributeConfig,
     DBDatatype,
@@ -101,13 +100,13 @@ class TestAPIUtils:
         assert len(manifests) == 5
 
     def test_get_manifest(
-        self, secrets_dict: dict, gff_synapse_asset_view_id: str
+        self, secrets_dict: dict, test_synapse_asset_view_id: str
     ) -> None:
         "Testing for get_manifest"
         manifest = get_manifest(
             secrets_dict["synapse"]["auth_token"],
-            "syn38306654",
-            gff_synapse_asset_view_id,
+            "syn47996410",
+            test_synapse_asset_view_id,
         )
         assert isinstance(manifest, pd.DataFrame)
 
@@ -118,7 +117,7 @@ class TestAPIUtils:
             get_manifest(
                 secrets_dict["synapse"]["auth_token"],
                 "1",
-                gff_synapse_asset_view_id,
+                test_synapse_asset_view_id,
             )
 
 
@@ -193,59 +192,10 @@ class TestSchema:
             "BulkRNA-seqAssay",
         ]
 
-
-@pytest.mark.schematic
-class TestGFFSchema:
-    """Testing for GFF Schema"""
-
-    def test_create_db_config(self, gff_db_config: DBConfig) -> None:
-        """Testing for Schema.create_db_config()"""
-        assert gff_db_config.get_config_names() == [
-            "Donor",
-            "AnimalModel",
-            "CellLine",
-            "Antibody",
-            "GeneticReagent",
-            "Funder",
-            "Publication",
-            "Investigator",
-            "Resource",
-            "MutationDetails",
-            "Vendor",
-            "Development",
-            "Mutation",
-            "ResourceApplication",
-            "Observation",
-            "VendorItem",
-            "Biobank",
-            "Usage",
-        ]
-
-    def test_get_manifests(self, gff_schema: Schema, gff_db_config: DBConfig) -> None:
+    def test_get_manifests(self, test_schema: Schema) -> None:
         """Testing for Schema.get_manifests()"""
-        manifests1 = gff_schema.get_manifests(gff_db_config.configs[0])
-        assert len(manifests1) == 2
-        assert list(manifests1[0].columns) == [
-            "age",
-            "donorId",
-            "parentDonorId",
-            "race",
-            "sex",
-            "species",
-        ]
-
-        manifests2 = gff_schema.get_manifests(gff_db_config.configs[1])
-        assert len(manifests2) == 1
-        assert list(manifests2[0].columns) == [
-            "animalModelDisease",
-            "animalModelofManifestation",
-            "animalModelId",
-            "animalState",
-            "backgroundStrain",
-            "backgroundSubstrain",
-            "donorId",
-            "generation",
-            "strainNomenclature",
-            "transplantationDonorId",
-            "transplantationType",
-        ]
+        obj = test_schema
+        db_config = obj.create_db_config()
+        patient_config = db_config.get_config_by_name("Patient")
+        manifests = test_schema.get_manifests(patient_config)
+        assert len(manifests) == 2

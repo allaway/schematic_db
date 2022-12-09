@@ -65,16 +65,3 @@ class TestRDBQueryerTest:  # pylint: disable=too-few-public-methods
         assert obj.query_store.synapse.get_table_names() == []  # type: ignore
         obj.store_query_results(test_query_csv_path)
         assert obj.query_store.synapse.get_table_names() == test_schema_table_names  # type: ignore
-
-
-@pytest.mark.gff
-@pytest.mark.synapse
-@pytest.mark.schematic
-class TestRDBQueryerGFF:  # pylint: disable=too-few-public-methods
-    """Testing for RDBQueryer using the gff database"""
-
-    def test_store_query_results(
-        self, rdb_queryer_mysql_gff: RDBQueryer, gff_query_csv_path: str
-    ) -> None:
-        """Testing for RDBQueryer.store_query_results()"""
-        rdb_queryer_mysql_gff.store_query_results(gff_query_csv_path)
