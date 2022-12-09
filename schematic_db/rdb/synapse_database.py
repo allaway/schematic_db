@@ -158,6 +158,15 @@ class SynapseDatabase(RelationalDatabase):
         for rd_table_name in reverse_dependencies:
             self._drop_table_and_dependencies(rd_table_name, db_config)
 
+    def delete_table(self, table_name: str) -> None:
+        """Deletes the table entity
+
+        Args:
+            table_name (str): The name of the table to delete
+        """
+        table_id = self.synapse.get_synapse_id_from_table_name(table_name)
+        self.synapse.delete_table(table_id)
+
     def drop_table(self, table_name: str) -> None:
         db_config = self.get_db_config()
         reverse_dependencies = db_config.get_reverse_dependencies(table_name)
