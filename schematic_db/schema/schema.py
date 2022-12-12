@@ -256,29 +256,11 @@ class Schema:
         Returns:
             Union[list[DBAttributeConfig], None]: A list of attributes in DBAttributeConfig form
         """
-        import logging
-        logging.warning(object_name)
-        logging.warning(self.schema_url)
         # the names of the attributes to be created, in label(not display) form
         attribute_names = find_class_specific_properties(self.schema_url, object_name)
-        logging.warning(attribute_names)
-        # the id of the first manifest for the object
-        manifest_id = get_manifest_ids_for_object(object_name, self.manifests)[0]
-        logging.warning(manifest_id)
-        logging.warning(self.synapse_asset_view_id)
-        # a dictionary of all the attributes in display form, and their attribute types
-        datatypes = get_manifest_datatypes(
-            self.synapse_input_token, manifest_id, self.synapse_asset_view_id
-        )
-        logging.warning(datatypes)
-        # converts the display names to labels
-        datatypes = {
-            get_property_label_from_display_name(self.schema_url, k): v
-            for (k, v) in datatypes.items()
-        }
-        logging.warning(datatypes)
+        datatype_dict = self.create_datatype_dict(object_name)
         attributes = [
-            self.create_attribute(name, datatypes) for name in attribute_names
+            self.create_attribute(name, datatype_dict) for name in attribute_names
         ]
         # Some components will not have any attributes for various reasons
         if not attributes:
@@ -290,7 +272,35 @@ class Schema:
             return None
         return attributes
 
-    def create_attribute(self, name: str, datatypes: dict[str, str]) -> DBAttributeConfig:
+    def create_datatype_dict(self, object_name: str) -> dict[str, str]:
+        """Creates a dictionary of attributes in label form , and their dataytypes
+
+        Args:
+            object_name (str): The name of the object to get the datatypes for
+
+        Returns:
+            dict[str, str]: A dictionary of attributes and their datatypes
+        """
+        manifest_ids = get_manifest_ids_for_object(object_name, self.manifests)
+        # creates a list of dictionaries and their datatypes, one for each manifest
+        datatype_dicts = [
+            get_manifest_datatypes(
+                self.synapse_input_token, id, self.synapse_asset_view_id
+            )
+            for id in manifest_ids
+        ]
+        # combines all the dictionaries into one
+        datatype_dict = {k: v for x in datatype_dicts for k, v in x.items()}
+        # replaces the display names with labels
+        datatype_dict = {
+            get_property_label_from_display_name(self.schema_url, k): v
+            for (k, v) in datatype_dict.items()
+        }
+        return datatype_dict
+
+    def create_attribute(
+        self, name: str, datatypes: dict[str, str]
+    ) -> DBAttributeConfig:
         """Creates an attribute
 
         Args:
@@ -302,7 +312,7 @@ class Schema:
         """
         return DBAttributeConfig(
             name=name,
-            datatype=DATATYPES[datatypes[name]],
+            datatype=DATATYPES[datatypes.get(name, "string")],
             required=is_node_required(self.schema_url, name),
         )
 
