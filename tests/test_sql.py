@@ -113,16 +113,16 @@ class TestSQLUpdateRows:
             assert obj.get_table_names() == ["table_one"]
 
             obj.upsert_table_rows("table_one", table_one)
-            query_result1 = obj.query_table("table_one", table_one_config)
+            query_result1 = obj.query_table("table_one")
 
             obj.upsert_table_rows("table_one", table_one)
-            query_result2 = obj.query_table("table_one", table_one_config)
+            query_result2 = obj.query_table("table_one")
             pd.testing.assert_frame_equal(query_result1, query_result2)
 
             table_one_copy = table_one.copy()
             table_one_copy["string_one_col"] = ["a", "b", "c"]
             obj.upsert_table_rows("table_one", table_one_copy)
-            query_result3 = obj.query_table("table_one", table_one_config)
+            query_result3 = obj.query_table("table_one")
             assert query_result3["string_one_col"].values.tolist() == ["a", "b", "c"]
 
             obj.drop_table("table_one")
@@ -144,13 +144,13 @@ class TestSQLUpdateRows:
             assert obj.get_table_names() == ["table_one"]
 
             obj.upsert_table_rows("table_one", table_one)
-            query_result1 = obj.query_table("table_one", table_one_config)
+            query_result1 = obj.query_table("table_one")
             assert query_result1["string_one_col"].values.tolist() == ["a", "b", None]
 
             table_one_copy = table_one.copy()
             table_one_copy["string_one_col"] = ["a", "b", "c"]
             obj.upsert_table_rows("table_one", table_one_copy)
-            query_result2 = obj.query_table("table_one", table_one_config)
+            query_result2 = obj.query_table("table_one")
             assert query_result2["string_one_col"].values.tolist() == ["a", "b", "c"]
 
             obj.drop_table("table_one")
@@ -172,7 +172,7 @@ class TestSQLUpdateRows:
             assert obj.get_table_names() == ["table_two"]
 
             obj.upsert_table_rows("table_two", table_two)
-            query_result1 = obj.query_table("table_two", table_two_config)
+            query_result1 = obj.query_table("table_two")
             assert query_result1["string_two_col"].values.tolist() == [
                 "a",
                 "b",
@@ -195,7 +195,7 @@ class TestSQLUpdateRows:
                 ignore_index=True,
             )
             obj.upsert_table_rows("table_two", table_two_copy)
-            query_result2 = obj.query_table("table_two", table_two_config)
+            query_result2 = obj.query_table("table_two")
             assert query_result2["string_two_col"].values.tolist() == [
                 "a",
                 "b",
@@ -219,14 +219,12 @@ class TestSQLUpdateRows:
             obj.add_table("table_one", table_one_config)
             assert obj.get_table_names() == ["table_one"]
             obj.upsert_table_rows("table_one", table_one)
-            result1 = obj.query_table("table_one", table_one_config)
-            pd.testing.assert_frame_equal(table_one, result1)
+            result1 = obj.query_table("table_one")
+            assert result1["pk_one_col"].to_list() == ["key1", "key2", "key3"]
+
             obj.delete_table_rows("table_one", table_one.iloc[0:2, :])
-            result_keys = obj.query_table("table_one", table_one_config)[
-                "pk_one_col"
-            ].to_list()
-            correct_keys = table_one.iloc[2:, :]["pk_one_col"].to_list()
-            assert result_keys == correct_keys
+            result2 = obj.query_table("table_one")
+            assert result2["pk_one_col"].to_list() == ["key3"]
 
             obj.drop_table("table_one")
             assert obj.get_table_names() == []

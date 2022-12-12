@@ -38,6 +38,17 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
+    def query_table(self, table_name: str) -> pd.DataFrame:
+        """Queries a whole table
+
+        Args:
+            table_name (str): The name of the table
+
+        Returns:
+            pd.DataFrame: The table
+        """
+
+    @abstractmethod
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
         """Updates or inserts rows into the given table
         If table does not exist the table is created
