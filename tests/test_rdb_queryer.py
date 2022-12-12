@@ -31,7 +31,7 @@ def fixture_mysql_test_rdb_queryer(
     assert updater.rdb.get_table_names() == test_schema_table_names
 
     store = synapse_test_query_store
-    assert store.synapse.get_table_names() == []  # type: ignore
+    assert store.get_table_names() == []
 
     obj = RDBQueryer(
         rdb=updater.rdb,
@@ -41,12 +41,9 @@ def fixture_mysql_test_rdb_queryer(
 
     updater.rdb.drop_all_tables()
     assert updater.rdb.get_table_names() == []
-    for table_name in store.synapse.get_table_names():  # type: ignore
-        table_id = store.synapse.get_synapse_id_from_table_name(  # type: ignore
-            table_name
-        )
-        store.synapse.delete_table(table_id)  # type: ignore
-    assert store.synapse.get_table_names() == []  # type: ignore
+    for table_name in store.get_table_names():
+        store.delete_table(table_name)
+    assert store.get_table_names() == []
 
 
 @pytest.mark.synapse
