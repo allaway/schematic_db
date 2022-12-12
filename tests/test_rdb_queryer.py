@@ -59,6 +59,6 @@ class TestRDBQueryerTest:  # pylint: disable=too-few-public-methods
     ) -> None:
         """Testing for RDBQueryer.store_query_results()"""
         obj = mysql_test_rdb_queryer
-        assert obj.query_store.synapse.get_table_names() == []  # type: ignore
+        assert obj.query_store.get_table_names() == []
         obj.store_query_results(test_query_csv_path)
-        assert obj.query_store.synapse.get_table_names() == test_schema_table_names  # type: ignore
+        assert obj.query_store.get_table_names() == test_schema_table_names
