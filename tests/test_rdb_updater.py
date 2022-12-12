@@ -35,9 +35,7 @@ def fixture_rdb_updater_synapse_test(
     """Yields a RDBUpdater with a synapse database and test schema"""
     obj = RDBUpdater(rdb=synapse_database, schema=test_schema)
     yield obj
-    table_names = obj.rdb.get_table_names()
-    for name in table_names:
-        obj.rdb.delete_table(name)  # type: ignore
+    obj.rdb.delete_all_tables()
 
 
 @pytest.mark.schematic
