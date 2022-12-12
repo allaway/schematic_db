@@ -39,6 +39,29 @@ class SynapseDatabaseDropTableError(Exception):
         )
 
 
+class SynapseDatabaseUpdateTableError(Exception):
+    """SynapseDatabaseDropTableError"""
+
+    def __init__(
+        self, table_name: str, foreign_key: str, values: list[str], dependency: str
+    ) -> None:
+        self.message = "Error updating table"
+        self.table_name = table_name
+        self.foreign_key = foreign_key
+        self.values = values
+        self.dependency = dependency
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return (
+            f"{self.message}; "
+            f"name: {self.table_name}; "
+            f"foreign key: {self.foreign_key}; "
+            f"values: {self.values}; "
+            f"one or more values missing in dependency: {self.dependency}; "
+        )
+
+
 def create_foreign_key_annotation_string(key: DBForeignKey) -> str:
     """Creates a string that will serve as a foreign key Synapse annotation
 
@@ -190,7 +213,38 @@ class SynapseDatabase(RelationalDatabase):
     ) -> pd.DataFrame:
         return self.synapse.execute_sql_query(query, include_row_data)
 
+    def check_dependencies(
+        self, data: pd.DataFrame, table_config: DBObjectConfig
+    ) -> None:
+        """Checks if the dataframe's foreign keys are in the tables dependencies
+
+        Args:
+            data (pd.DataFrame): The dataframe to be inserted
+            table_config (DBObjectConfig): The config of the table to be inserted into
+
+        Raises:
+            SynapseDatabaseUpdateTableError: Raised when there are values in foreign key columns
+             that don't exist in the tables dependencies
+        """
+        for key in table_config.foreign_keys:
+            if key.name not in data.columns:
+                continue
+            insert_keys = [key for key in data[key.name].tolist() if not pd.isnull(key)]
+            table_id = self.synapse.get_synapse_id_from_table_name(
+                key.foreign_object_name
+            )
+            table = self._create_primary_key_table(table_id, key.foreign_attribute_name)
+            current_keys = table[key.foreign_attribute_name].tolist()
+            if not set(insert_keys).issubset(current_keys):
+                raise SynapseDatabaseUpdateTableError(
+                    table_name=table_config.name,
+                    foreign_key=key.name,
+                    values=insert_keys,
+                    dependency=key.foreign_object_name,
+                )
+
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
+        self.check_dependencies(data, table_config)
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
 
