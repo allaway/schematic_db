@@ -9,7 +9,7 @@ from schematic_db.db_config import (
     DBDatatype,
 )
 from schematic_db.synapse import Synapse, SynapseConfig
-from .rdb import RelationalDatabase
+from .rdb import RelationalDatabase, UpdateDBTableError
 
 CONFIG_DATATYPES = {
     "text": DBDatatype.TEXT,
@@ -244,7 +244,10 @@ class SynapseDatabase(RelationalDatabase):
                 )
 
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
-        self.check_dependencies(data, table_config)
+        try:
+            self.check_dependencies(data, table_config)
+        except SynapseDatabaseUpdateTableError as error:
+            raise UpdateDBTableError(table_config.name, str(error)) from error
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
 
