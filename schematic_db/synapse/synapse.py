@@ -67,7 +67,7 @@ def create_synapse_column(name: str, datatype: DBDatatype) -> sc.Column:
     return func(name=name)
 
 
-class Synapse: # pylint: disable=too-many-public-methods
+class Synapse:  # pylint: disable=too-many-public-methods
     """
     The Synapse class handles interactions with a project in Synapse.
     """
