@@ -25,6 +25,14 @@ class RelationalDatabase(ABC):
         """Drops all tables from the database"""
 
     @abstractmethod
+    def delete_all_tables(self) -> None:
+        """
+        Deletes all tables from the database
+        This will be the same as self.drop_all_tables() in most specifications, but some like
+         SynapseDatabase drop preserves something like the Synapse ID where delete will not.
+        """
+
+    @abstractmethod
     def execute_sql_query(self, query: str) -> pd.DataFrame:
         """Executes a valid SQL statement
         Should be used when a result is expected.
