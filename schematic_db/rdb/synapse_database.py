@@ -113,6 +113,11 @@ class SynapseDatabase(RelationalDatabase):
         """
         self.synapse = Synapse(config)
 
+    def query_table(self, table_name: str) -> pd.DataFrame:
+        synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
+        table = self.synapse.query_table(synapse_id)
+        return table
+
     def drop_all_tables(self) -> None:
         db_config = self.get_db_config()
         deps = {
