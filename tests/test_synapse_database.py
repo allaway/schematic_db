@@ -144,22 +144,21 @@ class TestSynapseDatabase:
         assert obj.synapse.get_table_names() == []
 
         obj.update_table(table_one, table_one_config)
-        synapse_id1 = obj.synapse.get_synapse_id_from_table_name("table_one")
-        result1 = obj.synapse.query_table(synapse_id1)
+        result1 = obj.query_table("table_one")
         assert result1[table_one_config.primary_key].to_list() == table_one_keys
 
         obj.drop_table("table_one")
         assert obj.synapse.get_table_column_names("table_one") == []
 
         obj.update_table(table_one, table_one_config)
-        result3 = obj.synapse.query_table(synapse_id1)
+        result3 = obj.query_table("table_one")
         assert result3[table_one_config.primary_key].to_list() == table_one_keys
 
         table_one_x = table_one.copy()
         table_one_x.loc[2] = ["key3", "c", np.NaN, np.NaN, np.NaN, np.NaN]
         table_one_x.loc[3] = ["key_x", "d", np.NaN, np.NaN, np.NaN, np.NaN]
         obj.update_table(table_one_x, table_one_config)
-        result4 = obj.synapse.query_table(synapse_id1)
+        result4 = obj.query_table("table_one")
         assert result4[table_one_config.primary_key].to_list() == table_one_keys + [
             "key_x"
         ]
@@ -259,23 +258,21 @@ class TestSynapseDatabase:
     ) -> None:
         """Testing for SynapseDatabase.delete_table_rows()"""
         obj = synapse_with_filled_tables
-        synapse_id1 = obj.synapse.get_synapse_id_from_table_name("table_one")
-        synapse_id3 = obj.synapse.get_synapse_id_from_table_name("table_three")
 
-        table1a = obj.synapse.query_table(synapse_id1)
-        table3a = obj.synapse.query_table(synapse_id3)
+        table1a = obj.query_table("table_one")
+        table3a = obj.query_table("table_three")
         assert table1a["pk_one_col"].tolist() == ["key1", "key2", "key3"]
         assert table3a["pk_zero_col"].tolist() == ["keyA", "keyB", "keyC", "keyD"]
 
         obj.delete_table_rows("table_one", table1a.iloc[[2]])
-        table1b = obj.synapse.query_table(synapse_id1)
-        table3b = obj.synapse.query_table(synapse_id3)
+        table1b = obj.query_table("table_one")
+        table3b = obj.query_table("table_three")
         assert table1b["pk_one_col"].tolist() == ["key1", "key2"]
         assert table3b["pk_zero_col"].tolist() == ["keyA", "keyB", "keyC", "keyD"]
 
         obj.delete_table_rows("table_one", table1a.iloc[[0]])
-        table1b = obj.synapse.query_table(synapse_id1)
-        table3b = obj.synapse.query_table(synapse_id3)
+        table1b = obj.query_table("table_one")
+        table3b = obj.query_table("table_three")
         assert table1b["pk_one_col"].tolist() == ["key2"]
         assert table3b["pk_zero_col"].tolist() == ["keyC", "keyD"]
 
@@ -285,15 +282,14 @@ class TestSynapseDatabase:
     ) -> None:
         """Testing for SynapseDatabase.upsert_table_rows()"""
         obj = synapse_with_filled_tables
-        synapse_id = obj.synapse.get_synapse_id_from_table_name("table_one")
 
-        table1 = obj.synapse.query_table(synapse_id)
+        table1 = obj.query_table("table_one")
         assert table1["pk_one_col"].tolist() == ["key1", "key2", "key3"]
         assert table1["string_one_col"].tolist() == ["a", "b", np.nan]
 
         upsert_table1 = pd.DataFrame({"pk_one_col": ["key1"], "string_one_col": ["a"]})
         obj.upsert_table_rows("table_one", upsert_table1)
-        table2 = obj.synapse.query_table(synapse_id)
+        table2 = obj.query_table("table_one")
         assert table2["pk_one_col"].tolist() == ["key1", "key2", "key3"]
         assert table2["string_one_col"].tolist() == ["a", "b", np.nan]
 
@@ -301,7 +297,7 @@ class TestSynapseDatabase:
             {"pk_one_col": ["key3", "key4"], "string_one_col": ["c", "d"]}
         )
         obj.upsert_table_rows("table_one", upsert_table2)
-        table3 = obj.synapse.query_table(synapse_id)
+        table3 = obj.query_table("table_one")
         assert table3["pk_one_col"].tolist() == ["key1", "key2", "key3", "key4"]
         assert table3["string_one_col"].tolist() == ["a", "b", "c", "d"]
 

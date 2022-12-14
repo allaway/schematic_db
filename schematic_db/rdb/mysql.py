@@ -19,8 +19,6 @@ MYSQL_DATATYPES = {
     DBDatatype.BOOLEAN: sa.Boolean,
 }
 
-PANDAS_DATATYPES = {DBDatatype.INT: "Int64", DBDatatype.BOOLEAN: "boolean"}
-
 
 class DataframeKeyError(Exception):
     """DataframeKeyError"""
@@ -117,6 +115,9 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         for tbl in reversed(self.metadata.sorted_tables):
             self.drop_table(tbl)
 
+    def delete_all_tables(self) -> None:
+        self.drop_all_tables()
+
     def execute_sql_query(self, query: str) -> pd.DataFrame:
         result = self._execute_sql_statement(query).fetchall()
         table = pd.DataFrame(result)
@@ -176,24 +177,9 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
             with self.engine.connect().execution_options(autocommit=True) as conn:
                 conn.execute(statement)
 
-    def query_table(
-        self, table_name: str, table_config: DBObjectConfig
-    ) -> pd.DataFrame:
-        """Queries an entire table
-
-        Args:
-            table_name (str): The table to be queried
-            table_config (DBObjectConfig): The config for the table to be queried
-
-        Returns:
-            pd.DataFrame: The query result
-        """
+    def query_table(self, table_name: str) -> pd.DataFrame:
         query = f"SELECT * FROM {table_name};"
         table = self.execute_sql_query(query)
-        for att in table_config.attributes:
-            pandas_value = PANDAS_DATATYPES.get(att.datatype, None)
-            if pandas_value is not None:
-                table = table.astype({att.name: pandas_value})
         return table
 
     def _execute_sql_statement(self, statement: str) -> Any:

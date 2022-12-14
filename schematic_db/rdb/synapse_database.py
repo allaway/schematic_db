@@ -113,6 +113,11 @@ class SynapseDatabase(RelationalDatabase):
         """
         self.synapse = Synapse(config)
 
+    def query_table(self, table_name: str) -> pd.DataFrame:
+        synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
+        table = self.synapse.query_table(synapse_id)
+        return table
+
     def drop_all_tables(self) -> None:
         db_config = self.get_db_config()
         deps = {
@@ -157,6 +162,11 @@ class SynapseDatabase(RelationalDatabase):
         reverse_dependencies = db_config.get_reverse_dependencies(table_name)
         for rd_table_name in reverse_dependencies:
             self._drop_table_and_dependencies(rd_table_name, db_config)
+
+    def delete_all_tables(self) -> None:
+        table_names = self.get_table_names()
+        for name in table_names:
+            self.delete_table(name)
 
     def delete_table(self, table_name: str) -> None:
         """Deletes the table entity
