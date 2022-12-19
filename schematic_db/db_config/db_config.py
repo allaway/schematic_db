@@ -88,6 +88,8 @@ class DBObjectConfig:
     foreign_keys: list[DBForeignKey]
 
     def __post_init__(self) -> None:
+        self.attributes.sort(key=lambda x: x.name)
+        self.foreign_keys.sort(key=lambda x: x.name)
         self._check_attributes()
         self._check_primary_key()
         self._check_foreign_keys()
