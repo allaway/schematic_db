@@ -150,18 +150,21 @@ class Synapse:  # pylint: disable=too-many-public-methods
         tables = self._get_tables()
         return [table["name"] for table in tables if table["id"] == synapse_id][0]
 
-    def query_table(self, synapse_id: str) -> pd.DataFrame:
+    def query_table(
+        self, synapse_id: str, include_row_data: bool = False
+    ) -> pd.DataFrame:
         """Queries a whole table
 
         Args:
             synapse_id (str): The Synapse id of the table to delete
             table_config (DBObjectConfig): The config for the table
+            include_row_data (bool): Include row_id and row_etag. Defaults to False.
 
         Returns:
             pd.DataFrame: The queried table
         """
         query = f"SELECT * FROM {synapse_id}"
-        return self.execute_sql_query(query)
+        return self.execute_sql_query(query, include_row_data)
 
     def execute_sql_query(
         self, query: str, include_row_data: bool = False

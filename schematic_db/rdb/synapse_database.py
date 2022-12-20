@@ -249,11 +249,6 @@ class SynapseDatabase(RelationalDatabase):
         self.synapse.set_entity_annotations(synapse_id, annotations)
 
     def get_db_config(self) -> DBConfig:
-        """Returns a DBConfig created from the current table annotations
-
-        Returns:
-            DBConfig: a DBConfig object
-        """
         table_names = self.synapse.get_table_names()
         result_list = [self.get_table_config(name) for name in table_names]
         config_list = [config for config in result_list if config is not None]
@@ -398,7 +393,8 @@ class SynapseDatabase(RelationalDatabase):
             pd.DataFrame: A dataframe with only rows where the primary key currently exists
         """
         data = data[[primary_key]]
-        table = self._create_primary_key_table(table_id, primary_key)
+        table = self.synapse.query_table(table_id, include_row_data=True)
+        table = table[["ROW_ID", "ROW_VERSION", primary_key]]
         merged_table = pd.merge(data, table, how="inner", on=primary_key)
         return merged_table
 
@@ -415,6 +411,6 @@ class SynapseDatabase(RelationalDatabase):
             pd.DataFrame: The table in pandas.DataFrame form with the primary key, ROW_ID, and
              ROW_VERSION columns
         """
-        query = f"SELECT {primary_key} FROM {table_id}"
-        table = self.execute_sql_query(query, include_row_data=True)
+        table = self.synapse.query_table(table_id, include_row_data=True)
+        table = table[["ROW_ID", "ROW_VERSION", primary_key]]
         return table

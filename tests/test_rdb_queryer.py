@@ -27,7 +27,7 @@ def fixture_mysql_test_rdb_queryer(
 ) -> Generator:
     """Yields a RDBQueryer with a mysql database with test schema tables added"""
     updater = RDBUpdater(rdb=mysql, schema=test_schema)
-    updater.update_all_database_tables()
+    updater.update_database()
     assert updater.rdb.get_table_names() == test_schema_table_names
 
     store = synapse_test_query_store

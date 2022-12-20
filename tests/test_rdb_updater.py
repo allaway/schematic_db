@@ -48,9 +48,9 @@ class TestRDBUpdaterTestSchema:
         """Creates the test database in MySQL"""
         obj = rdb_updater_mysql_test
         assert obj.rdb.get_table_names() == []
-        obj.update_all_database_tables()
+        obj.build_database()
         assert obj.rdb.get_table_names() == test_schema_table_names
-        obj.update_all_database_tables(replace_tables=True)
+        obj.update_database()
         assert obj.rdb.get_table_names() == test_schema_table_names
 
     def test_postgres_update_all_database_tables(
@@ -59,9 +59,9 @@ class TestRDBUpdaterTestSchema:
         """Creates the test database in Postgres"""
         obj = rdb_updater_postgres_test
         assert obj.rdb.get_table_names() == []
-        obj.update_all_database_tables()
+        obj.build_database()
         assert obj.rdb.get_table_names() == test_schema_table_names
-        obj.update_all_database_tables(replace_tables=True)
+        obj.update_database()
         assert obj.rdb.get_table_names() == test_schema_table_names
 
     def test_synapse_update_all_database_tables(
@@ -70,7 +70,7 @@ class TestRDBUpdaterTestSchema:
         """Creates the test database in Synapse"""
         obj = rdb_updater_synapse_test
         assert obj.rdb.get_table_names() == []
-        obj.update_all_database_tables()
+        obj.build_database()
         assert obj.rdb.get_table_names() == test_schema_table_names
-        obj.update_all_database_tables(replace_tables=True)
+        obj.update_database()
         assert obj.rdb.get_table_names() == test_schema_table_names

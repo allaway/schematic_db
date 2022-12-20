@@ -212,6 +212,14 @@ class DBConfig:
         for config in self.configs:
             self._check_foreign_keys(config)
 
+    def __eq__(self, other):
+        """Overrides the default implementation"""
+        if isinstance(other, DBConfig):
+            self_configs = self.configs.copy().sort(key=lambda x: x.name)
+            other_configs = self.configs.copy().sort(key=lambda x: x.name)
+            return self_configs == other_configs
+        return False
+
     def get_dependencies(self, object_name: str) -> list[str]:
         """Gets the objects dependencies
 

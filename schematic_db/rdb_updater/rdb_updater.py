@@ -1,9 +1,23 @@
 """RDBUpdater"""
 import warnings
 import pandas as pd
-from schematic_db.db_config import DBObjectConfig
-from schematic_db.rdb import RelationalDatabase, UpdateDBTableError
+from schematic_db.db_config import DBConfig, DBObjectConfig
+from schematic_db.rdb import RelationalDatabase
 from schematic_db.schema import Schema
+
+
+class SchemaConflictError(Exception):
+    """Raised when the current database schema is different than the incoming schmea"""
+
+    def __init__(self) -> None:
+        self.message = (
+            "The schema generated from the schema object is different from the current database."
+            "Please use build_database() instead."
+        )
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class NoManifestWarning(Warning):
@@ -42,25 +56,33 @@ class RDBUpdater:
         self.rdb = rdb
         self.schema = schema
 
-    def update_all_database_tables(
-        self, strict: bool = True, replace_tables: bool = False
-    ) -> None:
-        """Updates all tables in the db_config
-
-        Args:
-            strict (bool): If false, some errors are turned into warnings.
-            replace_tables (bool): If true, all tables are dropped before update.
-
+    def build_database(self) -> None:
         """
+        Builds the database based on the schema.
+        If the database exists all tables will be dropped and the database recreated.
+        """
+        self.rdb.drop_all_tables()
         db_config = self.schema.create_db_config()
-        if replace_tables:
-            self.rdb.drop_all_tables()
-        for config in db_config.configs:
-            self.update_database_table(config, strict)
+        self._update_database(db_config)
 
-    def update_database_table(
-        self, table_config: DBObjectConfig, strict: bool = True
-    ) -> None:
+    def update_database(self) -> None:
+        """
+        Updates all tables in the schema.
+        If the schema has changed since last update an exception will be thrown,
+         the user should use self.build_database() instead
+        """
+        new_db_config = self.schema.create_db_config()
+        current_db_config = self.rdb.get_db_config()
+        if new_db_config != current_db_config:
+            raise SchemaConflictError()
+        self._update_database(new_db_config)
+
+    def _update_database(self, db_config: DBConfig) -> None:
+        """Updates all tables in the schema."""
+        for config in db_config.configs:
+            self.update_database_table(config)
+
+    def update_database_table(self, table_config: DBObjectConfig) -> None:
         """
         Updates a table in the database based on one or more manifests.
         If any of the manifests don't exist an exception will be raised.
@@ -69,29 +91,15 @@ class RDBUpdater:
         Args:
             table_config (DBObjectConfig): A generic representation of the table as a
                 DBObjectConfig object.
-            strict (bool): If false, some errors are turned into warnings.
-
-        Raises:
-            NoManifestError: If strict = True, and Schema.get_manifests returns no manifests
         """
         manifest_tables = self.schema.get_manifests(table_config)
-        # If there are no manifests and strict is true, raise an error.
-        # Otherwise a warning and break out of function.
+        # If there are no manifests a warning is raised and breaks out of function.
         if len(manifest_tables) == 0:
             msg = f"There were no manifests found for table: {table_config.name}"
-            if strict:
-                raise NoManifestError(msg)
             warnings.warn(NoManifestWarning(msg))
             return
         manifest_table = pd.concat(manifest_tables)
         manifest_table = manifest_table.drop_duplicates(subset=table_config.primary_key)
         manifest_table.reset_index(inplace=True, drop=True)
 
-        # If not strict try to update the table and return a warning instead of an error
-        if strict:
-            self.rdb.update_table(manifest_table, table_config)
-        else:
-            try:
-                self.rdb.update_table(manifest_table, table_config)
-            except UpdateDBTableError as error:
-                warnings.warn(UpdateTableWarning(error.message))
+        self.rdb.update_table(manifest_table, table_config)

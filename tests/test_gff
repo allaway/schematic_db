@@ -110,7 +110,7 @@ def fixture_rdb_updater_mysql_gff(
 ) -> Generator:
     """Yields a RDBUpdater with a mysql database and gff schema with tables added"""
     obj = RDBUpdater(rdb=gff_mysql, schema=gff_schema)
-    obj.update_all_database_tables()
+    obj.update_database()
     yield obj
 
 
@@ -120,7 +120,7 @@ def fixture_rdb_updater_synapse_gff(
 ) -> Generator:
     """Yields a RDBUpdater with a synapse database and gff schema with tables added"""
     obj = RDBUpdater(rdb=gff_synapse, schema=gff_schema)
-    obj.update_all_database_tables()
+    obj.update_database()
     yield obj
 
 
