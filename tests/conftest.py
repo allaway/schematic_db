@@ -370,10 +370,10 @@ def fixture_table_three_config() -> Generator:
                 name="pk_zero_col", datatype=DBDatatype.TEXT, required=True
             ),
             DBAttributeConfig(
-                name="pk_one_col", datatype=DBDatatype.TEXT, required=True
+                name="pk_one_col", datatype=DBDatatype.TEXT, required=False
             ),
             DBAttributeConfig(
-                name="pk_two_col", datatype=DBDatatype.TEXT, required=True
+                name="pk_two_col", datatype=DBDatatype.TEXT, required=False
             ),
             DBAttributeConfig(
                 name="string_three_col", datatype=DBDatatype.TEXT, required=False
