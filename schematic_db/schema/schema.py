@@ -292,15 +292,15 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         # combines all the dictionaries into one
         datatype_dict: dict[str, str] = {}
         for d_dict in datatype_dicts:
-            for key, new_value in d_dict.items():
-                current_value = datatype_dict.get(key)
-                if current_value is None:
-                    datatype_dict[key] = new_value
-                elif current_value == new_value:
+            for attribute, new_attribute_type in d_dict.items():
+                current_attribute_type = datatype_dict.get(attribute)
+                if current_attribute_type is None:
+                    datatype_dict[attribute] = new_attribute_type
+                elif current_attribute_type == new_attribute_type:
                     pass
                 # when there is a conflict between different manifests, cast as string
                 else:
-                    datatype_dict[key] = "string"
+                    datatype_dict[attribute] = "string"
 
         # replaces the display names with labels
         datatype_dict = {
