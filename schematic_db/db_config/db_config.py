@@ -3,6 +3,7 @@ These are a set of classes for defining a database table in a dialect agnostic w
 """
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 from sqlalchemy import ForeignKey
 
@@ -223,7 +224,7 @@ class DBConfig:
         for config in self.configs:
             self._check_foreign_keys(config)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any):
         """Overrides the default implementation"""
         if isinstance(other, DBConfig):
             self_configs = self.configs.copy().sort(key=lambda x: x.name)
