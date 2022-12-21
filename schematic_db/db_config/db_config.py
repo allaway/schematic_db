@@ -224,7 +224,7 @@ class DBConfig:
         for config in self.configs:
             self._check_foreign_keys(config)
 
-    def __eq__(self, other: Any):
+    def __eq__(self, other: Any) -> bool:
         """Overrides the default implementation"""
         if isinstance(other, DBConfig):
             self_configs = self.configs.copy().sort(key=lambda x: x.name)
