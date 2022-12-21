@@ -119,7 +119,7 @@ def get_dataset_ids_for_object(
     ]
 
 
-class Schema:
+class Schema: # pylint: disable=too-many-instance-attributes
     """
     The Schema class interacts with the Schematic API to create a DBConfig
      object or to get a list of manifests for the schema.
@@ -164,15 +164,13 @@ class Schema:
         """
         self.schema_url = schema_url
         self.schema_graph = self.create_schema_graph()
+        self.synapse_project_id = synapse_project_id
         self.synapse_asset_view_id = synapse_asset_view_id
         self.synapse_input_token = synapse_input_token
         self.primary_key_getter = primary_key_getter
         self.foreign_key_getter = foreign_key_getter
-        self.manifests = get_project_manifests(
-            input_token=synapse_input_token,
-            project_id=synapse_project_id,
-            asset_view=synapse_asset_view_id,
-        )
+        self.update_manifest_configs()
+        self.update_db_config()
 
     def create_schema_graph(self) -> networkx.DiGraph:
         """Retrieve the edges from schematic API and store in networkx.DiGraph()
@@ -185,12 +183,12 @@ class Schema:
         schema_graph.add_edges_from(subgraph)
         return schema_graph
 
-    def create_db_config(self) -> DBConfig:
-        """Creates the configs for all objects in the database.
+    def get_db_config(self) -> DBConfig:
+        "Gets the currents objects DBConfig"
+        return self.db_config
 
-        Returns:
-            DBObjectConfigList: Configs for all objects in the database.
-        """
+    def update_db_config(self) -> None:
+        """Updates the objects DBConfig object."""
         # order objects so that ones with dependencies come after they depend on
         object_names = list(
             reversed(list(networkx.topological_sort(self.schema_graph)))
@@ -201,7 +199,7 @@ class Schema:
         filtered_object_configs: list[DBObjectConfig] = [
             config for config in object_configs if config is not None
         ]
-        return DBConfig(filtered_object_configs)
+        self.db_config = DBConfig(filtered_object_configs)
 
     def create_db_object_config(self, object_name: str) -> Optional[DBObjectConfig]:
         """Creates the config for one object in the database.
@@ -273,7 +271,7 @@ class Schema:
         return attributes
 
     def create_datatype_dict(self, object_name: str) -> dict[str, str]:
-        """Creates a dictionary of attributes in label form , and their dataytypes
+        """Creates a dictionary of attributes in label form , and their datatypes
 
         Args:
             object_name (str): The name of the object to get the datatypes for
@@ -281,7 +279,9 @@ class Schema:
         Returns:
             dict[str, str]: A dictionary of attributes and their datatypes
         """
-        manifest_ids = get_manifest_ids_for_object(object_name, self.manifests)
+        manifest_ids = get_manifest_ids_for_object(
+            object_name, self.get_manifest_configs()
+        )
         # creates a list of dictionaries and their datatypes, one for each manifest
         datatype_dicts = [
             get_manifest_datatypes(
@@ -350,6 +350,18 @@ class Schema:
             foreign_attribute_name,
         )
 
+    def update_manifest_configs(self) -> None:
+        """Updates the current objects manifest_configs."""
+        self.manifest_configs = get_project_manifests(
+            input_token=self.synapse_input_token,
+            project_id=self.synapse_project_id,
+            asset_view=self.synapse_asset_view_id,
+        )
+
+    def get_manifest_configs(self) -> list[ManifestSynapseConfig]:
+        """Gets the currents objects manifest_configs"""
+        return self.manifest_configs
+
     def get_manifests(self, config: DBObjectConfig) -> list[pd.DataFrame]:
         """Gets the manifests associated with a db object config
 
@@ -359,7 +371,7 @@ class Schema:
         Returns:
             list[pd.DataFrame]: A list manifests in dataframe form
         """
-        dataset_ids = get_dataset_ids_for_object(config.name, self.manifests)
+        dataset_ids = get_dataset_ids_for_object(config.name, self.manifest_configs)
         manifests = [
             self.get_manifest(dataset_id, config) for dataset_id in dataset_ids
         ]

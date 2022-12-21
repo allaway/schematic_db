@@ -62,7 +62,7 @@ class RDBUpdater:
         If the database exists all tables will be dropped and the database recreated.
         """
         self.rdb.drop_all_tables()
-        db_config = self.schema.create_db_config()
+        db_config = self.schema.get_db_config()
         self._update_database(db_config)
 
     def update_database(self) -> None:
@@ -71,7 +71,7 @@ class RDBUpdater:
         If the schema has changed since last update an exception will be thrown,
          the user should use self.build_database() instead
         """
-        new_db_config = self.schema.create_db_config()
+        new_db_config = self.schema.get_db_config()
         current_db_config = self.rdb.get_db_config()
         if new_db_config != current_db_config:
             raise SchemaConflictError()
