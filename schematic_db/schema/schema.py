@@ -119,7 +119,7 @@ def get_dataset_ids_for_object(
     ]
 
 
-class Schema: # pylint: disable=too-many-instance-attributes
+class Schema:  # pylint: disable=too-many-instance-attributes
     """
     The Schema class interacts with the Schematic API to create a DBConfig
      object or to get a list of manifests for the schema.

@@ -1,13 +1,20 @@
 """RDBUpdater"""
 import warnings
 import pandas as pd
-from schematic_db.db_config import DBConfig, DBObjectConfig
+from schematic_db.db_config import DBConfig, DBObjectConfig, DBDatatype
 from schematic_db.rdb import RelationalDatabase
 from schematic_db.schema import Schema
 
+DATATYPES = {
+    DBDatatype.TEXT: "string",
+    DBDatatype.DATE: "datetime64[ns]",
+    DBDatatype.INT: "int64",
+    DBDatatype.FLOAT: "float64",
+}
+
 
 class SchemaConflictError(Exception):
-    """Raised when the current database schema is different than the incoming schmea"""
+    """Raised when the current database schema is different than the incoming schema"""
 
     def __init__(self) -> None:
         self.message = (
@@ -98,8 +105,16 @@ class RDBUpdater:
             msg = f"There were no manifests found for table: {table_config.name}"
             warnings.warn(NoManifestWarning(msg))
             return
+
+        # combine and normalize manifests into one table
         manifest_table = pd.concat(manifest_tables)
         manifest_table = manifest_table.drop_duplicates(subset=table_config.primary_key)
         manifest_table.reset_index(inplace=True, drop=True)
+
+        # cast columns as types defined in config
+        for col in manifest_table.columns:
+            col_attribute = table_config.get_attribute_by_name(col)
+            pandas_col_type = DATATYPES[col_attribute.datatype]
+            manifest_table[col] = manifest_table[col].astype(pandas_col_type)
 
         self.rdb.update_table(manifest_table, table_config)

@@ -129,6 +129,17 @@ class DBObjectConfig:
         """
         return [key for key in self.foreign_keys if key.name == name][0]
 
+    def get_attribute_by_name(self, name: str) -> DBAttributeConfig:
+        """Returns the attribute
+
+        Args:
+            name (str): name of the attribute
+
+        Returns:
+            DBAttributeConfig: The DBAttributeConfig asked for
+        """
+        return [att for att in self.attributes if att.name == name][0]
+
     def _check_attributes(self) -> None:
         if len(self.attributes) == 0:
             raise ConfigAttributeError("Attributes is empty", self.name)
