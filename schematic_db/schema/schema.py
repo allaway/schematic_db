@@ -290,7 +290,18 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             for id in manifest_ids
         ]
         # combines all the dictionaries into one
-        datatype_dict = {k: v for x in datatype_dicts for k, v in x.items()}
+        datatype_dict: dict[str, str] = {}
+        for d_dict in datatype_dicts:
+            for key, new_value in d_dict.items():
+                current_value = datatype_dict.get(key)
+                if current_value is None:
+                    datatype_dict[key] = new_value
+                elif current_value == new_value:
+                    pass
+                # when there is a conflict between different manifests, cast as string
+                else:
+                    datatype_dict[key] = "string"
+
         # replaces the display names with labels
         datatype_dict = {
             get_property_label_from_display_name(self.schema_url, k): v
