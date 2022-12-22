@@ -25,9 +25,10 @@ from .api_utils import (
 
 DATATYPES = {
     "string": DBDatatype.TEXT,
+    "object": DBDatatype.TEXT,
     "Int64": DBDatatype.INT,
     "float64": DBDatatype.FLOAT,
-    "datetime[ns]": DBDatatype.DATE,
+    "datetime64[ns]": DBDatatype.DATE,
 }
 
 
