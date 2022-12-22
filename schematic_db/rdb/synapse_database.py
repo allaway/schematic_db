@@ -208,17 +208,17 @@ class SynapseDatabase(RelationalDatabase):
         if table_name not in table_names:
             self.synapse.add_table(table_name, table_config)
             synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
-            self.synapse.insert_table_rows(synapse_id, data)
             self.annotate_table(table_name, table_config)
+            self.synapse.insert_table_rows(synapse_id, data)
             return
 
         # table exists but has no columns/rows, both must be added
         current_columns = self.synapse.get_table_column_names(table_name)
         if len(list(current_columns)) == 0:
             synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
+            self.annotate_table(table_name, table_config)
             self.synapse.add_table_columns(synapse_id, table_config)
             self.synapse.insert_table_rows(synapse_id, data)
-            self.annotate_table(table_name, table_config)
             return
 
         # table exists and possibly has data, upsert method must be used
