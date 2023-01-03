@@ -201,6 +201,12 @@ class SynapseDatabase(RelationalDatabase):
         return self.synapse.execute_sql_query(query, include_row_data)
 
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
+
+        # synapse client can have some problems with <NA> values in string columns
+        for attribute in table_config.attributes:
+            if attribute.datatype == DBDatatype.TEXT and attribute.name in data.columns:
+                data[attribute.name].fillna("", inplace=True)
+
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
 
