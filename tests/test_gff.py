@@ -42,7 +42,7 @@ def fixture_gff_database_table_names() -> Generator:
     yield table_names
 
 
-@pytest.fixture(scope="session", name="gff_mysql")
+@pytest.fixture(scope="session", name="gff_mysql_database")
 def fixture_gff_mysql(mysql_config: MySQLConfig) -> Generator:
     """
     Yields a MYSQL object with database named 'gff_test_schema'
@@ -54,7 +54,7 @@ def fixture_gff_mysql(mysql_config: MySQLConfig) -> Generator:
     obj.drop_database()
 
 
-@pytest.fixture(scope="session", name="gff_synapse")
+@pytest.fixture(scope="session", name="gff_synapse_database")
 def fixture_gff_synapse(secrets_dict: dict) -> Generator:
     """
     Yields a Synapse object used for testing databases
@@ -123,21 +123,6 @@ def fixture_rdb_updater_synapse_gff(
     yield obj
 
 
-@pytest.fixture(scope="session", name="synapse_gff_query_store")
-def fixture_synapse_gff_query_store(secrets_dict: dict) -> Generator:
-    """
-    Yields a Synapse Query Store for gff
-    """
-    obj = SynapseQueryStore(
-        SynapseConfig(
-            project_id="syn39024404",
-            username=secrets_dict["synapse"]["username"],
-            auth_token=secrets_dict["synapse"]["auth_token"],
-        )
-    )
-    yield obj
-
-
 @pytest.fixture(scope="session", name="gff_query_csv_path")
 def fixture_gff_query_csv_path(data_dir: str = "data_directory") -> Generator:
     """Yields a path to a file of test SQL queries for gff"""
@@ -145,20 +130,9 @@ def fixture_gff_query_csv_path(data_dir: str = "data_directory") -> Generator:
     yield path
 
 
-@pytest.fixture(scope="module", name="rdb_queryer_mysql_gff")
-def fixture_rdb_queryer_mysql_gff(
-    rdb_updater_mysql_gff: RDBUpdater, synapse_gff_query_store: QueryStore
-) -> Generator:
-    """Yields a RDBQueryer with a mysql database with gff tables added"""
-    obj = RDBQueryer(
-        rdb=rdb_updater_mysql_gff.rdb,
-        query_store=synapse_gff_query_store,
-    )
-    yield obj
-
-
 @pytest.mark.gff
 @pytest.mark.synapse
+@pytest.mark.schematic
 class TestSynapseDatabase:  # pylint: disable=too-few-public-methods
     """Testing for gff synapse database"""
 
@@ -167,19 +141,6 @@ class TestSynapseDatabase:  # pylint: disable=too-few-public-methods
         obj = gff_synapse
         obj.drop_all_tables()
         assert False
-
-
-@pytest.mark.gff
-@pytest.mark.synapse
-@pytest.mark.schematic
-class TestRDBQueryerGFF:  # pylint: disable=too-few-public-methods
-    """Testing for RDBQueryer using the gff database"""
-
-    def test_store_query_results(
-        self, rdb_queryer_mysql_gff: RDBQueryer, gff_query_csv_path: str
-    ) -> None:
-        """Testing for RDBQueryer.store_query_results()"""
-        rdb_queryer_mysql_gff.store_query_results(gff_query_csv_path)
 
 
 @pytest.mark.gff
@@ -209,6 +170,72 @@ class TestRDBUpdater:
         assert obj.rdb.get_table_names() == gff_database_table_names
         obj.update_database()
         assert obj.rdb.get_table_names() == gff_database_table_names
+
+
+# RDBQueryer ------------------------------------------------------------------
+
+
+@pytest.fixture(scope="session", name="synapse_gff_query_store")
+def fixture_synapse_gff_query_store(secrets_dict: dict) -> Generator:
+    """
+    Yields a Synapse Query Store for gff
+    """
+    obj = SynapseQueryStore(
+        SynapseConfig(
+            project_id="syn39024404",
+            username=secrets_dict["synapse"]["username"],
+            auth_token=secrets_dict["synapse"]["auth_token"],
+        )
+    )
+    yield obj
+
+
+@pytest.fixture(scope="module", name="rdb_queryer_mysql")
+def fixture_rdb_queryer_mysql(
+    rdb_updater_mysql_gff: RDBUpdater, synapse_gff_query_store: QueryStore
+) -> Generator:
+    """Yields a RDBQueryer with a mysql database with gff tables added"""
+    obj = RDBQueryer(
+        rdb=rdb_updater_mysql_gff.rdb,
+        query_store=synapse_gff_query_store,
+    )
+    yield obj
+
+
+@pytest.fixture(scope="module", name="rdb_queryer_synapse")
+def fixture_rdb_queryer_synapse(
+    gff_synapse_database: SynapseDatabase, synapse_gff_query_store: QueryStore
+) -> Generator:
+    """Yields a RDBQueryer with a mysql database with gff tables added"""
+    obj = RDBQueryer(
+        rdb=gff_synapse_database,
+        query_store=synapse_gff_query_store,
+    )
+    yield obj
+
+
+@pytest.mark.gff
+@pytest.mark.synapse
+@pytest.mark.schematic
+class TestRDBQueryer:
+    """Testing for RDBQueryer using the gff database"""
+
+    def test_store_query_results_mysql(
+        self,
+        rdb_queryer_mysql: RDBQueryer,
+    ) -> None:
+        """Testing for RDBQueryer.store_query_results()"""
+        rdb_queryer_mysql.store_query_results("tests/data/gff_queries.csv")
+
+    def test_store_query_results_synapse(
+        self,
+        rdb_queryer_synapse: RDBQueryer,
+    ) -> None:
+        """Testing for RDBQueryer.store_query_results()"""
+        rdb_queryer_synapse.store_query_results("tests/data/gff_queries.csv")
+
+
+# Schema ----------------------------------------------------------------------
 
 
 @pytest.mark.gff
