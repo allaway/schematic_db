@@ -1,6 +1,7 @@
 """RDBUpdater"""
 import warnings
 import pandas as pd
+from dateutil.parser import ParserError
 from schematic_db.db_config import DBConfig, DBObjectConfig, DBDatatype
 from schematic_db.rdb import RelationalDatabase
 from schematic_db.schema import Schema
@@ -50,6 +51,14 @@ class UpdateTableWarning(Warning):
     """
     Occurs when trying to update a database table and the rdb subclass encounters an error
     """
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(self.message)
+
+
+class ColumnCastingWarning(Warning):
+    """Raised when trying to cast a column as they type in the schema fails."""
 
     def __init__(self, message: str) -> None:
         self.message = message
@@ -106,15 +115,35 @@ class RDBUpdater:
             warnings.warn(NoManifestWarning(msg))
             return
 
+        # cast columns as types defined in config
+        for attribute in table_config.attributes:
+            pandas_col_type = DATATYPES[attribute.datatype]
+            try:
+                self._cast_column_type(manifest_tables, attribute.name, pandas_col_type)
+            # if there is an error casting the column
+            except ParserError:
+                msg = (
+                    "Unable to cast column as type in schema, casting as string instead; "
+                    f"Table: {table_config.name}; "
+                    f"Column: {attribute.name}; "
+                    f"Type: {pandas_col_type}"
+                )
+                warnings.warn(msg, ColumnCastingWarning)
+                # schema is changed to text
+                attribute.datatype = DBDatatype.TEXT
+                # column is cast as string
+                self._cast_column_type(manifest_tables, attribute.name, "string")
+
         # combine and normalize manifests into one table
         manifest_table = pd.concat(manifest_tables)
         manifest_table = manifest_table.drop_duplicates(subset=table_config.primary_key)
         manifest_table.reset_index(inplace=True, drop=True)
 
-        # cast columns as types defined in config
-        for col in manifest_table.columns:
-            col_attribute = table_config.get_attribute_by_name(col)
-            pandas_col_type = DATATYPES[col_attribute.datatype]
-            manifest_table[col] = manifest_table[col].astype(pandas_col_type)
-
         self.rdb.update_table(manifest_table, table_config)
+
+    def _cast_column_type(
+        self, tables: list[pd.DataFrame], column: str, datatype: str
+    ) -> None:
+        for table in tables:
+            if column in table.columns:
+                table[column] = table[column].astype(datatype)
