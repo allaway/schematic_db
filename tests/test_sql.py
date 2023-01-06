@@ -33,7 +33,7 @@ def fixture_sql_databases(
 
 
 @pytest.mark.fast
-class TestSQLGetters:  # pylint: disable=too-few-public-methods
+class TestSQLGetters:
     """Testing for RelationalDatabase getters"""
 
     def test_get_table_names(
@@ -66,6 +66,20 @@ class TestSQLGetters:  # pylint: disable=too-few-public-methods
             assert obj.get_table_config("table_two") == table_two_config
             assert obj.get_table_config("table_three") == table_three_config
 
+            obj.delete_all_tables()
+
+    def test_execute_sql_query(
+        self,
+        sql_databases: list[MySQLDatabase],
+        table_one_config: DBObjectConfig,
+    ) -> None:
+        """Tests RelationalDatabase.execute_sql_query()"""
+        for obj in sql_databases:
+            assert obj.get_table_names() == []
+            obj.add_table("table_one", table_one_config)
+            assert obj.get_table_names() == ["table_one"]
+            result = obj.execute_sql_query("SELECT * FROM table_one;")
+            assert isinstance(result, pd.DataFrame)
             obj.delete_all_tables()
 
 
