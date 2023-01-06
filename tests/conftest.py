@@ -164,14 +164,6 @@ def fixture_synapse_test_query_store(secrets_dict: dict) -> Generator:
     )
     yield obj
 
-'''
-@pytest.fixture(scope="session", name="test_query_csv_path")
-def fixture_test_query_csv_path() -> Generator:
-    """Yields a path to a file of test SQL queries for the test schema"""
-    path = os.path.join(DATA_DIR, "test_queries.csv")
-    yield path
-'''
-
 
 # other test objects ----------------------------------------------------------
 # objects that don't have a test schema or manifests, but interact with
