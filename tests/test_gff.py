@@ -319,8 +319,9 @@ def fixture_rdb_queryer_synapse(
 @pytest.mark.gff
 @pytest.mark.synapse
 @pytest.mark.schematic
-class TestRDBQueryer: # pylint: disable=too-few-public-methods
+class TestRDBQueryer:  # pylint: disable=too-few-public-methods
     """Testing for RDBQueryer using the gff database"""
+
     def test_store_query_results_postgres(
         self,
         rdb_queryer_postgres: RDBQueryer,
