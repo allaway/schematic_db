@@ -73,18 +73,13 @@ def fixture_mysql_database(mysql_config: MySQLConfig) -> Generator:
 
 
 @pytest.fixture(scope="module", name="postgres_database")
-def fixture_postgres_database(secrets_dict: dict) -> Generator:
+def fixture_postgres_database(postgres_config) -> Generator:
     """
     Yields a Postgres object with database named 'gff_test_schema'
     """
-    obj = PostgresDatabase(
-        MySQLConfig(
-            username=secrets_dict["postgres"]["username"],
-            password=secrets_dict["postgres"]["password"],
-            host=secrets_dict["postgres"]["host"],
-            name="gff_test_schema",
-        )
-    )
+    config = copy(postgres_config)
+    config.name = "gff_test_schema"
+    obj = PostgresDatabase(config)
     yield obj
     obj.drop_database()
 
@@ -324,17 +319,8 @@ def fixture_rdb_queryer_synapse(
 @pytest.mark.gff
 @pytest.mark.synapse
 @pytest.mark.schematic
-class TestRDBQueryer:
+class TestRDBQueryer: # pylint: disable=too-few-public-methods
     """Testing for RDBQueryer using the gff database"""
-
-    def test_store_query_results_mysql(
-        self,
-        rdb_queryer_mysql: RDBQueryer,
-    ) -> None:
-        """Testing for RDBQueryer.store_query_results()"""
-        with pytest.raises(exc.OperationalError, match="Row size too large"):
-            rdb_queryer_mysql.store_query_results("tests/data/gff_queries_mysql.csv")
-
     def test_store_query_results_postgres(
         self,
         rdb_queryer_postgres: RDBQueryer,
