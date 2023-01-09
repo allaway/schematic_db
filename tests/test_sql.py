@@ -25,11 +25,11 @@ from schematic_db.rdb.postgres import PostgresDatabase
 
 @pytest.fixture(name="sql_databases", scope="module")
 def fixture_sql_databases(
-    mysql: MySQLDatabase,
-    postgres: PostgresDatabase,
+    mysql_database: MySQLDatabase,
+    postgres_database: PostgresDatabase,
 ) -> Generator:
     """Yields a list of databases to test"""
-    yield [mysql, postgres]
+    yield [mysql_database, postgres_database]
 
 
 @pytest.mark.fast
