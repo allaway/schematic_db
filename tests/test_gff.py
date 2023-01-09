@@ -73,7 +73,7 @@ def fixture_mysql_database(mysql_config: MySQLConfig) -> Generator:
 
 
 @pytest.fixture(scope="module", name="postgres_database")
-def fixture_postgres_database(postgres_config) -> Generator:
+def fixture_postgres_database(postgres_config: MySQLConfig) -> Generator:
     """
     Yields a Postgres object with database named 'gff_test_schema'
     """
