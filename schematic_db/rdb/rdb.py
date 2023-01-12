@@ -1,7 +1,7 @@
 """RelationalDatabase"""
 from abc import ABC, abstractmethod
 import pandas as pd
-from schematic_db.db_config import DBObjectConfig
+from schematic_db.db_config import DBConfig, DBObjectConfig
 
 
 class UpdateDBTableError(Exception):
@@ -19,6 +19,14 @@ class UpdateDBTableError(Exception):
 
 class RelationalDatabase(ABC):
     """An interface for relational database types"""
+
+    @abstractmethod
+    def get_db_config(self) -> DBConfig:
+        """Returns a DBConfig created from the current table annotations
+
+        Returns:
+            DBConfig: a DBConfig object
+        """
 
     @abstractmethod
     def drop_all_tables(self) -> None:

@@ -5,10 +5,16 @@ import pandas as pd
 import numpy as np
 import sqlalchemy as sa
 import sqlalchemy_utils.functions
+from sqlalchemy.inspection import inspect
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy import exc
-from schematic_db.db_config import DBObjectConfig, DBDatatype
-from schematic_db.db_config.db_config import DBAttributeConfig
+from schematic_db.db_config import (
+    DBConfig,
+    DBObjectConfig,
+    DBDatatype,
+    DBAttributeConfig,
+    DBForeignKey,
+)
 from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
@@ -17,6 +23,15 @@ MYSQL_DATATYPES = {
     DBDatatype.INT: sa.Integer,
     DBDatatype.FLOAT: sa.Float,
     DBDatatype.BOOLEAN: sa.Boolean,
+}
+
+CONFIG_DATATYPES = {
+    sa.String: DBDatatype.TEXT,
+    sa.VARCHAR: DBDatatype.TEXT,
+    sa.Date: DBDatatype.DATE,
+    sa.Integer: DBDatatype.INT,
+    sa.Float: DBDatatype.FLOAT,
+    sa.Boolean: DBDatatype.BOOLEAN,
 }
 
 
@@ -59,6 +74,48 @@ def create_foreign_key_column(
         nullable=True,
     )
     return col
+
+
+def create_foreign_key_configs(table_schema: sa.sql.schema.Table) -> list[DBForeignKey]:
+    """Creates a list of foreign key configs from a sqlalchemy table schema
+
+    Args:
+        table_schema (sa.sql.schema.Table): A sqlalchemy table schema
+
+    Returns:
+        list[DBForeignKey]: A list of foreign key configs
+    """
+    foreign_keys = inspect(table_schema).foreign_keys
+    return [
+        DBForeignKey(
+            name=key.parent.name,
+            foreign_object_name=key.column.table.name,
+            foreign_attribute_name=key.column.name,
+        )
+        for key in foreign_keys
+    ]
+
+
+def create_attribute_configs(
+    table_schema: sa.sql.schema.Table,
+) -> list[DBAttributeConfig]:
+    """Creates a list of attribute configs from a sqlalchemy table schema
+
+    Args:
+        table_schema (sa.sql.schema.Table):A sqlalchemy table schema
+
+    Returns:
+        list[DBAttributeConfig]: A list of foreign key configs
+    """
+    columns = table_schema.c
+    return [
+        DBAttributeConfig(
+            name=col.name,
+            datatype=CONFIG_DATATYPES[type(col.type)],
+            required=not col.nullable,
+        )
+        for col in columns
+    ]
 
 
 @dataclass
@@ -123,7 +180,32 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         table = pd.DataFrame(result)
         return table
 
+    def get_db_config(self) -> DBConfig:
+        table_names = self.get_table_names()
+        config_list = [self.get_table_config(name) for name in table_names]
+        return DBConfig(config_list)
+
+    def get_table_config(self, table_name: str) -> DBObjectConfig:
+        """Creates a table config from a sqlalchemy table schema
+
+        Args:
+            table_name (str): The name of the table
+
+        Returns:
+            DBObjectConfig: A config for the table
+        """
+        table_schema = self.metadata.tables[table_name]
+        primary_key = inspect(table_schema).primary_key.columns.values()[0].name
+
+        return DBObjectConfig(
+            name=table_name,
+            primary_key=primary_key,
+            foreign_keys=create_foreign_key_configs(table_schema),
+            attributes=create_attribute_configs(table_schema),
+        )
+
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
+
         table_names = self.get_table_names()
         table_name = table_config.name
         if table_name not in table_names:

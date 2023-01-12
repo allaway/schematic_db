@@ -19,8 +19,17 @@ from .api_utils import (
     get_project_manifests,
     get_manifest,
     is_node_required,
+    get_manifest_datatypes,
     ManifestSynapseConfig,
 )
+
+DATATYPES = {
+    "string": DBDatatype.TEXT,
+    "object": DBDatatype.TEXT,
+    "Int64": DBDatatype.INT,
+    "float64": DBDatatype.FLOAT,
+    "datetime64[ns]": DBDatatype.DATE,
+}
 
 
 class NoAttributesWarning(Warning):
@@ -111,7 +120,7 @@ def get_dataset_ids_for_object(
     ]
 
 
-class Schema:
+class Schema:  # pylint: disable=too-many-instance-attributes
     """
     The Schema class interacts with the Schematic API to create a DBConfig
      object or to get a list of manifests for the schema.
@@ -156,15 +165,13 @@ class Schema:
         """
         self.schema_url = schema_url
         self.schema_graph = self.create_schema_graph()
+        self.synapse_project_id = synapse_project_id
         self.synapse_asset_view_id = synapse_asset_view_id
         self.synapse_input_token = synapse_input_token
         self.primary_key_getter = primary_key_getter
         self.foreign_key_getter = foreign_key_getter
-        self.manifests = get_project_manifests(
-            input_token=synapse_input_token,
-            project_id=synapse_project_id,
-            asset_view=synapse_asset_view_id,
-        )
+        self.update_manifest_configs()
+        self.update_db_config()
 
     def create_schema_graph(self) -> networkx.DiGraph:
         """Retrieve the edges from schematic API and store in networkx.DiGraph()
@@ -177,12 +184,12 @@ class Schema:
         schema_graph.add_edges_from(subgraph)
         return schema_graph
 
-    def create_db_config(self) -> DBConfig:
-        """Creates the configs for all objects in the database.
+    def get_db_config(self) -> DBConfig:
+        "Gets the currents objects DBConfig"
+        return self.db_config
 
-        Returns:
-            DBObjectConfigList: Configs for all objects in the database.
-        """
+    def update_db_config(self) -> None:
+        """Updates the objects DBConfig object."""
         # order objects so that ones with dependencies come after they depend on
         object_names = list(
             reversed(list(networkx.topological_sort(self.schema_graph)))
@@ -193,7 +200,7 @@ class Schema:
         filtered_object_configs: list[DBObjectConfig] = [
             config for config in object_configs if config is not None
         ]
-        return DBConfig(filtered_object_configs)
+        self.db_config = DBConfig(filtered_object_configs)
 
     def create_db_object_config(self, object_name: str) -> Optional[DBObjectConfig]:
         """Creates the config for one object in the database.
@@ -248,14 +255,11 @@ class Schema:
         Returns:
             Union[list[DBAttributeConfig], None]: A list of attributes in DBAttributeConfig form
         """
+        # the names of the attributes to be created, in label(not display) form
         attribute_names = find_class_specific_properties(self.schema_url, object_name)
+        datatype_dict = self.create_datatype_dict(object_name)
         attributes = [
-            DBAttributeConfig(
-                name=name,
-                datatype=DBDatatype.TEXT,
-                required=is_node_required(self.schema_url, name),
-            )
-            for name in attribute_names
+            self.create_attribute(name, datatype_dict) for name in attribute_names
         ]
         # Some components will not have any attributes for various reasons
         if not attributes:
@@ -266,6 +270,63 @@ class Schema:
             )
             return None
         return attributes
+
+    def create_datatype_dict(self, object_name: str) -> dict[str, str]:
+        """Creates a dictionary of attributes in label form , and their datatypes
+
+        Args:
+            object_name (str): The name of the object to get the datatypes for
+
+        Returns:
+            dict[str, str]: A dictionary of attributes and their datatypes
+        """
+        manifest_ids = get_manifest_ids_for_object(
+            object_name, self.get_manifest_configs()
+        )
+        # creates a list of dictionaries and their datatypes, one for each manifest
+        datatype_dicts = [
+            get_manifest_datatypes(
+                self.synapse_input_token, id, self.synapse_asset_view_id
+            )
+            for id in manifest_ids
+        ]
+        # combines all the dictionaries into one
+        datatype_dict: dict[str, str] = {}
+        for d_dict in datatype_dicts:
+            for attribute, new_attribute_type in d_dict.items():
+                current_attribute_type = datatype_dict.get(attribute)
+                if current_attribute_type is None:
+                    datatype_dict[attribute] = new_attribute_type
+                elif current_attribute_type == new_attribute_type:
+                    pass
+                # when there is a conflict between different manifests, cast as string
+                else:
+                    datatype_dict[attribute] = "string"
+
+        # replaces the display names with labels
+        datatype_dict = {
+            get_property_label_from_display_name(self.schema_url, k): v
+            for (k, v) in datatype_dict.items()
+        }
+        return datatype_dict
+
+    def create_attribute(
+        self, name: str, datatypes: dict[str, str]
+    ) -> DBAttributeConfig:
+        """Creates an attribute
+
+        Args:
+            name (str): The name of the attribute
+            datatypes (dict[str, str]): A dictionary of attributes and their types
+
+        Returns:
+            DBAttributeConfig: The DBAttributeConfig for the attribute
+        """
+        return DBAttributeConfig(
+            name=name,
+            datatype=DATATYPES[datatypes.get(name, "string")],
+            required=is_node_required(self.schema_url, name),
+        )
 
     def create_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
         """Creates a list of foreign keys for an object in the database
@@ -301,6 +362,18 @@ class Schema:
             foreign_attribute_name,
         )
 
+    def update_manifest_configs(self) -> None:
+        """Updates the current objects manifest_configs."""
+        self.manifest_configs = get_project_manifests(
+            input_token=self.synapse_input_token,
+            project_id=self.synapse_project_id,
+            asset_view=self.synapse_asset_view_id,
+        )
+
+    def get_manifest_configs(self) -> list[ManifestSynapseConfig]:
+        """Gets the currents objects manifest_configs"""
+        return self.manifest_configs
+
     def get_manifests(self, config: DBObjectConfig) -> list[pd.DataFrame]:
         """Gets the manifests associated with a db object config
 
@@ -310,7 +383,7 @@ class Schema:
         Returns:
             list[pd.DataFrame]: A list manifests in dataframe form
         """
-        dataset_ids = get_dataset_ids_for_object(config.name, self.manifests)
+        dataset_ids = get_dataset_ids_for_object(config.name, self.manifest_configs)
         manifests = [
             self.get_manifest(dataset_id, config) for dataset_id in dataset_ids
         ]

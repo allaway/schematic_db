@@ -25,19 +25,19 @@ from schematic_db.rdb.postgres import PostgresDatabase
 
 @pytest.fixture(name="sql_databases", scope="module")
 def fixture_sql_databases(
-    mysql: MySQLDatabase,
-    postgres: PostgresDatabase,
+    mysql_database: MySQLDatabase,
+    postgres_database: PostgresDatabase,
 ) -> Generator:
     """Yields a list of databases to test"""
-    yield [mysql, postgres]
+    yield [mysql_database, postgres_database]
 
 
 @pytest.mark.fast
-class TestSQLGetters:  # pylint: disable=too-few-public-methods
+class TestSQLGetters:
     """Testing for RelationalDatabase getters"""
 
     def test_get_table_names(
-        self, sql_databases: Any, table_one_config: DBObjectConfig
+        self, sql_databases: list[MySQLDatabase], table_one_config: DBObjectConfig
     ) -> None:
         """Tests RelationalDatabase.get_table_names()"""
         for obj in sql_databases:
@@ -46,6 +46,41 @@ class TestSQLGetters:  # pylint: disable=too-few-public-methods
             assert obj.get_table_names() == ["table_one"]
             obj.drop_table("table_one")
             assert obj.get_table_names() == []
+
+    def test_get_table_config(
+        self,
+        sql_databases: list[MySQLDatabase],
+        table_one_config: DBObjectConfig,
+        table_two_config: DBObjectConfig,
+        table_three_config: DBObjectConfig,
+    ) -> None:
+        """Tests RelationalDatabase.get_table_config()"""
+        for obj in sql_databases:
+            assert obj.get_table_names() == []
+            obj.add_table("table_one", table_one_config)
+            obj.add_table("table_two", table_two_config)
+            obj.add_table("table_three", table_three_config)
+            assert obj.get_table_names() == ["table_one", "table_three", "table_two"]
+
+            assert obj.get_table_config("table_one") == table_one_config
+            assert obj.get_table_config("table_two") == table_two_config
+            assert obj.get_table_config("table_three") == table_three_config
+
+            obj.delete_all_tables()
+
+    def test_execute_sql_query(
+        self,
+        sql_databases: list[MySQLDatabase],
+        table_one_config: DBObjectConfig,
+    ) -> None:
+        """Tests RelationalDatabase.execute_sql_query()"""
+        for obj in sql_databases:
+            assert obj.get_table_names() == []
+            obj.add_table("table_one", table_one_config)
+            assert obj.get_table_names() == ["table_one"]
+            result = obj.execute_sql_query("SELECT * FROM table_one;")
+            assert isinstance(result, pd.DataFrame)
+            obj.delete_all_tables()
 
 
 @pytest.mark.fast
@@ -228,3 +263,30 @@ class TestSQLUpdateRows:
 
             obj.drop_table("table_one")
             assert obj.get_table_names() == []
+
+    def test_update_table(
+        self,
+        sql_databases: list[MySQLDatabase],
+        table_one_config: DBObjectConfig,
+        table_one: pd.DataFrame,
+    ) -> None:
+        """Testing for RelationalDatabase.update_table()"""
+        for obj in sql_databases:
+            assert obj.get_table_names() == []
+
+            obj.update_table(table_one, table_one_config)
+            assert obj.get_table_names() == ["table_one"]
+            result1 = obj.query_table("table_one")
+            assert result1["pk_one_col"].to_list() == ["key1", "key2", "key3"]
+
+            obj.update_table(table_one, table_one_config)
+            assert obj.get_table_names() == ["table_one"]
+            result1 = obj.query_table("table_one")
+            assert result1["pk_one_col"].to_list() == ["key1", "key2", "key3"]
+
+            table_copy = table_one.copy()
+            table_copy["string_one_col"] = [1, 2, 3]
+            obj.update_table(table_copy, table_one_config)
+            result2 = obj.query_table("table_one")
+            assert result2["pk_one_col"].to_list() == ["key1", "key2", "key3"]
+            assert result2["string_one_col"].to_list() == ["1", "2", "3"]

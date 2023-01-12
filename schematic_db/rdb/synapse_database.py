@@ -201,6 +201,12 @@ class SynapseDatabase(RelationalDatabase):
         return self.synapse.execute_sql_query(query, include_row_data)
 
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
+
+        # synapse client can have some problems with <NA> values in string columns
+        for attribute in table_config.attributes:
+            if attribute.datatype == DBDatatype.TEXT and attribute.name in data.columns:
+                data[attribute.name].fillna("", inplace=True)
+
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
 
@@ -208,17 +214,17 @@ class SynapseDatabase(RelationalDatabase):
         if table_name not in table_names:
             self.synapse.add_table(table_name, table_config)
             synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
-            self.synapse.insert_table_rows(synapse_id, data)
             self.annotate_table(table_name, table_config)
+            self.synapse.insert_table_rows(synapse_id, data)
             return
 
         # table exists but has no columns/rows, both must be added
         current_columns = self.synapse.get_table_column_names(table_name)
         if len(list(current_columns)) == 0:
             synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
+            self.annotate_table(table_name, table_config)
             self.synapse.add_table_columns(synapse_id, table_config)
             self.synapse.insert_table_rows(synapse_id, data)
-            self.annotate_table(table_name, table_config)
             return
 
         # table exists and possibly has data, upsert method must be used
@@ -249,11 +255,6 @@ class SynapseDatabase(RelationalDatabase):
         self.synapse.set_entity_annotations(synapse_id, annotations)
 
     def get_db_config(self) -> DBConfig:
-        """Returns a DBConfig created from the current table annotations
-
-        Returns:
-            DBConfig: a DBConfig object
-        """
         table_names = self.synapse.get_table_names()
         result_list = [self.get_table_config(name) for name in table_names]
         config_list = [config for config in result_list if config is not None]
@@ -398,7 +399,8 @@ class SynapseDatabase(RelationalDatabase):
             pd.DataFrame: A dataframe with only rows where the primary key currently exists
         """
         data = data[[primary_key]]
-        table = self._create_primary_key_table(table_id, primary_key)
+        table = self.synapse.query_table(table_id, include_row_data=True)
+        table = table[["ROW_ID", "ROW_VERSION", primary_key]]
         merged_table = pd.merge(data, table, how="inner", on=primary_key)
         return merged_table
 
@@ -415,6 +417,6 @@ class SynapseDatabase(RelationalDatabase):
             pd.DataFrame: The table in pandas.DataFrame form with the primary key, ROW_ID, and
              ROW_VERSION columns
         """
-        query = f"SELECT {primary_key} FROM {table_id}"
-        table = self.execute_sql_query(query, include_row_data=True)
+        table = self.synapse.query_table(table_id, include_row_data=True)
+        table = table[["ROW_ID", "ROW_VERSION", primary_key]]
         return table
