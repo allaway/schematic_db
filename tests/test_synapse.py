@@ -2,7 +2,6 @@
 from typing import Any, Generator
 import pytest
 import pandas as pd
-import synapseclient as sc  # type: ignore
 from schematic_db.db_config.db_config import DBObjectConfig
 from schematic_db.synapse import Synapse, SynapseConfig
 
@@ -164,7 +163,7 @@ class TestSynapseGetters:
         obj = synapse_with_test_table_one
         synapse_id = obj.get_synapse_id_from_table_name("test_table_one")
         result = synapse_with_test_table_one.query_table(synapse_id)
-        assert list(result.columns) == list(table_one.columns)
+        assert sorted(result.columns) == sorted(table_one.columns)
         assert (
             result["pk_one_col"].values.tolist()
             == table_one["pk_one_col"].values.tolist()
@@ -292,7 +291,9 @@ class TestSynapseModifyColumns:
         """Testing for synapse.delete_all_table_columns()"""
         obj = synapse_with_filled_table_one
         synapse_id = obj.get_synapse_id_from_table_name("table_one")
-        assert obj.get_table_column_names("table_one") == list(table_one.columns)
+        assert sorted(obj.get_table_column_names("table_one")) == sorted(
+            table_one.columns
+        )
         obj.delete_all_table_columns(synapse_id)
         assert obj.get_table_column_names("table_one") == []
 
@@ -305,18 +306,16 @@ class TestSynapseModifyColumns:
         """Testing for synapse.add_table_columns()"""
         obj = synapse_with_filled_table_one
         synapse_id = obj.get_synapse_id_from_table_name("table_one")
-        assert obj.get_table_column_names("table_one") == list(table_one.columns)
-
-        with pytest.raises(
-            sc.core.exceptions.SynapseHTTPError,
-            match="400 Client Error",
-        ):
-            obj.add_table_columns(synapse_id, table_one_config)
+        assert sorted(obj.get_table_column_names("table_one")) == sorted(
+            table_one.columns
+        )
 
         obj.delete_all_table_columns(synapse_id)
         assert obj.get_table_column_names("table_one") == []
         obj.add_table_columns(synapse_id, table_one_config)
-        assert obj.get_table_column_names("table_one") == list(table_one.columns)
+        assert sorted(obj.get_table_column_names("table_one")) == sorted(
+            (table_one.columns)
+        )
 
 
 @pytest.mark.synapse

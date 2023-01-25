@@ -5,10 +5,16 @@ import pandas as pd
 import numpy as np
 import sqlalchemy as sa
 import sqlalchemy_utils.functions
+from sqlalchemy.inspection import inspect
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy import exc
-from schematic_db.db_config import DBObjectConfig, DBDatatype
-from schematic_db.db_config.db_config import DBAttributeConfig
+from schematic_db.db_config import (
+    DBConfig,
+    DBObjectConfig,
+    DBDatatype,
+    DBAttributeConfig,
+    DBForeignKey,
+)
 from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
@@ -19,7 +25,14 @@ MYSQL_DATATYPES = {
     DBDatatype.BOOLEAN: sa.Boolean,
 }
 
-PANDAS_DATATYPES = {DBDatatype.INT: "Int64", DBDatatype.BOOLEAN: "boolean"}
+CONFIG_DATATYPES = {
+    sa.String: DBDatatype.TEXT,
+    sa.VARCHAR: DBDatatype.TEXT,
+    sa.Date: DBDatatype.DATE,
+    sa.Integer: DBDatatype.INT,
+    sa.Float: DBDatatype.FLOAT,
+    sa.Boolean: DBDatatype.BOOLEAN,
+}
 
 
 class DataframeKeyError(Exception):
@@ -61,6 +74,48 @@ def create_foreign_key_column(
         nullable=True,
     )
     return col
+
+
+def create_foreign_key_configs(table_schema: sa.sql.schema.Table) -> list[DBForeignKey]:
+    """Creates a list of foreign key configs from a sqlalchemy table schema
+
+    Args:
+        table_schema (sa.sql.schema.Table): A sqlalchemy table schema
+
+    Returns:
+        list[DBForeignKey]: A list of foreign key configs
+    """
+    foreign_keys = inspect(table_schema).foreign_keys
+    return [
+        DBForeignKey(
+            name=key.parent.name,
+            foreign_object_name=key.column.table.name,
+            foreign_attribute_name=key.column.name,
+        )
+        for key in foreign_keys
+    ]
+
+
+def create_attribute_configs(
+    table_schema: sa.sql.schema.Table,
+) -> list[DBAttributeConfig]:
+    """Creates a list of attribute configs from a sqlalchemy table schema
+
+    Args:
+        table_schema (sa.sql.schema.Table):A sqlalchemy table schema
+
+    Returns:
+        list[DBAttributeConfig]: A list of foreign key configs
+    """
+    columns = table_schema.c
+    return [
+        DBAttributeConfig(
+            name=col.name,
+            datatype=CONFIG_DATATYPES[type(col.type)],
+            required=not col.nullable,
+        )
+        for col in columns
+    ]
 
 
 @dataclass
@@ -117,12 +172,40 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         for tbl in reversed(self.metadata.sorted_tables):
             self.drop_table(tbl)
 
+    def delete_all_tables(self) -> None:
+        self.drop_all_tables()
+
     def execute_sql_query(self, query: str) -> pd.DataFrame:
         result = self._execute_sql_statement(query).fetchall()
         table = pd.DataFrame(result)
         return table
 
+    def get_db_config(self) -> DBConfig:
+        table_names = self.get_table_names()
+        config_list = [self.get_table_config(name) for name in table_names]
+        return DBConfig(config_list)
+
+    def get_table_config(self, table_name: str) -> DBObjectConfig:
+        """Creates a table config from a sqlalchemy table schema
+
+        Args:
+            table_name (str): The name of the table
+
+        Returns:
+            DBObjectConfig: A config for the table
+        """
+        table_schema = self.metadata.tables[table_name]
+        primary_key = inspect(table_schema).primary_key.columns.values()[0].name
+
+        return DBObjectConfig(
+            name=table_name,
+            primary_key=primary_key,
+            foreign_keys=create_foreign_key_configs(table_schema),
+            attributes=create_attribute_configs(table_schema),
+        )
+
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
+
         table_names = self.get_table_names()
         table_name = table_config.name
         if table_name not in table_names:
@@ -176,24 +259,9 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
             with self.engine.connect().execution_options(autocommit=True) as conn:
                 conn.execute(statement)
 
-    def query_table(
-        self, table_name: str, table_config: DBObjectConfig
-    ) -> pd.DataFrame:
-        """Queries an entire table
-
-        Args:
-            table_name (str): The table to be queried
-            table_config (DBObjectConfig): The config for the table to be queried
-
-        Returns:
-            pd.DataFrame: The query result
-        """
+    def query_table(self, table_name: str) -> pd.DataFrame:
         query = f"SELECT * FROM {table_name};"
         table = self.execute_sql_query(query)
-        for att in table_config.attributes:
-            pandas_value = PANDAS_DATATYPES.get(att.datatype, None)
-            if pandas_value is not None:
-                table = table.astype({att.name: pandas_value})
         return table
 
     def _execute_sql_statement(self, statement: str) -> Any:

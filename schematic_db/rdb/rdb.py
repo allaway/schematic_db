@@ -1,7 +1,7 @@
 """RelationalDatabase"""
 from abc import ABC, abstractmethod
 import pandas as pd
-from schematic_db.db_config import DBObjectConfig
+from schematic_db.db_config import DBConfig, DBObjectConfig
 
 
 class UpdateDBTableError(Exception):
@@ -21,8 +21,24 @@ class RelationalDatabase(ABC):
     """An interface for relational database types"""
 
     @abstractmethod
+    def get_db_config(self) -> DBConfig:
+        """Returns a DBConfig created from the current table annotations
+
+        Returns:
+            DBConfig: a DBConfig object
+        """
+
+    @abstractmethod
     def drop_all_tables(self) -> None:
         """Drops all tables from the database"""
+
+    @abstractmethod
+    def delete_all_tables(self) -> None:
+        """
+        Deletes all tables from the database
+        This will be the same as self.drop_all_tables() in most specifications, but some like
+         SynapseDatabase drop preserves something like the Synapse ID where delete will not.
+        """
 
     @abstractmethod
     def execute_sql_query(self, query: str) -> pd.DataFrame:
@@ -32,6 +48,17 @@ class RelationalDatabase(ABC):
 
         Args:
             query (str): A SQL statement
+
+        Returns:
+            pd.DataFrame: The table
+        """
+
+    @abstractmethod
+    def query_table(self, table_name: str) -> pd.DataFrame:
+        """Queries a whole table
+
+        Args:
+            table_name (str): The name of the table
 
         Returns:
             pd.DataFrame: The table

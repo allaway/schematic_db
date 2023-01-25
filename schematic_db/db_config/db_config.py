@@ -3,6 +3,7 @@ These are a set of classes for defining a database table in a dialect agnostic w
 """
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 from sqlalchemy import ForeignKey
 
@@ -88,6 +89,8 @@ class DBObjectConfig:
     foreign_keys: list[DBForeignKey]
 
     def __post_init__(self) -> None:
+        self.attributes.sort(key=lambda x: x.name)
+        self.foreign_keys.sort(key=lambda x: x.name)
         self._check_attributes()
         self._check_primary_key()
         self._check_foreign_keys()
@@ -126,6 +129,17 @@ class DBObjectConfig:
             DBForeignKey: The foreign key asked for
         """
         return [key for key in self.foreign_keys if key.name == name][0]
+
+    def get_attribute_by_name(self, name: str) -> DBAttributeConfig:
+        """Returns the attribute
+
+        Args:
+            name (str): name of the attribute
+
+        Returns:
+            DBAttributeConfig: The DBAttributeConfig asked for
+        """
+        return [att for att in self.attributes if att.name == name][0]
 
     def _check_attributes(self) -> None:
         if len(self.attributes) == 0:
@@ -209,6 +223,14 @@ class DBConfig:
     def __post_init__(self) -> None:
         for config in self.configs:
             self._check_foreign_keys(config)
+
+    def __eq__(self, other: Any) -> bool:
+        """Overrides the default implementation"""
+        if isinstance(other, DBConfig):
+            self_configs = self.configs.copy().sort(key=lambda x: x.name)
+            other_configs = self.configs.copy().sort(key=lambda x: x.name)
+            return self_configs == other_configs
+        return False
 
     def get_dependencies(self, object_name: str) -> list[str]:
         """Gets the objects dependencies

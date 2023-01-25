@@ -1,8 +1,9 @@
 """Testing for Schema."""
-from typing import Generator, Any
+from typing import Generator
 import pytest
 import pandas as pd
 from schematic_db.db_config import (
+    DBConfig,
     DBForeignKey,
     DBAttributeConfig,
     DBDatatype,
@@ -15,6 +16,7 @@ from schematic_db.schema import (
     get_manifest_ids_for_object,
     get_dataset_ids_for_object,
     get_manifest,
+    get_manifest_datatypes,
 )
 
 
@@ -120,27 +122,34 @@ class TestAPIUtils:
                 test_synapse_asset_view_id,
             )
 
-
-@pytest.mark.fast
-class TestMockSchema:  # pylint: disable=too-few-public-methods
-    """Testing for Schema with schematic endpoint mocked"""
-
-    def test_init(self, mocker: Any) -> None:
-        """Testing for Schema.create_foreign_keys()"""
-        subgraph = [["Patient", "PatientID"], ["Patient", "Sex"]]
-        mocker.patch(
-            "schematic_db.schema.schema.get_graph_by_edge_type", return_value=subgraph
+    def test_get_manifest_datatypes(
+        self, secrets_dict: dict, test_synapse_asset_view_id: str
+    ) -> None:
+        """Testing for get_manifest_datatypes()"""
+        datatypes = get_manifest_datatypes(
+            secrets_dict["synapse"]["auth_token"],
+            "syn30988380",
+            test_synapse_asset_view_id,
         )
-        mocker.patch(
-            "schematic_db.schema.schema.get_project_manifests", return_value=[]
-        )
-        obj = Schema("url", "project_id", "asset_id", "token")
-        assert isinstance(obj, Schema)
+        assert isinstance(datatypes, dict)
 
 
 @pytest.mark.schematic
 class TestSchema:
     """Testing for Schema"""
+
+    def test_init(self, test_schema: Schema) -> None:
+        """Testing for Schema.__init__"""
+        obj = test_schema
+        for item in obj.manifest_configs:
+            assert isinstance(item, ManifestSynapseConfig)
+        config = obj.get_db_config()
+        assert isinstance(config, DBConfig)
+        assert config.get_config_names() == [
+            "Patient",
+            "Biospecimen",
+            "BulkRNA-seqAssay",
+        ]
 
     def test_create_attributes(self, test_schema: Schema) -> None:
         """Testing for Schema.attributes()"""
@@ -148,7 +157,7 @@ class TestSchema:
         assert obj.create_attributes("Patient") == [
             DBAttributeConfig(name="sex", datatype=DBDatatype.TEXT, required=True),
             DBAttributeConfig(
-                name="yearofBirth", datatype=DBDatatype.TEXT, required=False
+                name="yearofBirth", datatype=DBDatatype.INT, required=False
             ),
             DBAttributeConfig(
                 name="diagnosis", datatype=DBDatatype.TEXT, required=True
@@ -182,20 +191,10 @@ class TestSchema:
             )
         ]
 
-    def test_create_db_config(self, test_schema: Schema) -> None:
-        """Testing for Schema.create_db_config()"""
-        obj = test_schema
-        config = obj.create_db_config()
-        assert config.get_config_names() == [
-            "Patient",
-            "Biospecimen",
-            "BulkRNA-seqAssay",
-        ]
-
     def test_get_manifests(self, test_schema: Schema) -> None:
         """Testing for Schema.get_manifests()"""
         obj = test_schema
-        db_config = obj.create_db_config()
+        db_config = obj.get_db_config()
         patient_config = db_config.get_config_by_name("Patient")
         manifests = test_schema.get_manifests(patient_config)
         assert len(manifests) == 2

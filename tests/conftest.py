@@ -94,8 +94,19 @@ def fixture_mysql_config(secrets_dict: dict) -> Generator:
     )
 
 
-@pytest.fixture(scope="session", name="mysql")
-def fixture_mysql(mysql_config: MySQLConfig) -> Generator:
+@pytest.fixture(scope="session", name="postgres_config")
+def fixture_postgres_config(secrets_dict: dict) -> Generator:
+    """Yields a MYSQlConfig object"""
+    yield MySQLConfig(
+        username=secrets_dict["postgres"]["username"],
+        password=secrets_dict["postgres"]["password"],
+        host=secrets_dict["postgres"]["host"],
+        name="test_schema",
+    )
+
+
+@pytest.fixture(scope="session", name="mysql_database")
+def fixture_mysql_database(mysql_config: MySQLConfig) -> Generator:
     """
     Yields a MYSQL object
     """
@@ -104,19 +115,12 @@ def fixture_mysql(mysql_config: MySQLConfig) -> Generator:
     obj.drop_database()
 
 
-@pytest.fixture(scope="session", name="postgres")
-def fixture_postgres(secrets_dict: dict) -> Generator:
+@pytest.fixture(scope="session", name="postgres_database")
+def fixture_postgres_database(postgres_config: MySQLConfig) -> Generator:
     """
     Yields a Postgres object
     """
-    obj = PostgresDatabase(
-        MySQLConfig(
-            username=secrets_dict["postgres"]["username"],
-            password=secrets_dict["postgres"]["password"],
-            host=secrets_dict["postgres"]["host"],
-            name="test_schema",
-        )
-    )
+    obj = PostgresDatabase(postgres_config)
     yield obj
     obj.drop_database()
 
@@ -163,13 +167,6 @@ def fixture_synapse_test_query_store(secrets_dict: dict) -> Generator:
         )
     )
     yield obj
-
-
-@pytest.fixture(scope="session", name="test_query_csv_path")
-def fixture_test_query_csv_path() -> Generator:
-    """Yields a path to a file of test SQL queries for the test schema"""
-    path = os.path.join(DATA_DIR, "test_queries.csv")
-    yield path
 
 
 # other test objects ----------------------------------------------------------
@@ -370,10 +367,10 @@ def fixture_table_three_config() -> Generator:
                 name="pk_zero_col", datatype=DBDatatype.TEXT, required=True
             ),
             DBAttributeConfig(
-                name="pk_one_col", datatype=DBDatatype.TEXT, required=True
+                name="pk_one_col", datatype=DBDatatype.TEXT, required=False
             ),
             DBAttributeConfig(
-                name="pk_two_col", datatype=DBDatatype.TEXT, required=True
+                name="pk_two_col", datatype=DBDatatype.TEXT, required=False
             ),
             DBAttributeConfig(
                 name="string_three_col", datatype=DBDatatype.TEXT, required=False

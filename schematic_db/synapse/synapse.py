@@ -1,8 +1,8 @@
 """Synapse"""
-import time
 from dataclasses import dataclass
 from functools import partial
 from typing import Any
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 import synapseclient as sc  # type: ignore
 import pandas as pd  # type: ignore
 from schematic_db.db_config import DBObjectConfig, DBDatatype
@@ -67,7 +67,7 @@ def create_synapse_column(name: str, datatype: DBDatatype) -> sc.Column:
     return func(name=name)
 
 
-class Synapse:
+class Synapse:  # pylint: disable=too-many-public-methods
     """
     The Synapse class handles interactions with a project in Synapse.
     """
@@ -150,18 +150,21 @@ class Synapse:
         tables = self._get_tables()
         return [table["name"] for table in tables if table["id"] == synapse_id][0]
 
-    def query_table(self, synapse_id: str) -> pd.DataFrame:
+    def query_table(
+        self, synapse_id: str, include_row_data: bool = False
+    ) -> pd.DataFrame:
         """Queries a whole table
 
         Args:
             synapse_id (str): The Synapse id of the table to delete
             table_config (DBObjectConfig): The config for the table
+            include_row_data (bool): Include row_id and row_etag. Defaults to False.
 
         Returns:
             pd.DataFrame: The queried table
         """
         query = f"SELECT * FROM {synapse_id}"
-        return self.execute_sql_query(query)
+        return self.execute_sql_query(query, include_row_data)
 
     def execute_sql_query(
         self, query: str, include_row_data: bool = False
@@ -245,27 +248,9 @@ class Synapse:
         else:
             synapse_id = self.get_synapse_id_from_table_name(table_name)
 
-            # deletes all current rows
-            results = self.syn.tableQuery(f"select * from {synapse_id}")
-            self.syn.delete(results)
-
-            # wait for Synapse to catch up
-            time.sleep(5)
-
-            # removes all current columns
-            current_table = self.syn.get(synapse_id)
-            current_columns = self.syn.getTableColumns(current_table)
-            for col in current_columns:
-                current_table.removeColumn(col)
-
-            # adds new columns to schema
-            new_columns = sc.as_table_columns(table)
-            for col in new_columns:
-                current_table.addColumn(col)
-            self.syn.store(current_table)
-
-            # inserts new rows
-            synapse_id = self.get_synapse_id_from_table_name(table_name)
+            self.delete_all_table_rows(synapse_id)
+            self.delete_all_table_columns(synapse_id)
+            self.add_table_columns2(synapse_id, table)
             self.insert_table_rows(synapse_id, table)
 
     def insert_table_rows(self, synapse_id: str, data: pd.DataFrame) -> None:
@@ -304,6 +289,11 @@ class Synapse:
             )
         self.syn.delete(sc.Table(synapse_id, data))
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_fixed(1),
+        retry=retry_if_exception_type(sc.core.exceptions.SynapseHTTPError),
+    )
     def delete_all_table_rows(self, synapse_id: str) -> None:
         """Deletes all rows in the Synapse table
 
@@ -315,8 +305,12 @@ class Synapse:
         if len(list(columns)) > 0:
             results = self.syn.tableQuery(f"select * from {synapse_id}")
             self.syn.delete(results)
-            time.sleep(5)
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_fixed(1),
+        retry=retry_if_exception_type(sc.core.exceptions.SynapseHTTPError),
+    )
     def delete_all_table_columns(self, synapse_id: str) -> None:
         """Deletes all columns in the Synapse table
 
@@ -328,8 +322,12 @@ class Synapse:
         for col in columns:
             table.removeColumn(col)
         self.syn.store(table)
-        time.sleep(5)
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_fixed(1),
+        retry=retry_if_exception_type(sc.core.exceptions.SynapseHTTPError),
+    )
     def add_table_columns(self, synapse_id: str, table_config: DBObjectConfig) -> None:
         """Add columns to synapse table from config
 
@@ -346,7 +344,24 @@ class Synapse:
         for col in new_columns:
             table.addColumn(col)
         self.syn.store(table)
-        time.sleep(5)
+
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_fixed(1),
+        retry=retry_if_exception_type(sc.core.exceptions.SynapseHTTPError),
+    )
+    def add_table_columns2(self, synapse_id: str, data: pd.DataFrame) -> None:
+        """Add columns to synapse table from dataframe
+
+        Args:
+            synapse_id (str): The Synapse id of the table to add the columns to
+            data (pd.DataFrame): The dataframe the columns will be made from
+        """
+        current_table = self.syn.get(synapse_id)
+        new_columns = sc.as_table_columns(data)
+        for col in new_columns:
+            current_table.addColumn(col)
+        self.syn.store(current_table)
 
     def get_entity_annotations(self, synapse_id: str) -> sc.Annotations:
         """Gets the annotations for the Synapse entity

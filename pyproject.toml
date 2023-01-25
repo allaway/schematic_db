@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "schematic_db"
-version = "0.0.1"
+version = "0.0.4"
 description = ""
 authors = ["andrewelamb <andrewelamb@gmail.com>"]
 
@@ -20,6 +20,7 @@ pylint = "^2.15.4"
 mypy = "^0.982"
 pytest-mock = "^3.10.0"
 psycopg2 = "^2.9.5"
+tenacity = "^8.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
