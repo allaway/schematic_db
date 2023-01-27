@@ -99,7 +99,7 @@ jobs:
       # things like Django apps don't need this. But it's a good idea since it fully-exercises the
       # pyproject.toml and makes that if you add things like console-scripts at some point that
       # they'll be installed and working.
-      - run: poetry install --no-interaction
+      - run: poetry install --no-interaction --all-extras
 
       - name: Static typing with mypy
         run: |
