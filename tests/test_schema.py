@@ -17,6 +17,7 @@ from schematic_db.schema import (
     get_dataset_ids_for_object,
     get_manifest,
     get_manifest_datatypes,
+    get_node_validation_rules
 )
 
 
@@ -132,6 +133,11 @@ class TestAPIUtils:
             test_synapse_asset_view_id,
         )
         assert isinstance(datatypes, dict)
+
+    def test_get_node_validation_rules(self, test_schema_json_url: str) -> None:
+        """Testing for get_node_validation_rules"""
+        rules = get_node_validation_rules(test_schema_json_url, "Family History")
+        assert isinstance(rules, list)
 
 
 @pytest.mark.schematic
