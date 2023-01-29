@@ -17,7 +17,7 @@ from schematic_db.schema import (
     get_dataset_ids_for_object,
     get_manifest,
     get_manifest_datatypes,
-    get_node_validation_rules
+    get_node_validation_rules,
 )
 
 
@@ -165,6 +165,7 @@ class TestSchema:
             DBAttributeConfig(
                 name="yearofBirth", datatype=DBDatatype.INT, required=False
             ),
+            DBAttributeConfig(name="weight", datatype=DBDatatype.FLOAT, required=False),
             DBAttributeConfig(
                 name="diagnosis", datatype=DBDatatype.TEXT, required=True
             ),
@@ -175,6 +176,15 @@ class TestSchema:
             ),
             DBAttributeConfig(
                 name="tissueStatus", datatype=DBDatatype.TEXT, required=True
+            ),
+        ]
+        assert obj.create_attributes("BulkRNA-seqAssay") == [
+            DBAttributeConfig(
+                name="biospecimenId", datatype=DBDatatype.TEXT, required=True
+            ),
+            DBAttributeConfig(name="filename", datatype=DBDatatype.TEXT, required=True),
+            DBAttributeConfig(
+                name="fileFormat", datatype=DBDatatype.TEXT, required=True
             ),
         ]
 
