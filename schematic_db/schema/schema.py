@@ -19,17 +19,9 @@ from .api_utils import (
     get_project_manifests,
     get_manifest,
     is_node_required,
-    get_manifest_datatypes,
+    get_node_validation_rules,
     ManifestSynapseConfig,
 )
-
-DATATYPES = {
-    "string": DBDatatype.TEXT,
-    "object": DBDatatype.TEXT,
-    "Int64": DBDatatype.INT,
-    "float64": DBDatatype.FLOAT,
-    "datetime64[ns]": DBDatatype.DATE,
-}
 
 
 class NoAttributesWarning(Warning):
@@ -257,10 +249,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         """
         # the names of the attributes to be created, in label(not display) form
         attribute_names = find_class_specific_properties(self.schema_url, object_name)
-        datatype_dict = self.create_datatype_dict(object_name)
-        attributes = [
-            self.create_attribute(name, datatype_dict) for name in attribute_names
-        ]
+        attributes = [self.create_attribute(name) for name in attribute_names]
         # Some components will not have any attributes for various reasons
         if not attributes:
             warnings.warn(
@@ -271,48 +260,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             return None
         return attributes
 
-    def create_datatype_dict(self, object_name: str) -> dict[str, str]:
-        """Creates a dictionary of attributes in label form , and their datatypes
-
-        Args:
-            object_name (str): The name of the object to get the datatypes for
-
-        Returns:
-            dict[str, str]: A dictionary of attributes and their datatypes
-        """
-        manifest_ids = get_manifest_ids_for_object(
-            object_name, self.get_manifest_configs()
-        )
-        # creates a list of dictionaries and their datatypes, one for each manifest
-        datatype_dicts = [
-            get_manifest_datatypes(
-                self.synapse_input_token, id, self.synapse_asset_view_id
-            )
-            for id in manifest_ids
-        ]
-        # combines all the dictionaries into one
-        datatype_dict: dict[str, str] = {}
-        for d_dict in datatype_dicts:
-            for attribute, new_attribute_type in d_dict.items():
-                current_attribute_type = datatype_dict.get(attribute)
-                if current_attribute_type is None:
-                    datatype_dict[attribute] = new_attribute_type
-                elif current_attribute_type == new_attribute_type:
-                    pass
-                # when there is a conflict between different manifests, cast as string
-                else:
-                    datatype_dict[attribute] = "string"
-
-        # replaces the display names with labels
-        datatype_dict = {
-            get_property_label_from_display_name(self.schema_url, k): v
-            for (k, v) in datatype_dict.items()
-        }
-        return datatype_dict
-
-    def create_attribute(
-        self, name: str, datatypes: dict[str, str]
-    ) -> DBAttributeConfig:
+    def create_attribute(self, name: str) -> DBAttributeConfig:
         """Creates an attribute
 
         Args:
@@ -322,9 +270,18 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             DBAttributeConfig: The DBAttributeConfig for the attribute
         """
+        rules = get_node_validation_rules(self.schema_url, name)
+        if "str" in rules:
+            datatype = DBDatatype.TEXT
+        if "float" in rules or "num" in rules:
+            datatype = DBDatatype.FLOAT
+        elif "int" in rules:
+            datatype = DBDatatype.INT
+        else:
+            datatype = DBDatatype.TEXT
         return DBAttributeConfig(
             name=name,
-            datatype=DATATYPES[datatypes.get(name, "string")],
+            datatype=datatype,
             required=is_node_required(self.schema_url, name),
         )
 

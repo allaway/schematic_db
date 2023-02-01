@@ -78,7 +78,7 @@ def fixture_test_schema_json_url() -> Generator:
     """Yields the url for the main test schema json"""
     url = (
         "https://raw.githubusercontent.com/Sage-Bionetworks/"
-        "schematic/develop-rdb-merge-develop/tests/data/example.rdb.model.jsonld"
+        "Schematic-DB-Test-Schemas/main/test_schema.jsonld"
     )
     yield url
 

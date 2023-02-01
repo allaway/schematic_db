@@ -11,7 +11,7 @@ from schematic_db.rdb import (
 )
 from schematic_db.synapse import SynapseConfig
 from schematic_db.schema import Schema
-from schematic_db.rdb_updater import RDBUpdater, ColumnCastingWarning
+from schematic_db.rdb_updater import RDBUpdater
 from schematic_db.query_store import QueryStore, SynapseQueryStore
 from schematic_db.rdb_queryer import RDBQueryer
 from schematic_db.db_config import DBConfig
@@ -236,13 +236,12 @@ class TestRDBUpdater:
         self, rdb_updater_postgres: RDBUpdater, gff_database_table_names: list[str]
     ) -> None:
         """Builds and updates gff database in Postgres"""
-        with pytest.warns(ColumnCastingWarning):
-            obj = rdb_updater_postgres
-            assert obj.rdb.get_table_names() == []
-            obj.build_database()
-            assert obj.rdb.get_table_names() == gff_database_table_names
-            obj.update_database()
-            assert obj.rdb.get_table_names() == gff_database_table_names
+        obj = rdb_updater_postgres
+        assert obj.rdb.get_table_names() == []
+        obj.build_database()
+        assert obj.rdb.get_table_names() == gff_database_table_names
+        obj.update_database()
+        assert obj.rdb.get_table_names() == gff_database_table_names
 
     def test_build_and_update_synapse(
         self, rdb_updater_synapse: RDBUpdater, gff_database_table_names: list[str]
