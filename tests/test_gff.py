@@ -10,7 +10,7 @@ from schematic_db.rdb import (
     PostgresDatabase,
 )
 from schematic_db.synapse import SynapseConfig
-from schematic_db.schema import Schema
+from schematic_db.schema import Schema, SchemaConfig
 from schematic_db.rdb_updater import RDBUpdater
 from schematic_db.query_store import QueryStore, SynapseQueryStore
 from schematic_db.rdb_queryer import RDBQueryer
@@ -111,12 +111,13 @@ def fixture_schema(
         "https://raw.githubusercontent.com/nf-osi/"
         "nf-research-tools-schema/main/nf-research-tools.jsonld"
     )
-    obj = Schema(
+    config = SchemaConfig(
         schema_url,
         gff_synapse_project_id,
         gff_synapse_asset_view_id,
         secrets_dict["synapse"]["auth_token"],
     )
+    obj = Schema(config)
     yield obj
 
 
