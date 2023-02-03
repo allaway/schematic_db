@@ -154,7 +154,7 @@ class TestSchema:
         assert config.get_config_names() == [
             "Patient",
             "Biospecimen",
-            "BulkRNA-seqAssay",
+            "BulkRnaSeq",
         ]
 
     def test_create_attributes(self, test_schema: Schema) -> None:
@@ -178,7 +178,7 @@ class TestSchema:
                 name="tissueStatus", datatype=DBDatatype.TEXT, required=True
             ),
         ]
-        assert obj.create_attributes("BulkRNA-seqAssay") == [
+        assert obj.create_attributes("BulkRnaSeq") == [
             DBAttributeConfig(
                 name="biospecimenId", datatype=DBDatatype.TEXT, required=True
             ),
@@ -199,7 +199,7 @@ class TestSchema:
                 foreign_attribute_name="patientId",
             )
         ]
-        assert obj.create_foreign_keys("BulkRNA-seqAssay") == [
+        assert obj.create_foreign_keys("BulkRnaSeq") == [
             DBForeignKey(
                 name="biospecimenId",
                 foreign_object_name="Biospecimen",

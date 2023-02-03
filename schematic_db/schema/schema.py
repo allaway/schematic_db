@@ -1,6 +1,7 @@
 """Schema class"""
 
 from typing import Optional, Callable, Union
+from dataclasses import dataclass
 import warnings
 import networkx
 import pandas as pd
@@ -112,6 +113,24 @@ def get_dataset_ids_for_object(
     ]
 
 
+@dataclass
+class SchemaConfig:
+    """
+    A config for a Schema.
+    Properties:
+        schema_url (str): A url to the jsonld schema file
+        synapse_project_id (str): The synapse id to the project where the manifests are stored.
+        synapse_asset_view_id (str): The synapse id to the asset view that tracks the manifests.
+        synapse_input_token (str): A synapse token with download permissions for both the
+         synapse_project_id and synapse_asset_view_id
+    """
+
+    schema_url: str
+    synapse_project_id: str
+    synapse_asset_view_id: str
+    synapse_input_token: str
+
+
 class Schema:  # pylint: disable=too-many-instance-attributes
     """
     The Schema class interacts with the Schematic API to create a DBConfig
@@ -120,10 +139,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        schema_url: str,
-        synapse_project_id: str,
-        synapse_asset_view_id: str,
-        synapse_input_token: str,
+        config: SchemaConfig,
         primary_key_getter: Callable[[str], str] = get_key_attribute,
         foreign_key_getter: Callable[[str], str] = get_key_attribute,
     ) -> None:
@@ -135,7 +151,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         determined from the objects name, and that the primary_key_getter will do that.
 
         By default get_key_attribute is used for primary keys. This assumes that all primary keys
-        are of the form "<object_name>_id". For example if the object was named "patient" then the
+        are of the from "<object_name>_id". For example if the object was named "patient" then the
         primary key would be named "patient_id".
 
         Also by default get_key_attribute is used for foreign keys. This assumes that all foreign
@@ -145,23 +161,19 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         to be different to reflect that.
 
         Args:
-            schema_url (str): A url to the jsonld schema file
-            synapse_project_id (str): The synapse id to the project where the manifests are stored.
-            synapse_asset_view_id (str): The synapse id to the asset view that tracks the manifests.
-            synapse_input_token (str): A synapse token with download permissions for both the
-                synapse_project_id and synapse_asset_view_id
+            config(SchemaConfig): A config object
             primary_key_getter (Callable[[str], str], optional):
                 Defaults to get_key_attribute.
             foreign_key_getter (Callable[[str], str], optional):
                 Defaults to get_key_attribute.
         """
-        self.schema_url = schema_url
-        self.schema_graph = self.create_schema_graph()
-        self.synapse_project_id = synapse_project_id
-        self.synapse_asset_view_id = synapse_asset_view_id
-        self.synapse_input_token = synapse_input_token
+        self.schema_url = config.schema_url
+        self.synapse_project_id = config.synapse_project_id
+        self.synapse_asset_view_id = config.synapse_asset_view_id
+        self.synapse_input_token = config.synapse_input_token
         self.primary_key_getter = primary_key_getter
         self.foreign_key_getter = foreign_key_getter
+        self.schema_graph = self.create_schema_graph()
         self.update_manifest_configs()
         self.update_db_config()
 
