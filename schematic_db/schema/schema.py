@@ -139,7 +139,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        config=SchemaConfig,
+        config:SchemaConfig,
         primary_key_getter: Callable[[str], str] = get_key_attribute,
         foreign_key_getter: Callable[[str], str] = get_key_attribute,
     ) -> None:
