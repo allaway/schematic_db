@@ -1,6 +1,6 @@
 # adapted from : https://jacobian.org/til/github-actions-poetry/
 
-name: Test schematic_db
+name: Unit testing
 on: [pull_request]
 
 jobs:
