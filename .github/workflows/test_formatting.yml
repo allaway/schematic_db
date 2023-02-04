@@ -1,6 +1,6 @@
 # adapted from : https://jacobian.org/til/github-actions-poetry/
 
-name: Test formatting
+name: Test black, mypy, pylint
 on: [pull_request]
 
 jobs:
