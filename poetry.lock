@@ -143,17 +143,6 @@ dev = ["PyTest", "PyTest (<5)", "PyTest-Cov", "PyTest-Cov (<2.6)", "bump2version
 
 [[package]]
 name = "dill"
-version = "0.3.5.1"
-description = "serialize all of python"
-category = "main"
-optional = true
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*"
-
-[package.extras]
-graph = ["objgraph (>=1.7.2)"]
-
-[[package]]
-name = "dill"
 version = "0.3.6"
 description = "serialize all of python"
 category = "main"
@@ -229,7 +218,7 @@ name = "jinja2"
 version = "3.1.2"
 description = "A very fast and expressive template engine."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -284,7 +273,7 @@ name = "markupsafe"
 version = "2.1.1"
 description = "Safely add untrusted strings to HTML/XML markup."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [[package]]
@@ -403,7 +392,7 @@ name = "pdoc"
 version = "12.1.0"
 description = "API Documentation for Python Projects"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -466,7 +455,7 @@ name = "pygments"
 version = "2.12.0"
 description = "Pygments is a syntax highlighting package written in Python."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [[package]]
@@ -522,7 +511,7 @@ name = "pytest-mock"
 version = "3.10.0"
 description = "Thin-wrapper around the mock package for easier use with pytest"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -687,7 +676,7 @@ name = "tenacity"
 version = "8.1.0"
 description = "Retry code until it succeeds"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.extras]
@@ -762,14 +751,17 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 black = ["black"]
 mypy = ["mypy"]
 mysql = ["mysqlclient"]
+pdoc = ["pdoc"]
 postgres = ["psycopg2-binary"]
 pylint = ["pylint"]
+pytest-mock = ["pytest-mock"]
 synapse = ["synapseclient"]
+tenacity = ["tenacity"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "4e55fde5191a615966e989a2c61e09581bc1c9d9c9ddfc00a10b7b0d8cebeaa8"
+content-hash = "2c7ed4cfa2f5e863c87f7476d62f811d0d775bcea7a7ab51c3868c36059b842f"
 
 [metadata.files]
 astroid = [
@@ -921,8 +913,6 @@ deprecated = [
     {file = "Deprecated-1.2.13.tar.gz", hash = "sha256:43ac5335da90c31c24ba028af536a91d41d53f9e6901ddb021bcc572ce44e38d"},
 ]
 dill = [
-    {file = "dill-0.3.5.1-py2.py3-none-any.whl", hash = "sha256:33501d03270bbe410c72639b350e941882a8b0fd55357580fbc873fba0c59302"},
-    {file = "dill-0.3.5.1.tar.gz", hash = "sha256:d75e41f3eff1eee599d738e76ba8f4ad98ea229db8b085318aa2b3333a208c86"},
     {file = "dill-0.3.6-py3-none-any.whl", hash = "sha256:a07ffd2351b8c678dfc4a856a3005f8067aea51d6ba6c700796a4d9e280f39f0"},
     {file = "dill-0.3.6.tar.gz", hash = "sha256:e5db55f3687856d8fbdab002ed78544e1c4559a130302693d839dfe8f93f2373"},
 ]
