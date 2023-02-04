@@ -47,7 +47,7 @@ jobs:
           sudo systemctl start postgresql.service
           sudo -u postgres psql -c "ALTER USER $username PASSWORD '$password';"
 
-      # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
+ # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
       # reference the matrix python version here.
       - uses: actions/setup-python@v2
         with:
@@ -62,7 +62,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.local
-          key: poetry-1.2.0rc1
+          key: poetry-1.2.0rc1-0
 
       # Install Poetry. You could do this manually, or there are several actions that do this.
       # `snok/install-poetry` seems to be minimal yet complete, and really just calls out to
