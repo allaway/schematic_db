@@ -1,64 +1,24 @@
 # adapted from : https://jacobian.org/til/github-actions-poetry/
 
-name: Unit testing
+name: Test black, mypy, pylint
 on: [pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 1
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
 
     steps:
-
       - uses: actions/checkout@v2
 
-      # Create the secrets config file
-      - name: create secrets config
-        run: |
-          import yaml
-          dict = {
-            "synapse": {
-              "username": "${{secrets.SYNAPSE_LOGIN}}",
-              "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}"
-            },
-            "mysql": {
-              "username": "${{secrets.MYSQL_USERNAME}}",
-              "password": "${{secrets.MYSQL_PASSWORD}}",
-              "host": "${{secrets.MYSQL_HOST}}"
-            },
-            "postgres": {
-                "username": "${{secrets.POSTGRES_USERNAME}}",
-                "password": "${{secrets.POSTGRES_PASSWORD}}",
-                "host": "${{secrets.POSTGRES_HOST}}"
-            }
-          }
-          with open('tests/data/secrets.yml', 'w') as file:
-              yaml.dump(dict, file)
-        shell: python
-
-      - name: Set up MySQL
-        run: |
-          sudo /etc/init.d/mysql start
-
-      - name: Set up Postgres
-        env:
-          username: ${{secrets.POSTGRES_USERNAME}}
-          password: ${{secrets.POSTGRES_PASSWORD}}
-        run: |
-          sudo apt install postgresql postgresql-contrib
-          sudo systemctl start postgresql.service
-          sudo -u postgres psql -c "ALTER USER $username PASSWORD '$password';"
-
- # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
+      # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
       # reference the matrix python version here.
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-
 
       # Cache the installation of Poetry itself, e.g. the next step. This prevents the workflow
       # from installing Poetry every time, which can be slow. Note the use of the Poetry version
@@ -108,6 +68,16 @@ jobs:
       # they'll be installed and working.
       - run: poetry install --no-interaction --all-extras
 
-      - name: pytest
-        run: poetry run pytest -vvs -m "not schematic"
+      - name: Static typing with mypy
+        run: |
+          mkdir .mypy_cache
+          poetry run mypy --install-types --non-interactive ./
+          poetry run mypy --disallow-untyped-defs .
 
+      - name: Code formatting with black
+        uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+
+      - name: Code formatting with pylint
+        run: poetry run pylint schematic_db/* tests/*
