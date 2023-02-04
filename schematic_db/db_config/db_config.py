@@ -67,7 +67,9 @@ class ConfigAttributeError(Exception):
 class ConfigKeyError(Exception):
     """ConfigKeyError"""
 
-    def __init__(self, message: str, object_name: str, key: Optional[str] = None) -> None:
+    def __init__(
+        self, message: str, object_name: str, key: Optional[str] = None
+    ) -> None:
         self.message = message
         self.object_name = object_name
         self.key = key
