@@ -19,8 +19,8 @@ networkx = "^2.8.6"
 pylint = "^2.15.4"
 mypy = "^0.982"
 pytest-mock = "^3.10.0"
-tenacity = "^8.1.0"
 psycopg2-binary = {version = "^2.9.5", optional = true}
+tenacity = "^8.1.0"
 
 [tool.poetry.extras]
 mysql = ["mysqlclient"]
