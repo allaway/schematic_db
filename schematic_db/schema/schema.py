@@ -29,8 +29,9 @@ SCHEMATIC_TYPE_DATATYPES = {
     "float": DBDatatype.FLOAT,
     "num": DBDatatype.FLOAT,
     "int": DBDatatype.INT,
-    "date":DBDatatype.DATE,
+    "date": DBDatatype.DATE,
 }
+
 
 class NoAttributesWarning(Warning):
     """
@@ -65,6 +66,7 @@ class ManifestMissingPrimaryKeyError(Exception):
             f"dataset_id:{self.dataset_id}; primary keys:{self.primary_key}; "
             f"manifest columns:{self.manifest_columns}"
         )
+
 
 class MoreThanOneTypeRule(Exception):
     """Raised when an attribute has more than one validation type rule"""
