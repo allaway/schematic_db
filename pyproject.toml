@@ -17,12 +17,6 @@ synapseclient = {version = "^2.7.0", optional = true}
 psycopg2-binary = {version = "^2.9.5", optional = true}
 
 [tool.poetry.extras]
-pytest-mock = ["pytest-mock"]
-pdoc = ["pdoc"]
-tenacity = ["tenacity"]
-pylint = ["pylint"]
-mypy = ["mypy"]
-black = ["black"]
 mysql = ["mysqlclient"]
 postgres = ["psycopg2-binary"]
 synapse = ["synapseclient"]

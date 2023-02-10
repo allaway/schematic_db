@@ -733,20 +733,14 @@ docs = ["jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)
 testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
 
 [extras]
-black = []
-mypy = []
 mysql = ["mysqlclient"]
-pdoc = []
 postgres = ["psycopg2-binary"]
-pylint = []
-pytest-mock = []
 synapse = ["synapseclient"]
-tenacity = []
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "db4c070d8a5532bbbaaea783cddf3a94a89deb3945f716a7f02cb1567864dbe0"
+content-hash = "93ee8af0b48be92e4033e0224aa61a11dc6a3045a1357adb97170308ce61206b"
 
 [metadata.files]
 astroid = [
