@@ -191,6 +191,14 @@ class Schema:  # pylint: disable=too-many-instance-attributes
 
         Args:
             config(SchemaConfig): A config object
+            database_config: (Optional[dict[str, dict[str, Any]]]):
+             {
+                "<table_name1>": {
+                    "<attribute_name1>": {
+                        "index": <bool>
+                    }
+                }
+             }
             primary_key_getter (Callable[[str], str], optional):
                 Defaults to get_key_attribute.
             foreign_key_getter (Callable[[str], str], optional):
@@ -293,6 +301,12 @@ class Schema:  # pylint: disable=too-many-instance-attributes
 
         Args:
             object_name (str): The name of the object to create the attributes for
+            db_obj_config: Optional[dict[str, dict[str, Any]]]:
+             {
+                "<attribute_name1>": {
+                    "index": <bool>
+                }
+             }
 
         Returns:
             Union[list[DBAttributeConfig], None]: A list of attributes in DBAttributeConfig form
@@ -319,7 +333,12 @@ class Schema:  # pylint: disable=too-many-instance-attributes
 
         Args:
             name (str): The name of the attribute
-            datatypes (dict[str, str]): A dictionary of attributes and their types
+            db_obj_config: Optional[dict[str, dict[str, Any]]]:
+             {
+                "<attribute_name1>": {
+                    "index": <bool>
+                }
+             }
 
         Returns:
             DBAttributeConfig: The DBAttributeConfig for the attribute
