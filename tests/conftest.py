@@ -164,7 +164,8 @@ def fixture_test_schema(
         test_synapse_asset_view_id,
         secrets_dict["synapse"]["auth_token"],
     )
-    obj = Schema(config)
+    database_config = {"BulkRnaSeq": {}, "Patient": {"sex": {"index": True}}}
+    obj = Schema(config, database_config=database_config)
     yield obj
 
 

@@ -1,6 +1,6 @@
 """Schema class"""
 
-from typing import Optional, Callable, Union
+from typing import Optional, Callable, Union, Any
 from dataclasses import dataclass
 import warnings
 import networkx
@@ -248,7 +248,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
               otherwise None.
         """
         # Check if object has an optional attributes:
-        if self.database_config and self.database_config[object_name]:
+        if self.database_config and object_name in self.database_config:
             db_obj_config = self.database_config[object_name]
         else:
             db_obj_config = None
@@ -285,7 +285,9 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         )
 
     def create_attributes(
-        self, object_name: str, db_obj_config: Optional[dict[str, str]] = None
+        self,
+        object_name: str,
+        db_obj_config: Optional[dict[str, dict[str, Any]]] = None,
     ) -> Union[list[DBAttributeConfig], None]:
         """Create the attributes for the object
 
@@ -311,7 +313,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         return attributes
 
     def create_attribute(
-        self, name: str, db_obj_config: Optional[dict[str, str]] = None
+        self, name: str, db_obj_config: Optional[dict[str, dict[str, Any]]] = None
     ) -> DBAttributeConfig:
         """Creates an attribute
 
@@ -322,8 +324,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             DBAttributeConfig: The DBAttributeConfig for the attribute
         """
-
-        if db_obj_config and db_obj_config[name] and db_obj_config[name]["index"]:
+        if db_obj_config and name in db_obj_config and "index" in db_obj_config[name]:
             index = db_obj_config[name]["index"]
         else:
             index = False

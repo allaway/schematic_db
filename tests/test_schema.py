@@ -161,31 +161,54 @@ class TestSchema:
         """Testing for Schema.attributes()"""
         obj = test_schema
         assert obj.create_attributes("Patient") == [
-            DBAttributeConfig(name="sex", datatype=DBDatatype.TEXT, required=True),
             DBAttributeConfig(
-                name="yearofBirth", datatype=DBDatatype.INT, required=False
+                name="sex", datatype=DBDatatype.TEXT, required=True, index=False
+            ),
+            DBAttributeConfig(
+                name="yearofBirth", datatype=DBDatatype.INT, required=False, index=False
             ),
             DBAttributeConfig(name="weight", datatype=DBDatatype.FLOAT, required=False),
             DBAttributeConfig(
-                name="diagnosis", datatype=DBDatatype.TEXT, required=True
+                name="diagnosis", datatype=DBDatatype.TEXT, required=True, index=False
+            ),
+            DBAttributeConfig(name="date", datatype=DBDatatype.DATE, required=False),
+        ]
+        assert obj.create_attributes(
+            "Patient", db_obj_config={"sex": {"index": True}}
+        ) == [
+            DBAttributeConfig(
+                name="sex", datatype=DBDatatype.TEXT, required=True, index=True
+            ),
+            DBAttributeConfig(
+                name="yearofBirth", datatype=DBDatatype.INT, required=False, index=False
+            ),
+            DBAttributeConfig(name="weight", datatype=DBDatatype.FLOAT, required=False),
+            DBAttributeConfig(
+                name="diagnosis", datatype=DBDatatype.TEXT, required=True, index=False
             ),
             DBAttributeConfig(name="date", datatype=DBDatatype.DATE, required=False),
         ]
         assert obj.create_attributes("Biospecimen") == [
             DBAttributeConfig(
-                name="patientId", datatype=DBDatatype.TEXT, required=True
+                name="patientId", datatype=DBDatatype.TEXT, required=True, index=False
             ),
             DBAttributeConfig(
-                name="tissueStatus", datatype=DBDatatype.TEXT, required=True
+                name="tissueStatus",
+                datatype=DBDatatype.TEXT,
+                required=True,
+                index=False,
             ),
         ]
         assert obj.create_attributes("BulkRnaSeq") == [
             DBAttributeConfig(
-                name="biospecimenId", datatype=DBDatatype.TEXT, required=True
+                name="biospecimenId",
+                datatype=DBDatatype.TEXT,
+                required=True,
+                index=False,
             ),
             DBAttributeConfig(name="filename", datatype=DBDatatype.TEXT, required=True),
             DBAttributeConfig(
-                name="fileFormat", datatype=DBDatatype.TEXT, required=True
+                name="fileFormat", datatype=DBDatatype.TEXT, required=True, index=False
             ),
         ]
 
