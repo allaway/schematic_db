@@ -24,7 +24,8 @@ class DBAttributeConfig:
 
     name: str
     datatype: DBDatatype
-    required: bool
+    required: bool = False
+    index: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.datatype, DBDatatype):
@@ -43,7 +44,7 @@ class DBForeignKey:
         """Returns the foreign key in dict form
 
         Returns:
-            dict[str, str]: A dictionary of the foriegn key attributes
+            dict[str, str]: A dictionary of the foreign key attributes
         """
         return {
             "name": self.name,

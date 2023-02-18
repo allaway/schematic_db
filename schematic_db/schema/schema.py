@@ -165,9 +165,10 @@ class Schema:  # pylint: disable=too-many-instance-attributes
      object or to get a list of manifests for the schema.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         config: SchemaConfig,
+        database_config: Optional[dict] = None,
         primary_key_getter: Callable[[str], str] = lambda _: "id",
         foreign_key_getter: Callable[[str], str] = get_key_attribute,
     ) -> None:
@@ -195,6 +196,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             foreign_key_getter (Callable[[str], str], optional):
                 Defaults to get_key_attribute.
         """
+        self.database_config = database_config
         self.schema_url = config.schema_url
         self.synapse_project_id = config.synapse_project_id
         self.synapse_asset_view_id = config.synapse_asset_view_id
@@ -245,8 +247,14 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             Optional[DBObjectConfig]: The config for the object if the object has attributes
               otherwise None.
         """
+        # Check if object has an optional attributes:
+        if self.database_config and self.database_config[object_name]:
+            db_obj_config = self.database_config[object_name]
+        else:
+            db_obj_config = None
+
         # Some components will not have any attributes for various reasons
-        attributes = self.create_attributes(object_name)
+        attributes = self.create_attributes(object_name, db_obj_config)
         if not attributes:
             return None
         primary_key = get_property_label_from_display_name(
@@ -277,7 +285,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         )
 
     def create_attributes(
-        self, object_name: str
+        self, object_name: str, db_obj_config: Optional[dict[str, str]] = None
     ) -> Union[list[DBAttributeConfig], None]:
         """Create the attributes for the object
 
@@ -289,7 +297,9 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         """
         # the names of the attributes to be created, in label(not display) form
         attribute_names = find_class_specific_properties(self.schema_url, object_name)
-        attributes = [self.create_attribute(name) for name in attribute_names]
+        attributes = [
+            self.create_attribute(name, db_obj_config) for name in attribute_names
+        ]
         # Some components will not have any attributes for various reasons
         if not attributes:
             warnings.warn(
@@ -300,7 +310,9 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             return None
         return attributes
 
-    def create_attribute(self, name: str) -> DBAttributeConfig:
+    def create_attribute(
+        self, name: str, db_obj_config: Optional[dict[str, str]] = None
+    ) -> DBAttributeConfig:
         """Creates an attribute
 
         Args:
@@ -310,6 +322,12 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             DBAttributeConfig: The DBAttributeConfig for the attribute
         """
+
+        if db_obj_config and db_obj_config[name] and db_obj_config[name]["index"]:
+            index = db_obj_config[name]["index"]
+        else:
+            index = False
+
         rules = get_node_validation_rules(self.schema_url, name)
         type_rules = [rule for rule in rules if rule in SCHEMATIC_TYPE_DATATYPES]
         if len(type_rules) > 1:
@@ -322,6 +340,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             name=name,
             datatype=datatype,
             required=is_node_required(self.schema_url, name),
+            index=index,
         )
 
     def create_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
