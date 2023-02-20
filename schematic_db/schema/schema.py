@@ -227,7 +227,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             primary_key_attempt = self.database_config.get_primary_key(object_name)
             primary_key = "id" if primary_key_attempt is None else primary_key_attempt
 
-        foreign_keys = self.create_foreign_keys(object_name)
+        foreign_keys = self.get_foreign_keys(object_name)
 
         return DBObjectConfig(
             name=object_name,
@@ -299,7 +299,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         )
 
     def get_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
-        """Creates a list of foreign keys for an object in the database
+        """Gets a list of foreign keys for an object in the database
 
         Args:
             object_name (str): The name of the object the config will be created for.
@@ -310,14 +310,14 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         # Use foreign keys if supplied in config otherwise use schematic API to find dependencies
         if self.database_config is None:
             return self.create_foreign_keys(object_name)
-        foreign_keys_attempt = self.database_config.get_foreign_keys(object_name)
-        if foreign_keys_attempt is None:
+        attempt = self.database_config.get_foreign_keys(object_name)
+        if attempt is None:
             return self.create_foreign_keys(object_name)
 
-        return foreign_keys_attempt
+        return attempt
 
     def create_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
-        """Create a list of foreign keys for the object
+        """Create a list of foreign keys an object in the database
 
         Args:
             object_name (str): The name of the object
