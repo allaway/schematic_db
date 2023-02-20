@@ -220,6 +220,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         if not attributes:
             return None
 
+        # check if config has primary key for object, otherwise assume "id"
         if self.database_config is None:
             primary_key = "id"
         else:
@@ -272,12 +273,15 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             DBAttributeConfig: The DBAttributeConfig for the attribute
         """
+        # Use schematic API to get validation rules
         rules = get_node_validation_rules(self.schema_url, name)
         type_rules = [rule for rule in rules if rule in SCHEMATIC_TYPE_DATATYPES]
+        # Raise error if there is more than one type of validation type rule
         if len(type_rules) > 1:
             raise MoreThanOneTypeRule(name, type_rules)
         if len(type_rules) == 1:
             datatype = SCHEMATIC_TYPE_DATATYPES[type_rules[0]]
+        # Use text if there are no validation type rules
         else:
             datatype = DBDatatype.TEXT
 
@@ -303,7 +307,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             list[DBForeignKey]: A list of foreign keys for the object.
         """
-
+        # Use foreign keys if supplied in config otherwise use schematic API to find dependencies
         if self.database_config is None:
             return self.create_foreign_keys(object_name)
         foreign_keys_attempt = self.database_config.get_foreign_keys(object_name)

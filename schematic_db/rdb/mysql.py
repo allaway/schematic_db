@@ -18,7 +18,7 @@ from schematic_db.db_config import (
 from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
-    DBDatatype.TEXT: sa.VARCHAR(1000),
+    DBDatatype.TEXT: sa.VARCHAR(5000),
     DBDatatype.DATE: sa.Date,
     DBDatatype.INT: sa.Integer,
     DBDatatype.FLOAT: sa.Float,
@@ -284,11 +284,18 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         nullable = not attribute.required
         index = attribute.index
 
-        # If column is a key, set datatype to sa.String(100)
-        if att_name == primary_key or att_name in foreign_keys:
-            sql_datatype = sa.String(100)
+        # Keys need to max 100 chars
+        if attribute.datatype == DBDatatype.TEXT and (
+            att_name == primary_key or att_name in foreign_keys
+        ):
+            sql_datatype = sa.VARCHAR(100)
+        # String that need to be indexed  need to be max 1000
+        elif index and attribute.datatype == DBDatatype.TEXT:
+            sql_datatype = sa.VARCHAR(1000)
         else:
             sql_datatype = MYSQL_DATATYPES.get(attribute.datatype)
+
+        unique = att_name == primary_key
 
         if att_name in foreign_keys:
             key = table_config.get_foreign_key_by_name(att_name)
@@ -298,7 +305,9 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
                 key.foreign_object_name,
                 key.foreign_attribute_name,
             )
-        return sa.Column(att_name, sql_datatype, nullable=nullable, index=index)
+        return sa.Column(
+            att_name, sql_datatype, nullable=nullable, index=index, unique=unique
+        )
 
     def _get_datatype(self, attribute: DBAttributeConfig) -> Any:
         MYSQL_DATATYPES.get(attribute.datatype)
