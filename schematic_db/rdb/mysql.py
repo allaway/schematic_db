@@ -18,7 +18,7 @@ from schematic_db.db_config import (
 from .rdb import RelationalDatabase, UpdateDBTableError
 
 MYSQL_DATATYPES = {
-    DBDatatype.TEXT: sa.VARCHAR(5000),
+    DBDatatype.TEXT: sa.VARCHAR(1000),
     DBDatatype.DATE: sa.Date,
     DBDatatype.INT: sa.Integer,
     DBDatatype.FLOAT: sa.Float,
@@ -282,6 +282,7 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         primary_key = table_config.primary_key
         foreign_keys = table_config.get_foreign_key_names()
         nullable = not attribute.required
+        index = attribute.index
 
         # If column is a key, set datatype to sa.String(100)
         if att_name == primary_key or att_name in foreign_keys:
@@ -297,7 +298,7 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
                 key.foreign_object_name,
                 key.foreign_attribute_name,
             )
-        return sa.Column(att_name, sql_datatype, nullable=nullable)
+        return sa.Column(att_name, sql_datatype, nullable=nullable, index=index)
 
     def _get_datatype(self, attribute: DBAttributeConfig) -> Any:
         MYSQL_DATATYPES.get(attribute.datatype)
