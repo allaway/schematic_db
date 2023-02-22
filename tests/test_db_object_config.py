@@ -25,6 +25,17 @@ def fixture_pk_col1_attribute() -> Generator:
     yield att
 
 
+@pytest.fixture(name="pk_col1b_attribute", scope="module")
+def fixture_pk_col1b_attribute() -> Generator:
+    """
+    Yields a DBAttributeConfig
+    """
+    att = DBAttributeConfig(
+        name="pk_col1", datatype=DBDatatype.TEXT, required=True, index=True
+    )
+    yield att
+
+
 @pytest.fixture(name="pk_col2_attribute", scope="module")
 def fixture_pk_col2_attribute() -> Generator:
     """
@@ -46,6 +57,41 @@ def fixture_pk_col3_attribute() -> Generator:
 @pytest.mark.fast
 class TestDBObjectConfig:
     """Testing for DBObjectConfig"""
+
+    def test_is_equivalent(
+        self,
+        pk_col1_attribute: DBAttributeConfig,
+        pk_col1b_attribute: DBAttributeConfig,
+    ) -> None:
+        """Testing for DBObjectConfig.is_equivalent"""
+        obj1 = DBObjectConfig(
+            name="table",
+            attributes=[pk_col1_attribute],
+            primary_key="pk_col1",
+            foreign_keys=[],
+        )
+
+        obj2 = DBObjectConfig(
+            name="table",
+            attributes=[pk_col1_attribute],
+            primary_key="pk_col1",
+            foreign_keys=[],
+        )
+
+        obj3 = DBObjectConfig(
+            name="table",
+            attributes=[pk_col1b_attribute],
+            primary_key="pk_col1",
+            foreign_keys=[],
+        )
+
+        # obj1 and 2 are the same
+        assert obj1 == obj2
+        assert obj1.is_equivalent(obj2)
+
+        # obj1 and 3 are the same except the index
+        assert obj1 != obj3
+        assert obj1.is_equivalent(obj3)
 
     def test_get_foreign_key_dependencies(
         self, pk_col1_attribute: DBAttributeConfig

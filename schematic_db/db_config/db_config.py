@@ -31,6 +31,26 @@ class DBAttributeConfig:
         if not isinstance(self.datatype, DBDatatype):
             raise TypeError(f"Param datatype is not of type DBDatatype:{self.datatype}")
 
+    def is_equivalent(self, other: Any) -> bool:
+        """
+        Use instead of == when determining if schema's are equivalent
+        Args:
+            other (Any): Another instance of DBAttributeConfig
+
+        Returns:
+            bool
+        """
+        if not isinstance(other, DBAttributeConfig):
+            return False
+
+        return all(
+            [
+                self.name == other.name,
+                self.datatype == other.datatype,
+                self.required == other.required,
+            ]
+        )
+
 
 @dataclass
 class DBForeignKey:
@@ -97,6 +117,50 @@ class DBObjectConfig:
         self._check_attributes()
         self._check_primary_key()
         self._check_foreign_keys()
+
+    def __eq__(self, other: Any) -> bool:
+        """Overrides the default implementation"""
+        if not isinstance(other, DBObjectConfig):
+            return False
+
+        return self.get_sorted_attributes() == other.get_sorted_attributes()
+
+    def is_equivalent(self, other: Any) -> bool:
+        """
+        Use instead of == when determining if schema's are equivalent
+        Args:
+            other (Any): Another instance of DBObjectConfig
+
+        Returns:
+            bool
+        """
+        if not isinstance(other, DBObjectConfig):
+            return False
+
+        attributes_equivalent = all(
+            x.is_equivalent(y)
+            for x, y in zip(
+                self.get_sorted_attributes(),
+                other.get_sorted_attributes(),
+            )
+        )
+
+        return all(
+            [
+                attributes_equivalent,
+                self.name == other.name,
+                self.primary_key == other.primary_key,
+                self.foreign_keys == other.foreign_keys,
+            ]
+        )
+
+    def get_sorted_attributes(self) -> list[DBAttributeConfig]:
+        """Gets the configs attributes sorted by name
+
+        Returns:
+            list[DBAttributeConfig]: Sorted list of attributes
+        """
+        return sorted(self.attributes, key=lambda x: x.name)
 
     def get_attribute_names(self) -> list[str]:
         """Returns a list of names of the attributes
@@ -229,11 +293,38 @@ class DBConfig:
 
     def __eq__(self, other: Any) -> bool:
         """Overrides the default implementation"""
-        if isinstance(other, DBConfig):
-            self_configs = self.configs.copy().sort(key=lambda x: x.name)
-            other_configs = self.configs.copy().sort(key=lambda x: x.name)
-            return self_configs == other_configs
-        return False
+        if not isinstance(other, DBConfig):
+            return False
+
+        return self.get_sorted_configs() == other.get_sorted_configs()
+
+    def is_equivalent(self, other: Any) -> bool:
+        """
+        Use instead of == when determining if schema's are equivalent
+        Args:
+            other (Any): Another instance of DBConfig
+
+        Returns:
+            bool
+        """
+        if not isinstance(other, DBConfig):
+            return False
+
+        return all(
+            x.is_equivalent(y)
+            for x, y in zip(
+                self.get_sorted_configs(),
+                other.get_sorted_configs(),
+            )
+        )
+
+    def get_sorted_configs(self) -> list[DBObjectConfig]:
+        """Gets the the configs sorted by name
+
+        Returns:
+            list[DBObjectConfig]: The list of sorted configs
+        """
+        return sorted(self.configs, key=lambda x: x.name)
 
     def get_dependencies(self, object_name: str) -> list[str]:
         """Gets the objects dependencies

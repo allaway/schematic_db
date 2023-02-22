@@ -293,7 +293,10 @@ def fixture_table_one_config() -> Generator:
         name="table_one",
         attributes=[
             DBAttributeConfig(
-                name="pk_one_col", datatype=DBDatatype.TEXT, required=True
+                name="pk_one_col",
+                datatype=DBDatatype.TEXT,
+                required=True,
+                index=True,
             ),
             DBAttributeConfig(
                 name="string_one_col", datatype=DBDatatype.TEXT, required=False

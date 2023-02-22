@@ -97,7 +97,7 @@ def create_foreign_key_configs(table_schema: sa.sql.schema.Table) -> list[DBFore
 
 
 def create_attribute_configs(
-    table_schema: sa.sql.schema.Table,
+    table_schema: sa.sql.schema.Table, indices: list[str]
 ) -> list[DBAttributeConfig]:
     """Creates a list of attribute configs from a sqlalchemy table schema
 
@@ -113,6 +113,7 @@ def create_attribute_configs(
             name=col.name,
             datatype=CONFIG_DATATYPES[type(col.type)],
             required=not col.nullable,
+            index=col.name in indices,
         )
         for col in columns
     ]
@@ -196,12 +197,12 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         """
         table_schema = self.metadata.tables[table_name]
         primary_key = inspect(table_schema).primary_key.columns.values()[0].name
-
+        indices = self._get_column_indices(table_name)
         return DBObjectConfig(
             name=table_name,
             primary_key=primary_key,
             foreign_keys=create_foreign_key_configs(table_schema),
-            attributes=create_attribute_configs(table_schema),
+            attributes=create_attribute_configs(table_schema, indices),
         )
 
     def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
@@ -284,18 +285,21 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         nullable = not attribute.required
         index = attribute.index
 
-        # Keys need to max 100 chars
+        # Keys need to be max 100 chars
         if attribute.datatype == DBDatatype.TEXT and (
             att_name == primary_key or att_name in foreign_keys
         ):
             sql_datatype = sa.VARCHAR(100)
-        # String that need to be indexed  need to be max 1000
+        # Strings that need to be indexed need to be max 1000 chars
         elif index and attribute.datatype == DBDatatype.TEXT:
             sql_datatype = sa.VARCHAR(1000)
         else:
             sql_datatype = MYSQL_DATATYPES.get(attribute.datatype)
 
-        unique = att_name == primary_key
+        if not index:
+            unique = False
+        else:
+            unique = att_name == primary_key
 
         if att_name in foreign_keys:
             key = table_config.get_foreign_key_by_name(att_name)
@@ -311,3 +315,7 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
 
     def _get_datatype(self, attribute: DBAttributeConfig) -> Any:
         MYSQL_DATATYPES.get(attribute.datatype)
+
+    def _get_column_indices(self, table_name: str) -> list[str]:
+        indices = inspect(self.engine).get_indexes(table_name)
+        return [idx["column_names"][0] for idx in indices]
