@@ -3,7 +3,7 @@ These are a set of classes for defining a database table in a dialect agnostic w
 """
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, TypeVar
 
 from sqlalchemy import ForeignKey
 
@@ -18,6 +18,12 @@ class DBDatatype(Enum):
     BOOLEAN = "boolean"
 
 
+# mypy types so that a class can refer to its own type
+X = TypeVar("X", bound="DBAttributeConfig")
+Y = TypeVar("Y", bound="DBObjectConfig")
+T = TypeVar("T", bound="DBConfig")
+
+
 @dataclass
 class DBAttributeConfig:
     """A config for a table attribute(column)."""
@@ -27,21 +33,15 @@ class DBAttributeConfig:
     required: bool = False
     index: bool = False
 
-    def __post_init__(self) -> None:
-        if not isinstance(self.datatype, DBDatatype):
-            raise TypeError(f"Param datatype is not of type DBDatatype:{self.datatype}")
+    def is_equivalent(self, other: X) -> bool:
+        """Use instead of == when determining if schema's are equivalent
 
-    def is_equivalent(self, other: Any) -> bool:
-        """
-        Use instead of == when determining if schema's are equivalent
         Args:
-            other (Any): Another instance of DBAttributeConfig
+            other (DBAttributeConfig): Another DBAttributeConfig to compare to self
 
         Returns:
-            bool
+            bool: True if both DBAttributeConfigs are equivalent
         """
-        if not isinstance(other, DBAttributeConfig):
-            return False
 
         return all(
             [
@@ -120,23 +120,17 @@ class DBObjectConfig:
 
     def __eq__(self, other: Any) -> bool:
         """Overrides the default implementation"""
-        if not isinstance(other, DBObjectConfig):
-            return False
-
         return self.get_sorted_attributes() == other.get_sorted_attributes()
 
-    def is_equivalent(self, other: Any) -> bool:
+    def is_equivalent(self, other: Y) -> bool:
         """
         Use instead of == when determining if schema's are equivalent
         Args:
-            other (Any): Another instance of DBObjectConfig
+            other (DBObjectConfig): Another instance of DBObjectConfig
 
         Returns:
             bool
         """
-        if not isinstance(other, DBObjectConfig):
-            return False
-
         attributes_equivalent = all(
             x.is_equivalent(y)
             for x, y in zip(
@@ -293,23 +287,17 @@ class DBConfig:
 
     def __eq__(self, other: Any) -> bool:
         """Overrides the default implementation"""
-        if not isinstance(other, DBConfig):
-            return False
-
         return self.get_sorted_configs() == other.get_sorted_configs()
 
-    def is_equivalent(self, other: Any) -> bool:
+    def is_equivalent(self, other: T) -> bool:
         """
         Use instead of == when determining if schema's are equivalent
         Args:
-            other (Any): Another instance of DBConfig
+            other (DBConfig): Another instance of DBConfig
 
         Returns:
             bool
         """
-        if not isinstance(other, DBConfig):
-            return False
-
         return all(
             x.is_equivalent(y)
             for x, y in zip(
