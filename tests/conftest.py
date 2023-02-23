@@ -299,7 +299,7 @@ def fixture_table_one_config() -> Generator:
                 index=True,
             ),
             DBAttributeConfig(
-                name="string_one_col", datatype=DBDatatype.TEXT, required=False
+                name="string_one_col", datatype=DBDatatype.TEXT, required=False, index=True
             ),
             DBAttributeConfig(
                 name="int_one_col", datatype=DBDatatype.INT, required=False
