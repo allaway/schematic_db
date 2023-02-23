@@ -279,42 +279,44 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
     def _create_column(
         self, attribute: DBAttributeConfig, table_config: DBObjectConfig
     ) -> sa.Column:
-        att_name = attribute.name
-        primary_key = table_config.primary_key
-        foreign_keys = table_config.get_foreign_key_names()
-        nullable = not attribute.required
-        index = attribute.index
+        sql_datatype = self._get_datatype(
+            attribute, table_config.primary_key, table_config.get_foreign_key_names()
+        )
 
-        # Keys need to be max 100 chars
-        if attribute.datatype == DBDatatype.TEXT and (
-            att_name == primary_key or att_name in foreign_keys
-        ):
-            sql_datatype = sa.VARCHAR(100)
-        # Strings that need to be indexed need to be max 1000 chars
-        elif index and attribute.datatype == DBDatatype.TEXT:
-            sql_datatype = sa.VARCHAR(1000)
-        else:
-            sql_datatype = MYSQL_DATATYPES.get(attribute.datatype)
-
-        if not index:
-            unique = False
-        else:
-            unique = att_name == primary_key
-
-        if att_name in foreign_keys:
-            key = table_config.get_foreign_key_by_name(att_name)
+        # Add foreign key constraints if needed
+        if attribute.name in table_config.get_foreign_key_names():
+            key = table_config.get_foreign_key_by_name(attribute.name)
             return create_foreign_key_column(
-                att_name,
+                attribute.name,
                 sql_datatype,
                 key.foreign_object_name,
                 key.foreign_attribute_name,
             )
+
         return sa.Column(
-            att_name, sql_datatype, nullable=nullable, index=index, unique=unique
+            attribute.name,
+            sql_datatype,
+            # column is nullable if attribute is not required
+            nullable=not attribute.required,
+            index=attribute.index,
+            # column is unique if attribute is a primary key
+            unique=attribute.name == table_config.primary_key,
         )
 
-    def _get_datatype(self, attribute: DBAttributeConfig) -> Any:
-        MYSQL_DATATYPES.get(attribute.datatype)
+    def _get_datatype(
+        self, attribute: DBAttributeConfig, primary_key: str, foreign_keys: list[str]
+    ) -> Any:
+        # Keys need to be max 100 chars
+        if attribute.datatype == DBDatatype.TEXT and (
+            attribute.name == primary_key or attribute.name in foreign_keys
+        ):
+            return sa.VARCHAR(100)
+        # Strings that need to be indexed need to be max 1000 chars
+        if attribute.index and attribute.datatype == DBDatatype.TEXT:
+            return sa.VARCHAR(1000)
+
+        # Otherwise use datatypes dict
+        return MYSQL_DATATYPES[attribute.datatype]
 
     def _get_column_indices(self, table_name: str) -> list[str]:
         indices = inspect(self.engine).get_indexes(table_name)

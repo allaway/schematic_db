@@ -54,5 +54,6 @@ class PostgresDatabase(MySQLDatabase):
             with self.engine.connect().execution_options(autocommit=True) as conn:
                 conn.execute(statement)
 
-    def _get_datatype(self, attribute: DBAttributeConfig) -> Any:
-        POSTGRES_DATATYPES.get(attribute.datatype)
+    def _get_datatype(self, attribute: DBAttributeConfig, primary_key: str, foreign_keys: list[str]
+    ) -> Any:
+        return POSTGRES_DATATYPES[attribute.datatype]
