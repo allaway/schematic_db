@@ -55,7 +55,7 @@ def fixture_pk_col3_attribute() -> Generator:
 
 
 @pytest.mark.fast
-class TestDBForeignKey: #pylint: disable=too-few-public-methods
+class TestDBForeignKey:  # pylint: disable=too-few-public-methods
     """Testing for DBForeignKey"""
 
     def test_get_attribute_dict(self) -> None:
@@ -67,9 +67,9 @@ class TestDBForeignKey: #pylint: disable=too-few-public-methods
         )
         assert isinstance(obj, DBForeignKey)
         assert obj.get_attribute_dict() == {
-            "name":"test",
-            "foreign_object_name":"test_object",
-            "foreign_attribute_name":"test_name",
+            "name": "test",
+            "foreign_object_name": "test_object",
+            "foreign_attribute_name": "test_name",
         }
 
 
@@ -252,7 +252,7 @@ class TestDBConfig:
         )
         obj2 = DBConfig(
             [
-            DBObjectConfig(
+                DBObjectConfig(
                     name="table2",
                     attributes=[pk_col2_attribute],
                     primary_key="pk_col2",
@@ -268,7 +268,6 @@ class TestDBConfig:
         )
         assert obj1 == obj2
         assert obj1.is_equivalent(obj2)
-
 
     def test_db_object_config_list_success(
         self, pk_col1_attribute: DBAttributeConfig, pk_col2_attribute: DBAttributeConfig
