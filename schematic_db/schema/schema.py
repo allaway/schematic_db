@@ -220,20 +220,11 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         if not attributes:
             return None
 
-        # check if config has primary key for object, otherwise assume "id"
-        if self.database_config is None:
-            primary_key = "id"
-        else:
-            primary_key_attempt = self.database_config.get_primary_key(object_name)
-            primary_key = "id" if primary_key_attempt is None else primary_key_attempt
-
-        foreign_keys = self.get_foreign_keys(object_name)
-
         return DBObjectConfig(
             name=object_name,
             attributes=attributes,
-            primary_key=primary_key,
-            foreign_keys=foreign_keys,
+            primary_key=self.get_primary_key(object_name),
+            foreign_keys=self.get_foreign_keys(object_name),
         )
 
     def create_attributes(
@@ -263,40 +254,84 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             return None
         return attributes
 
-    def create_attribute(self, name: str, object_name: str) -> DBAttributeConfig:
+    def create_attribute(
+        self, attribute_name: str, object_name: str
+    ) -> DBAttributeConfig:
         """Creates an attribute
 
         Args:
-            name (str): The name of the attribute
+            attribute_name (str): The name of the attribute
             object_name (str): The name of the object to create the attributes for
 
         Returns:
             DBAttributeConfig: The DBAttributeConfig for the attribute
         """
+        return DBAttributeConfig(
+            name=attribute_name,
+            datatype=self.get_attribute_datatype(attribute_name),
+            required=is_node_required(self.schema_url, attribute_name),
+            index=self.index_attribute(attribute_name, object_name),
+        )
+
+    def get_attribute_datatype(self, attribute_name: str) -> DBDatatype:
+        """Gets the datatype for the attribute
+
+        Args:
+            attribute_name (str): The name of the attribute
+
+        Raises:
+            MoreThanOneTypeRule: Raised when the Schematic API returns more than one rule that
+             indicate the attributes datatype
+
+        Returns:
+            DBDatatype: The attributes datatype
+        """
         # Use schematic API to get validation rules
-        rules = get_node_validation_rules(self.schema_url, name)
+        rules = get_node_validation_rules(self.schema_url, attribute_name)
+        # Filter for rules that indicate the datatype
         type_rules = [rule for rule in rules if rule in SCHEMATIC_TYPE_DATATYPES]
         # Raise error if there is more than one type of validation type rule
         if len(type_rules) > 1:
-            raise MoreThanOneTypeRule(name, type_rules)
+            raise MoreThanOneTypeRule(attribute_name, type_rules)
         if len(type_rules) == 1:
-            datatype = SCHEMATIC_TYPE_DATATYPES[type_rules[0]]
+            return SCHEMATIC_TYPE_DATATYPES[type_rules[0]]
         # Use text if there are no validation type rules
-        else:
-            datatype = DBDatatype.TEXT
+        return DBDatatype.TEXT
 
+    def index_attribute(self, attribute_name: str, object_name: str) -> bool:
+        """Determine whether or not to index an attribute(column in SQL databases)
+
+        Args:
+            attribute_name (str): The name of the attribute
+            object_name (str): The name of the object
+
+        Returns:
+            bool: True if the attribute needs to indexed
+        """
         if self.database_config is None:
-            index = False
-        else:
-            indices = self.database_config.get_indices(object_name)
-            index = bool(indices is not None and name in indices)
+            return False
+        indices = self.database_config.get_indices(object_name)
+        return indices is not None and attribute_name in indices
 
-        return DBAttributeConfig(
-            name=name,
-            datatype=datatype,
-            required=is_node_required(self.schema_url, name),
-            index=index,
-        )
+    def get_primary_key(self, object_name: str) -> str:
+        """Get the primary key for the attribute
+
+        Args:
+            object_name (str): The name of the attribute
+
+        Returns:
+            str: The primary key of the attribute
+        """
+        # Check if config exists, otherwise assume "id"
+        if self.database_config is None:
+            return "id"
+        # Attempt to get the primary key from the config
+        primary_key_attempt = self.database_config.get_primary_key(object_name)
+        # Check if the primary key is in the config, otherwise assume "id"
+        if primary_key_attempt is None:
+            return "id"
+
+        return primary_key_attempt
 
     def get_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
         """Gets a list of foreign keys for an object in the database
@@ -307,17 +342,19 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             list[DBForeignKey]: A list of foreign keys for the object.
         """
-        # Use foreign keys if supplied in config otherwise use schematic API to find dependencies
+        # If there is no config use schema graph to create foreign keys
         if self.database_config is None:
             return self.create_foreign_keys(object_name)
-        attempt = self.database_config.get_foreign_keys(object_name)
-        if attempt is None:
+        # Attempt to get foreign keys from config
+        foreign_keys_attempt = self.database_config.get_foreign_keys(object_name)
+        # If there are no foreign keys in config use schema graph to create foreign keys
+        if foreign_keys_attempt is None:
             return self.create_foreign_keys(object_name)
 
-        return attempt
+        return foreign_keys_attempt
 
     def create_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
-        """Create a list of foreign keys an object in the database
+        """Create a list of foreign keys an object in the database using the schema graph
 
         Args:
             object_name (str): The name of the object
@@ -325,9 +362,10 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             list[DBForeignKey]: A list of foreign
         """
-        neighbor_object_names = list(self.schema_graph.neighbors(object_name))
-        foreign_keys = [self.create_foreign_key(name) for name in neighbor_object_names]
-        return foreign_keys
+        # Uses the schema graph to find objects the current object depends on
+        parent_object_names = list(self.schema_graph.neighbors(object_name))
+        # Each parent of the current object needs a foreign key to that parent
+        return [self.create_foreign_key(name) for name in parent_object_names]
 
     def create_foreign_key(self, foreign_object_name: str) -> DBForeignKey:
         """Creates a foreign key object
@@ -338,13 +376,16 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             DBForeignKey: A foreign key object.
         """
-
+        # Assume the foreign key name is <object_name>_id where the object name is the
+        #  name of the object the attribute the foreign key is in
         attribute_name = get_property_label_from_display_name(
             self.schema_url, f"{foreign_object_name}_id"
         )
 
+        # If there is no config, assume the name of the attribute the foreign key refers to is id
         if self.database_config is None:
             foreign_attribute_name = "id"
+        # If there is a config attempt to get it, if it is not present assume it's named id
         else:
             attempt = self.database_config.get_primary_key(foreign_object_name)
             foreign_attribute_name = "id" if attempt is None else attempt
