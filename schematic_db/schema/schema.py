@@ -156,7 +156,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         config: SchemaConfig,
-        database_config: Optional[DatabaseConfig] = None,
+        database_config: DatabaseConfig = DatabaseConfig([]),
     ) -> None:
         """
         The Schema class handles interactions with the schematic API.
@@ -164,7 +164,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
 
         Args:
             config (SchemaConfig): A config describing the basic inputs for the schema object
-            database_config (Optional[DatabaseConfig], optional): A config describing optional
+            database_config (DatabaseConfig): A config describing optional
              database specific attributes
         """
         self.database_config = database_config
@@ -192,18 +192,25 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         return self.db_config
 
     def update_db_config(self) -> None:
-        """Updates the objects DBConfig object."""
-        # order objects so that ones with dependencies come after they depend on
-        object_names = list(
-            reversed(list(networkx.topological_sort(self.schema_graph)))
-        )
-        object_configs: list[Optional[DBObjectConfig]] = [
-            self.create_db_object_config(name) for name in object_names
+        """Updates the DBConfig object."""
+        object_names = self._create_sorted_object_name_list()
+        object_configs = [
+            config
+            for config in [self.create_db_object_config(name) for name in object_names]
+            if config is not None
         ]
-        filtered_object_configs: list[DBObjectConfig] = [
-            config for config in object_configs if config is not None
-        ]
-        self.db_config = DBConfig(filtered_object_configs)
+        self.db_config = DBConfig(object_configs)
+
+    def _create_sorted_object_name_list(self) -> list[str]:
+        """
+        Uses the schema graph to create a object name list such objects always come after ones they
+         depend on.
+        This order is how objects in a database should be built and/or updated.
+
+        Returns:
+            list[str]: A list of objects names
+        """
+        return list(reversed(list(networkx.topological_sort(self.schema_graph))))
 
     def create_db_object_config(self, object_name: str) -> Optional[DBObjectConfig]:
         """Creates the config for one object in the database.
@@ -308,8 +315,6 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             bool: True if the attribute needs to indexed
         """
-        if self.database_config is None:
-            return False
         indices = self.database_config.get_indices(object_name)
         return indices is not None and attribute_name in indices
 
@@ -322,9 +327,6 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             str: The primary key of the attribute
         """
-        # Check if config exists, otherwise assume "id"
-        if self.database_config is None:
-            return "id"
         # Attempt to get the primary key from the config
         primary_key_attempt = self.database_config.get_primary_key(object_name)
         # Check if the primary key is in the config, otherwise assume "id"
@@ -342,9 +344,6 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             list[DBForeignKey]: A list of foreign keys for the object.
         """
-        # If there is no config use schema graph to create foreign keys
-        if self.database_config is None:
-            return self.create_foreign_keys(object_name)
         # Attempt to get foreign keys from config
         foreign_keys_attempt = self.database_config.get_foreign_keys(object_name)
         # If there are no foreign keys in config use schema graph to create foreign keys
@@ -382,13 +381,8 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             self.schema_url, f"{foreign_object_name}_id"
         )
 
-        # If there is no config, assume the name of the attribute the foreign key refers to is id
-        if self.database_config is None:
-            foreign_attribute_name = "id"
-        # If there is a config attempt to get it, if it is not present assume it's named id
-        else:
-            attempt = self.database_config.get_primary_key(foreign_object_name)
-            foreign_attribute_name = "id" if attempt is None else attempt
+        attempt = self.database_config.get_primary_key(foreign_object_name)
+        foreign_attribute_name = "id" if attempt is None else attempt
 
         return DBForeignKey(attribute_name, foreign_object_name, foreign_attribute_name)
 
