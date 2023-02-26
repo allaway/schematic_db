@@ -26,9 +26,10 @@ jobs:
             "3.12": "syn4",
           }
           import yaml
+          python_version = str( ${{ matrix.python-version }} )
           dict = {
             "synapse": {
-              "project_id": test_projects[${{ matrix.python-version }}],
+              "project_id": test_projects[python_version],
               "username": "${{secrets.SYNAPSE_LOGIN}}",
               "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}"
             },
