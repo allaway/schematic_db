@@ -10,7 +10,7 @@ jobs:
       max-parallel: 1
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
 
@@ -19,9 +19,16 @@ jobs:
       # Create the secrets config file
       - name: create secrets config
         run: |
+          test_projects = {
+            "3.9": "syn1",
+            "3.10": "syn2",
+            "3.11": "syn3",
+            "3.12": "syn4",
+          }
           import yaml
           dict = {
             "synapse": {
+              "project_id": test_projects[${{ matrix.python-version }}]
               "username": "${{secrets.SYNAPSE_LOGIN}}",
               "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}"
             },
