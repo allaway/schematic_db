@@ -28,7 +28,7 @@ jobs:
           import yaml
           dict = {
             "synapse": {
-              "project_id": test_projects[${{ matrix.python-version }}]
+              "project_id": test_projects[${{ matrix.python-version }}],
               "username": "${{secrets.SYNAPSE_LOGIN}}",
               "auth_token": "${{secrets.SYNAPSE_AUTH_TOKEN}}"
             },
