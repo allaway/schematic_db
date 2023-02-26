@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
 
@@ -63,7 +63,7 @@ jobs:
 
       # If you wanted to use multiple Python versions, you'd have specify a matrix in the job and
       # reference the matrix python version here.
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -115,6 +115,21 @@ jobs:
       # pyproject.toml and makes that if you add things like console-scripts at some point that
       # they'll be installed and working.
       - run: poetry install --no-interaction --all-extras
+
+
+      - name: Static typing with mypy
+        run: |
+          mkdir .mypy_cache
+          poetry run mypy --install-types --non-interactive ./
+          poetry run mypy --disallow-untyped-defs .
+
+      - name: Code formatting with black
+        uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+
+      - name: Code formatting with pylint
+        run: poetry run pylint schematic_db/* tests/*
 
       - name: pytest
         run: poetry run pytest -vvs -m "not schematic"
