@@ -24,9 +24,7 @@ from schematic_db.schema import Schema, SchemaConfig
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")
-SECRETS_PATH = os.path.join(DATA_DIR, "local_secrets.yml")
-if not os.path.exists(SECRETS_PATH):
-    SECRETS_PATH = os.path.join(DATA_DIR, "secrets.yml")
+SECRETS_PATH = os.path.join(DATA_DIR, "secrets.yml")
 
 # files -----------------------------------------------------------------------
 
