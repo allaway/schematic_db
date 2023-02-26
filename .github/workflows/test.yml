@@ -7,7 +7,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 1
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
@@ -20,10 +19,10 @@ jobs:
       - name: create secrets config
         run: |
           test_projects = {
-            "3.9": "syn1",
-            "3.10": "syn2",
-            "3.11": "syn3",
-            "3.12": "syn4",
+            "3.9": "syn51138339",
+            "3.10": "syn51138340",
+            "3.11": "syn51138343",
+            "3.12": "syn51138344",
           }
           import yaml
           python_version = str( ${{ matrix.python-version }} )
