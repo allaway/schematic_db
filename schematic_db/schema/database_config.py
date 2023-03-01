@@ -2,7 +2,15 @@
 A config for database specific items
 """
 from typing import Optional, Any
-from schematic_db.db_config import DBForeignKey
+from schematic_db.db_config import DBForeignKey, DBAttributeConfig, DBDatatype
+
+
+DATATYPES = {
+    "str": DBDatatype.TEXT,
+    "float": DBDatatype.FLOAT,
+    "int": DBDatatype.INT,
+    "date": DBDatatype.DATE,
+}
 
 
 class DatabaseObjectConfig:  # pylint: disable=too-few-public-methods
@@ -13,14 +21,13 @@ class DatabaseObjectConfig:  # pylint: disable=too-few-public-methods
         name: str,
         primary_key: Optional[str] = None,
         foreign_keys: Optional[list[dict[str, str]]] = None,
-        indices: Optional[list[str]] = None,
+        attributes: Optional[list[dict[str, Any]]] = None,
     ) -> None:
         """
         Init
         """
         self.name = name
         self.primary_key = primary_key
-        self.indices = indices
         if foreign_keys is None:
             self.foreign_keys = None
         else:
@@ -31,6 +38,18 @@ class DatabaseObjectConfig:  # pylint: disable=too-few-public-methods
                     foreign_attribute_name=key["foreign_attribute_name"],
                 )
                 for key in foreign_keys
+            ]
+        if attributes is None:
+            self.attributes = None
+        else:
+            self.attributes = [
+                DBAttributeConfig(
+                    name=attribute["attribute_name"],
+                    datatype=DATATYPES[attribute["datatype"]],
+                    required=attribute["required"],
+                    index=attribute["index"],
+                )
+                for attribute in attributes
             ]
 
 
@@ -69,17 +88,38 @@ class DatabaseConfig:
         obj = self._get_object_by_name(object_name)
         return None if obj is None else obj.foreign_keys
 
-    def get_indices(self, object_name: str) -> Optional[list[str]]:
-        """Gets the attributes to be indexed for an object
+    def get_attributes(self, object_name: str) -> Optional[list[DBAttributeConfig]]:
+        """Gets the attributes for an object
 
         Args:
             object_name (str): The name of the object
 
         Returns:
-            Optional[list[str]]: The list of attributes
+            Optional[list[DBAttributeConfig]]: The list of attributes
         """
         obj = self._get_object_by_name(object_name)
-        return None if obj is None else obj.indices
+        return None if obj is None else obj.attributes
+
+    def get_attribute(
+        self, object_name: str, attribute_name: str
+    ) -> Optional[DBAttributeConfig]:
+        """Gets the attributes for an object
+
+        Args:
+            object_name (str): The name of the object
+
+        Returns:
+            Optional[list[DBAttributeConfig]]: The list of attributes
+        """
+        attributes = self.get_attributes(object_name)
+        if attributes is None:
+            return None
+        attributes = [
+            attribute for attribute in attributes if attribute.name == attribute_name
+        ]
+        if len(attributes) == 0:
+            return None
+        return attributes[0]
 
     def _get_object_by_name(self, object_name: str) -> Optional[DatabaseObjectConfig]:
         objects = [obj for obj in self.objects if obj.name == object_name]

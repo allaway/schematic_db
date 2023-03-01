@@ -184,7 +184,18 @@ def fixture_test_schema2(
     )
     database_config = DatabaseConfig(
         [
-            {"name": "Patient", "primary_key": "id", "indices": ["sex"]},
+            {
+                "name": "Patient",
+                "primary_key": "id",
+                "attributes": [
+                    {
+                        "attribute_name": "sex",
+                        "datatype": "str",
+                        "required": True,
+                        "index": True,
+                    },
+                ],
+            },
             {
                 "name": "BulkRnaSeq",
                 "primary_key": "id",
