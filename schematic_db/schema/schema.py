@@ -157,7 +157,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         self,
         config: SchemaConfig,
         database_config: DatabaseConfig = DatabaseConfig([]),
-        use_display_names_as_labels=False,
+        use_display_names_as_labels: bool = False,
     ) -> None:
         """
         The Schema class handles interactions with the schematic API.
@@ -165,9 +165,10 @@ class Schema:  # pylint: disable=too-many-instance-attributes
 
         Args:
             config (SchemaConfig): A config describing the basic inputs for the schema object
-            database_config (DatabaseConfig): A config describing optional
-             database specific attributes
-            use_display_names_as_labels(bool): Experimental and will be deprecated in the near future.
+            database_config (DatabaseConfig): Experimental and will be deprecated in the near
+             future. A config describing optional database specific attributes.
+            use_display_names_as_labels(bool): Experimental and will be deprecated in the near
+             future. Use when display names and labels are the same in the schema.
         """
         self.database_config = database_config
         self.schema_url = config.schema_url
