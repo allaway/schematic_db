@@ -167,6 +167,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             config (SchemaConfig): A config describing the basic inputs for the schema object
             database_config (DatabaseConfig): A config describing optional
              database specific attributes
+            use_display_names_as_labels(bool): Experimental and will be deprecated in the near future.
         """
         self.database_config = database_config
         self.schema_url = config.schema_url
