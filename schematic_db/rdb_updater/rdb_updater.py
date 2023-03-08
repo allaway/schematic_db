@@ -89,7 +89,7 @@ class RDBUpdater:
         """
         new_db_config = self.schema.get_db_config()
         current_db_config = self.rdb.get_db_config()
-        if new_db_config != current_db_config:
+        if not new_db_config.is_equivalent(current_db_config):
             raise SchemaConflictError()
         self._update_database(new_db_config)
 

@@ -62,9 +62,9 @@ class TestSQLGetters:
             obj.add_table("table_three", table_three_config)
             assert obj.get_table_names() == ["table_one", "table_three", "table_two"]
 
-            assert obj.get_table_config("table_one") == table_one_config
-            assert obj.get_table_config("table_two") == table_two_config
-            assert obj.get_table_config("table_three") == table_three_config
+            assert obj.get_table_config("table_one").is_equivalent(table_one_config)
+            assert obj.get_table_config("table_two").is_equivalent(table_two_config)
+            assert obj.get_table_config("table_three").is_equivalent(table_three_config)
 
             obj.delete_all_tables()
 

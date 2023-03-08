@@ -20,7 +20,7 @@ from schematic_db.rdb.postgres import PostgresDatabase
 from schematic_db.rdb.synapse_database import SynapseDatabase
 from schematic_db.rdb_queryer import RDBQueryer
 from schematic_db.synapse import Synapse, SynapseConfig
-from schematic_db.schema import Schema, SchemaConfig
+from schematic_db.schema import Schema, SchemaConfig, DatabaseConfig
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")
@@ -150,8 +150,8 @@ def fixture_test_synapse_asset_view_id() -> Generator:
     yield "syn47997084"
 
 
-@pytest.fixture(scope="session", name="test_schema")
-def fixture_test_schema(
+@pytest.fixture(scope="session", name="test_schema1")
+def fixture_test_schema1(
     test_synapse_project_id: str,
     test_synapse_asset_view_id: str,
     secrets_dict: dict,
@@ -173,19 +173,32 @@ def fixture_test_schema2(
     test_synapse_project_id: str,
     test_synapse_asset_view_id: str,
     secrets_dict: dict,
-    test_schema_json_url2: str,
+    test_schema_json_url: str,
 ) -> Generator:
-    """
-    Yields a Schema using the database specific test schema where display names are intended to be
-     used
-    """
+    """Yields a Schema using the database specific test schema"""
     config = SchemaConfig(
-        test_schema_json_url2,
+        test_schema_json_url,
         test_synapse_project_id,
         test_synapse_asset_view_id,
         secrets_dict["synapse"]["auth_token"],
     )
-    obj = Schema(config)
+    database_config = DatabaseConfig(
+        [
+            {"name": "Patient", "primary_key": "id", "indices": ["sex"]},
+            {
+                "name": "BulkRnaSeq",
+                "primary_key": "id",
+                "foreign_keys": [
+                    {
+                        "attribute_name": "biospecimenId",
+                        "foreign_object_name": "Biospecimen",
+                        "foreign_attribute_name": "id",
+                    }
+                ],
+            },
+        ]
+    )
+    obj = Schema(config, database_config=database_config)
     yield obj
 
 
@@ -280,10 +293,16 @@ def fixture_table_one_config() -> Generator:
         name="table_one",
         attributes=[
             DBAttributeConfig(
-                name="pk_one_col", datatype=DBDatatype.TEXT, required=True
+                name="pk_one_col",
+                datatype=DBDatatype.TEXT,
+                required=True,
+                index=True,
             ),
             DBAttributeConfig(
-                name="string_one_col", datatype=DBDatatype.TEXT, required=False
+                name="string_one_col",
+                datatype=DBDatatype.TEXT,
+                required=False,
+                index=True,
             ),
             DBAttributeConfig(
                 name="int_one_col", datatype=DBDatatype.INT, required=False
