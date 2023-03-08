@@ -18,7 +18,6 @@ from schematic_db.schema import (
     get_manifest_ids_for_object,
     get_dataset_ids_for_object,
     get_manifest,
-    get_manifest_datatypes,
     get_node_validation_rules,
 )
 
@@ -217,17 +216,6 @@ class TestAPIUtils:
                 "1",
                 test_synapse_asset_view_id,
             )
-
-    def test_get_manifest_datatypes(
-        self, secrets_dict: dict, test_synapse_asset_view_id: str
-    ) -> None:
-        """Testing for get_manifest_datatypes()"""
-        datatypes = get_manifest_datatypes(
-            secrets_dict["synapse"]["auth_token"],
-            "syn30988380",
-            test_synapse_asset_view_id,
-        )
-        assert isinstance(datatypes, dict)
 
     def test_get_node_validation_rules(self, test_schema_json_url: str) -> None:
         """Testing for get_node_validation_rules"""
