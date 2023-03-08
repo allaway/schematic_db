@@ -7,14 +7,7 @@ from schematic_db.db_config import (
     DBAttributeConfig,
     DBDatatype,
 )
-from schematic_db.schema import (
-    Schema,
-    ManifestSynapseConfig,
-    DatabaseConfig,
-    DatabaseObjectConfig,
-    get_manifest_ids_for_object,
-    get_dataset_ids_for_object,
-)
+from schematic_db.schema import Schema, DatabaseConfig, DatabaseObjectConfig
 
 
 @pytest.fixture(name="database_config")
@@ -110,69 +103,6 @@ class TestDatabaseConfig:
         assert obj.get_attributes("object3") is None
 
 
-@pytest.fixture(name="test_manifests")
-def fixture_test_manifests() -> Generator:
-    """Yields a test set of manifests"""
-    yield [
-        ManifestSynapseConfig(
-            manifest_id="syn1",
-            dataset_id="syn6",
-            component_name="C1",
-            dataset_name="",
-            manifest_name="",
-        ),
-        ManifestSynapseConfig(
-            manifest_id="syn2",
-            dataset_id="syn7",
-            component_name="C2",
-            dataset_name="",
-            manifest_name="",
-        ),
-        ManifestSynapseConfig(
-            manifest_id="syn3",
-            dataset_id="syn8",
-            component_name="",
-            dataset_name="",
-            manifest_name="",
-        ),
-        ManifestSynapseConfig(
-            manifest_id="",
-            dataset_id="syn9",
-            component_name="C3",
-            dataset_name="",
-            manifest_name="",
-        ),
-        ManifestSynapseConfig(
-            manifest_id="syn5",
-            dataset_id="syn10",
-            component_name="C1",
-            dataset_name="",
-            manifest_name="",
-        ),
-    ]
-
-
-@pytest.mark.fast
-class TestUtils:
-    """Testing for Schema utils"""
-
-    def test_get_manifest_ids_for_object(
-        self, test_manifests: list[ManifestSynapseConfig]
-    ) -> None:
-        """Testing for get_manifest_ids_for_object"""
-        assert get_manifest_ids_for_object("C1", test_manifests) == ["syn1", "syn5"]
-        assert get_manifest_ids_for_object("C2", test_manifests) == ["syn2"]
-        assert get_manifest_ids_for_object("C3", test_manifests) == []
-
-    def test_get_dataset_ids_for_object(
-        self, test_manifests: list[ManifestSynapseConfig]
-    ) -> None:
-        """Testing for get_manifest_ids_for_object"""
-        assert get_dataset_ids_for_object("C1", test_manifests) == ["syn6", "syn10"]
-        assert get_dataset_ids_for_object("C2", test_manifests) == ["syn7"]
-        assert get_dataset_ids_for_object("C3", test_manifests) == []
-
-
 @pytest.mark.schematic
 class TestSchema:
     """Testing for Schema"""
@@ -180,8 +110,6 @@ class TestSchema:
     def test_init(self, test_schema1: Schema) -> None:
         """Testing for Schema.__init__"""
         obj = test_schema1
-        for item in obj.manifest_configs:
-            assert isinstance(item, ManifestSynapseConfig)
         config = obj.get_db_config()
         assert isinstance(config, DBConfig)
         assert config.get_config_names() == [
@@ -258,14 +186,6 @@ class TestSchema:
             )
         ]
 
-    def test_get_manifests(self, test_schema1: Schema) -> None:
-        """Testing for Schema.get_manifests()"""
-        obj = test_schema1
-        db_config = obj.get_db_config()
-        patient_config = db_config.get_config_by_name("Patient")
-        manifests = obj.get_manifests(patient_config)
-        assert len(manifests) == 2
-
 
 @pytest.mark.schematic
 class TestSchema2:
@@ -274,8 +194,6 @@ class TestSchema2:
     def test_init(self, test_schema2: Schema) -> None:
         """Testing for Schema.__init__"""
         obj = test_schema2
-        for item in obj.manifest_configs:
-            assert isinstance(item, ManifestSynapseConfig)
         config = obj.get_db_config()
         assert isinstance(config, DBConfig)
         assert config.get_config_names() == [
@@ -351,11 +269,3 @@ class TestSchema2:
                 foreign_attribute_name="id",
             )
         ]
-
-    def test_get_manifests(self, test_schema2: Schema) -> None:
-        """Testing for Schema.get_manifests()"""
-        obj = test_schema2
-        db_config = obj.get_db_config()
-        patient_config = db_config.get_config_by_name("Patient")
-        manifests = obj.get_manifests(patient_config)
-        assert len(manifests) == 2

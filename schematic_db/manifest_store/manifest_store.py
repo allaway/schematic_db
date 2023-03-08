@@ -79,7 +79,6 @@ class ManifestStore:  # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         config: ManifestStoreConfig,
-        use_display_names_as_labels: bool = False,
     ) -> None:
         """
         The Schema class handles interactions with the schematic API.
@@ -87,16 +86,11 @@ class ManifestStore:  # pylint: disable=too-many-instance-attributes
 
         Args:
             config (SchemaConfig): A config describing the basic inputs for the schema object
-            database_config (DatabaseConfig): Experimental and will be deprecated in the near
-             future. A config describing optional database specific attributes.
-            use_display_names_as_labels(bool): Experimental and will be deprecated in the near
-             future. Use when display names and labels are the same in the schema.
         """
         self.schema_url = config.schema_url
         self.synapse_project_id = config.synapse_project_id
         self.synapse_asset_view_id = config.synapse_asset_view_id
         self.synapse_input_token = config.synapse_input_token
-        self.use_display_names_as_labels = use_display_names_as_labels
         self.update_manifest_configs()
 
     def update_manifest_configs(self) -> None:
