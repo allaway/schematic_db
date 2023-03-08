@@ -1,7 +1,6 @@
 """Testing for Schema."""
 from typing import Generator
 import pytest
-import pandas as pd
 from schematic_db.db_config import (
     DBConfig,
     DBForeignKey,
@@ -11,14 +10,10 @@ from schematic_db.db_config import (
 from schematic_db.schema import (
     Schema,
     ManifestSynapseConfig,
-    SchematicAPIError,
     DatabaseConfig,
     DatabaseObjectConfig,
-    get_project_manifests,
     get_manifest_ids_for_object,
     get_dataset_ids_for_object,
-    get_manifest,
-    get_node_validation_rules,
 )
 
 
@@ -176,51 +171,6 @@ class TestUtils:
         assert get_dataset_ids_for_object("C1", test_manifests) == ["syn6", "syn10"]
         assert get_dataset_ids_for_object("C2", test_manifests) == ["syn7"]
         assert get_dataset_ids_for_object("C3", test_manifests) == []
-
-
-@pytest.mark.schematic
-class TestAPIUtils:
-    """Testing for API utils"""
-
-    def test_get_project_manifests(
-        self,
-        secrets_dict: dict,
-        test_synapse_project_id: str,
-        test_synapse_asset_view_id: str,
-    ) -> None:
-        "Testing for get_project_manifests"
-        manifests = get_project_manifests(
-            input_token=secrets_dict["synapse"]["auth_token"],
-            project_id=test_synapse_project_id,
-            asset_view=test_synapse_asset_view_id,
-        )
-        assert len(manifests) == 5
-
-    def test_get_manifest(
-        self, secrets_dict: dict, test_synapse_asset_view_id: str
-    ) -> None:
-        "Testing for get_manifest"
-        manifest = get_manifest(
-            secrets_dict["synapse"]["auth_token"],
-            "syn47996410",
-            test_synapse_asset_view_id,
-        )
-        assert isinstance(manifest, pd.DataFrame)
-
-        with pytest.raises(
-            SchematicAPIError,
-            match="Error accessing Schematic endpoint",
-        ):
-            get_manifest(
-                secrets_dict["synapse"]["auth_token"],
-                "1",
-                test_synapse_asset_view_id,
-            )
-
-    def test_get_node_validation_rules(self, test_schema_json_url: str) -> None:
-        """Testing for get_node_validation_rules"""
-        rules = get_node_validation_rules(test_schema_json_url, "Family History")
-        assert isinstance(rules, list)
 
 
 @pytest.mark.schematic

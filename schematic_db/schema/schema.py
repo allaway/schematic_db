@@ -14,9 +14,7 @@ from schematic_db.db_config import (
     DBDatatype,
 )
 
-from .database_config import DatabaseConfig
-
-from .api_utils import (
+from schematic_db.api_utils.api_utils import (
     get_graph_by_edge_type,
     find_class_specific_properties,
     get_property_label_from_display_name,
@@ -26,6 +24,9 @@ from .api_utils import (
     get_node_validation_rules,
     ManifestSynapseConfig,
 )
+
+from .database_config import DatabaseConfig
+
 
 SCHEMATIC_TYPE_DATATYPES = {
     "str": DBDatatype.TEXT,
