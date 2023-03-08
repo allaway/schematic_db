@@ -1,10 +1,11 @@
 """Schema class"""
 
-from typing import Optional, Callable, Union
+from typing import Optional
 from dataclasses import dataclass
 import warnings
 import networkx
 import pandas as pd
+
 from schematic_db.db_config import (
     DBConfig,
     DBObjectConfig,
@@ -12,6 +13,8 @@ from schematic_db.db_config import (
     DBAttributeConfig,
     DBDatatype,
 )
+
+from .database_config import DatabaseConfig
 
 from .api_utils import (
     get_graph_by_edge_type,
@@ -88,21 +91,6 @@ class MoreThanOneTypeRule(Exception):
         )
 
 
-def get_key_attribute(object_name: str) -> str:
-    """
-    Standard function for getting a key's name(primary or foreign) based on the objects name.
-    The Schema class uses this function to get both primary and foreign keys by default.
-    Users may want to use a different function.
-
-    Args:
-        object_name (str): The name of the object in the database
-
-    Returns:
-        str: The name of the key attribute for that database
-    """
-    return f"{object_name}_id"
-
-
 def get_manifest_ids_for_object(
     object_name: str, manifests: list[ManifestSynapseConfig]
 ) -> list[str]:
@@ -165,42 +153,25 @@ class Schema:  # pylint: disable=too-many-instance-attributes
      object or to get a list of manifests for the schema.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         config: SchemaConfig,
-        primary_key_getter: Callable[[str], str] = lambda _: "id",
-        foreign_key_getter: Callable[[str], str] = get_key_attribute,
+        database_config: DatabaseConfig = DatabaseConfig([]),
     ) -> None:
-        """Init
-
-        The Schema class has two optional arguments primary_key_getter, and foreign_key_getter.
-        These are used to determine the names of the attributes that are primary and foreign keys.
-        It is assumed that all objects(tables) have one primary key that can be systematically
-        determined from the objects name, and that the primary_key_getter will do that.
-
-        By default a lambda function that returns "id" is used for primary keys. This assumes that
-         all primary keys are named "id".
-
-        By default get_key_attribute is used for foreign keys. This assumes that all foreign
-        keys match the name of the the primary key they refer to. For example if the object the
-        foreign key referred to was named "patient" then the foreign would be named "patient_id".
-
-        If foreign keys do not match the primary key they refer to then the functions would need
-        to be different to reflect that.
+        """
+        The Schema class handles interactions with the schematic API.
+        The main responsibilities are creating the database schema, and retrieving manifests.
 
         Args:
-            config(SchemaConfig): A config object
-            primary_key_getter (Callable[[str], str], optional):
-                Defaults to get_key_attribute.
-            foreign_key_getter (Callable[[str], str], optional):
-                Defaults to get_key_attribute.
+            config (SchemaConfig): A config describing the basic inputs for the schema object
+            database_config (DatabaseConfig): A config describing optional
+             database specific attributes
         """
+        self.database_config = database_config
         self.schema_url = config.schema_url
         self.synapse_project_id = config.synapse_project_id
         self.synapse_asset_view_id = config.synapse_asset_view_id
         self.synapse_input_token = config.synapse_input_token
-        self.primary_key_getter = primary_key_getter
-        self.foreign_key_getter = foreign_key_getter
         self.schema_graph = self.create_schema_graph()
         self.update_manifest_configs()
         self.update_db_config()
@@ -221,25 +192,31 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         return self.db_config
 
     def update_db_config(self) -> None:
-        """Updates the objects DBConfig object."""
-        # order objects so that ones with dependencies come after they depend on
-        object_names = list(
-            reversed(list(networkx.topological_sort(self.schema_graph)))
-        )
-        object_configs: list[Optional[DBObjectConfig]] = [
-            self.create_db_object_config(name) for name in object_names
+        """Updates the DBConfig object."""
+        object_names = self._create_sorted_object_name_list()
+        object_configs = [
+            config
+            for config in [self.create_db_object_config(name) for name in object_names]
+            if config is not None
         ]
-        filtered_object_configs: list[DBObjectConfig] = [
-            config for config in object_configs if config is not None
-        ]
-        self.db_config = DBConfig(filtered_object_configs)
+        self.db_config = DBConfig(object_configs)
+
+    def _create_sorted_object_name_list(self) -> list[str]:
+        """
+        Uses the schema graph to create a object name list such objects always come after ones they
+         depend on.
+        This order is how objects in a database should be built and/or updated.
+
+        Returns:
+            list[str]: A list of objects names
+        """
+        return list(reversed(list(networkx.topological_sort(self.schema_graph))))
 
     def create_db_object_config(self, object_name: str) -> Optional[DBObjectConfig]:
         """Creates the config for one object in the database.
 
         Args:
             object_name (str): The name of the object the config will be created for.
-            manifests (list[dict[str:str]]): A list of manifests in dictionary form
 
         Returns:
             Optional[DBObjectConfig]: The config for the object if the object has attributes
@@ -249,47 +226,31 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         attributes = self.create_attributes(object_name)
         if not attributes:
             return None
-        primary_key = get_property_label_from_display_name(
-            self.schema_url, self.primary_key_getter(object_name)
-        )
-        # primary keys don't always appear in the attributes endpoint
-        if primary_key not in [att.name for att in attributes]:
-            attributes.append(
-                DBAttributeConfig(
-                    name=primary_key, datatype=DBDatatype.TEXT, required=True
-                )
-            )
-        # foreign keys don't always appear in the attributes endpoint
-        foreign_keys = self.create_foreign_keys(object_name)
-        for key in foreign_keys:
-            name = key.name
-            if name not in [att.name for att in attributes]:
-                attributes.append(
-                    DBAttributeConfig(
-                        name=name, datatype=DBDatatype.TEXT, required=False
-                    )
-                )
+
         return DBObjectConfig(
             name=object_name,
             attributes=attributes,
-            primary_key=primary_key,
-            foreign_keys=foreign_keys,
+            primary_key=self.get_primary_key(object_name),
+            foreign_keys=self.get_foreign_keys(object_name),
         )
 
     def create_attributes(
-        self, object_name: str
-    ) -> Union[list[DBAttributeConfig], None]:
+        self,
+        object_name: str,
+    ) -> Optional[list[DBAttributeConfig]]:
         """Create the attributes for the object
 
         Args:
             object_name (str): The name of the object to create the attributes for
 
         Returns:
-            Union[list[DBAttributeConfig], None]: A list of attributes in DBAttributeConfig form
+            Optional[list[DBAttributeConfig]]: A list of attributes in DBAttributeConfig form
         """
         # the names of the attributes to be created, in label(not display) form
         attribute_names = find_class_specific_properties(self.schema_url, object_name)
-        attributes = [self.create_attribute(name) for name in attribute_names]
+        attributes = [
+            self.create_attribute(name, object_name) for name in attribute_names
+        ]
         # Some components will not have any attributes for various reasons
         if not attributes:
             warnings.warn(
@@ -300,32 +261,82 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             return None
         return attributes
 
-    def create_attribute(self, name: str) -> DBAttributeConfig:
+    def create_attribute(
+        self, attribute_name: str, object_name: str
+    ) -> DBAttributeConfig:
         """Creates an attribute
 
         Args:
-            name (str): The name of the attribute
-            datatypes (dict[str, str]): A dictionary of attributes and their types
+            attribute_name (str): The name of the attribute
+            object_name (str): The name of the object to create the attributes for
 
         Returns:
             DBAttributeConfig: The DBAttributeConfig for the attribute
         """
-        rules = get_node_validation_rules(self.schema_url, name)
-        type_rules = [rule for rule in rules if rule in SCHEMATIC_TYPE_DATATYPES]
-        if len(type_rules) > 1:
-            raise MoreThanOneTypeRule(name, type_rules)
-        if len(type_rules) == 1:
-            datatype = SCHEMATIC_TYPE_DATATYPES[type_rules[0]]
-        else:
-            datatype = DBDatatype.TEXT
         return DBAttributeConfig(
-            name=name,
-            datatype=datatype,
-            required=is_node_required(self.schema_url, name),
+            name=attribute_name,
+            datatype=self.get_attribute_datatype(attribute_name),
+            required=is_node_required(self.schema_url, attribute_name),
+            index=self.index_attribute(attribute_name, object_name),
         )
 
-    def create_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
-        """Creates a list of foreign keys for an object in the database
+    def get_attribute_datatype(self, attribute_name: str) -> DBDatatype:
+        """Gets the datatype for the attribute
+
+        Args:
+            attribute_name (str): The name of the attribute
+
+        Raises:
+            MoreThanOneTypeRule: Raised when the Schematic API returns more than one rule that
+             indicate the attributes datatype
+
+        Returns:
+            DBDatatype: The attributes datatype
+        """
+        # Use schematic API to get validation rules
+        rules = get_node_validation_rules(self.schema_url, attribute_name)
+        # Filter for rules that indicate the datatype
+        type_rules = [rule for rule in rules if rule in SCHEMATIC_TYPE_DATATYPES]
+        # Raise error if there is more than one type of validation type rule
+        if len(type_rules) > 1:
+            raise MoreThanOneTypeRule(attribute_name, type_rules)
+        if len(type_rules) == 1:
+            return SCHEMATIC_TYPE_DATATYPES[type_rules[0]]
+        # Use text if there are no validation type rules
+        return DBDatatype.TEXT
+
+    def index_attribute(self, attribute_name: str, object_name: str) -> bool:
+        """Determine whether or not to index an attribute(column in SQL databases)
+
+        Args:
+            attribute_name (str): The name of the attribute
+            object_name (str): The name of the object
+
+        Returns:
+            bool: True if the attribute needs to indexed
+        """
+        indices = self.database_config.get_indices(object_name)
+        return indices is not None and attribute_name in indices
+
+    def get_primary_key(self, object_name: str) -> str:
+        """Get the primary key for the attribute
+
+        Args:
+            object_name (str): The name of the attribute
+
+        Returns:
+            str: The primary key of the attribute
+        """
+        # Attempt to get the primary key from the config
+        primary_key_attempt = self.database_config.get_primary_key(object_name)
+        # Check if the primary key is in the config, otherwise assume "id"
+        if primary_key_attempt is None:
+            return "id"
+
+        return primary_key_attempt
+
+    def get_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
+        """Gets a list of foreign keys for an object in the database
 
         Args:
             object_name (str): The name of the object the config will be created for.
@@ -333,9 +344,27 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             list[DBForeignKey]: A list of foreign keys for the object.
         """
-        neighbor_object_names = list(self.schema_graph.neighbors(object_name))
-        foreign_keys = [self.create_foreign_key(name) for name in neighbor_object_names]
-        return foreign_keys
+        # Attempt to get foreign keys from config
+        foreign_keys_attempt = self.database_config.get_foreign_keys(object_name)
+        # If there are no foreign keys in config use schema graph to create foreign keys
+        if foreign_keys_attempt is None:
+            return self.create_foreign_keys(object_name)
+
+        return foreign_keys_attempt
+
+    def create_foreign_keys(self, object_name: str) -> list[DBForeignKey]:
+        """Create a list of foreign keys an object in the database using the schema graph
+
+        Args:
+            object_name (str): The name of the object
+
+        Returns:
+            list[DBForeignKey]: A list of foreign
+        """
+        # Uses the schema graph to find objects the current object depends on
+        parent_object_names = list(self.schema_graph.neighbors(object_name))
+        # Each parent of the current object needs a foreign key to that parent
+        return [self.create_foreign_key(name) for name in parent_object_names]
 
     def create_foreign_key(self, foreign_object_name: str) -> DBForeignKey:
         """Creates a foreign key object
@@ -346,17 +375,16 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             DBForeignKey: A foreign key object.
         """
+        # Assume the foreign key name is <object_name>_id where the object name is the
+        #  name of the object the attribute the foreign key is in
         attribute_name = get_property_label_from_display_name(
-            self.schema_url, self.foreign_key_getter(foreign_object_name)
+            self.schema_url, f"{foreign_object_name}_id"
         )
-        foreign_attribute_name = get_property_label_from_display_name(
-            self.schema_url, self.primary_key_getter(foreign_object_name)
-        )
-        return DBForeignKey(
-            attribute_name,
-            foreign_object_name,
-            foreign_attribute_name,
-        )
+
+        attempt = self.database_config.get_primary_key(foreign_object_name)
+        foreign_attribute_name = "id" if attempt is None else attempt
+
+        return DBForeignKey(attribute_name, foreign_object_name, foreign_attribute_name)
 
     def update_manifest_configs(self) -> None:
         """Updates the current objects manifest_configs."""

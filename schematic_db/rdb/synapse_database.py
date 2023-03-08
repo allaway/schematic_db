@@ -120,7 +120,7 @@ def create_attributes(strings: list[str]) -> list[DBAttributeConfig]:
     attribute_lists = [att.split(";") for att in strings]
     return [
         DBAttributeConfig(
-            name=att[0], datatype=CONFIG_DATATYPES[att[1]], required=bool(att[2])
+            name=att[0], datatype=CONFIG_DATATYPES[att[1]], required=att[2] == "True"
         )
         for att in attribute_lists
     ]

@@ -163,8 +163,8 @@ def fixture_test_synapse_asset_view_id() -> Generator:
     yield "syn47997084"
 
 
-@pytest.fixture(scope="session", name="test_schema")
-def fixture_test_schema(
+@pytest.fixture(scope="session", name="test_schema1")
+def fixture_test_schema1(
     test_synapse_project_id: str,
     test_synapse_asset_view_id: str,
     secrets_dict: dict,
@@ -242,10 +242,16 @@ def fixture_table_one_config() -> Generator:
         name="table_one",
         attributes=[
             DBAttributeConfig(
-                name="pk_one_col", datatype=DBDatatype.TEXT, required=True
+                name="pk_one_col",
+                datatype=DBDatatype.TEXT,
+                required=True,
+                index=True,
             ),
             DBAttributeConfig(
-                name="string_one_col", datatype=DBDatatype.TEXT, required=False
+                name="string_one_col",
+                datatype=DBDatatype.TEXT,
+                required=False,
+                index=True,
             ),
             DBAttributeConfig(
                 name="int_one_col", datatype=DBDatatype.INT, required=False
