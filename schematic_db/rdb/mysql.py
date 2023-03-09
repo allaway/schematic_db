@@ -173,9 +173,6 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         for tbl in reversed(self.metadata.sorted_tables):
             self.drop_table(tbl)
 
-    def delete_all_tables(self) -> None:
-        self.drop_all_tables()
-
     def execute_sql_query(self, query: str) -> pd.DataFrame:
         result = self._execute_sql_statement(query).fetchall()
         table = pd.DataFrame(result)

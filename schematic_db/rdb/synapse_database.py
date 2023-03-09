@@ -290,7 +290,6 @@ class SynapseDatabase(RelationalDatabase):
     '''
 
     def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
-
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
 

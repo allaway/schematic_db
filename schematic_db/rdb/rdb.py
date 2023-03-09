@@ -21,8 +21,23 @@ class RelationalDatabase(ABC):
     """An interface for relational database types"""
 
     @abstractmethod
-    def drop_all_tables(self) -> None:
-        """Drops all tables from the database"""
+    def get_table_names(self) -> list[str]:
+        """Gets the names of the tables in the database
+
+        Returns:
+            list[str]: A list of table names
+        """
+
+    @abstractmethod
+    def get_table_config(self, table_name: str) -> DBObjectConfig:
+        """Returns a DBObjectConfig created from the current database table
+
+        Args:
+            table_name (str): The name of the table
+
+        Returns:
+            DBObjectConfig: The config for the given table
+        """
 
     @abstractmethod
     def execute_sql_query(self, query: str) -> pd.DataFrame:
@@ -65,8 +80,12 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
-        """Deletes rows from the given table
+    def drop_all_tables(self) -> None:
+        """Drops all tables from the database"""
+
+    @abstractmethod
+    def upsert_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
+        """Upserts rows into the given table
 
         Args:
             table_name (str): The name of the table the rows will be deleted from
@@ -74,9 +93,10 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def get_table_names(self) -> list[str]:
-        """Gets the names of the tables in the database
+    def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
+        """Deletes rows from the given table
 
-        Returns:
-            list[str]: A list of table names
+        Args:
+            table_name (str): The name of the table the rows will be deleted from
+            data (pd.DataFrame): A pandas.DataFrame. It must contain the primary keys of the table
         """
