@@ -223,6 +223,7 @@ class SynapseDatabase(RelationalDatabase):
     ) -> pd.DataFrame:
         return self.synapse.execute_sql_query(query, include_row_data)
 
+    '''
     def check_dependencies(
         self, data: pd.DataFrame, table_config: DBObjectConfig
     ) -> None:
@@ -286,6 +287,20 @@ class SynapseDatabase(RelationalDatabase):
 
         # table exists and possibly has data, upsert method must be used
         self.upsert_table_rows(table_name, data)
+    '''
+
+    def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
+
+        table_names = self.synapse.get_table_names()
+        table_name = table_config.name
+
+        if table_name not in table_names:
+            self.synapse.add_table(table_name, table_config)
+        else:
+            synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
+            self.synapse.add_table_columns(synapse_id, table_config)
+
+        self.annotate_table(table_name, table_config)
 
     def get_table_names(self) -> list[str]:
         return self.synapse.get_table_names()
