@@ -7,7 +7,6 @@ import sqlalchemy as sa
 import sqlalchemy_utils.functions
 from sqlalchemy.inspection import inspect
 from sqlalchemy.dialects.mysql import insert
-from sqlalchemy import exc
 from schematic_db.db_config import (
     DBConfig,
     DBObjectConfig,
@@ -15,7 +14,7 @@ from schematic_db.db_config import (
     DBAttributeConfig,
     DBForeignKey,
 )
-from .rdb import RelationalDatabase, UpdateDBTableError
+from .rdb import RelationalDatabase
 
 MYSQL_DATATYPES = {
     DBDatatype.TEXT: sa.VARCHAR(5000),
@@ -201,17 +200,6 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
             foreign_keys=create_foreign_key_configs(table_schema),
             attributes=create_attribute_configs(table_schema, indices),
         )
-
-    def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
-        table_names = self.get_table_names()
-        table_name = table_config.name
-        if table_name not in table_names:
-            self.add_table(table_name, table_config)
-        try:
-            self.upsert_table_rows(table_name, data)
-        except exc.SQLAlchemyError as error:
-            error_msg = str(error.__dict__["orig"])
-            raise UpdateDBTableError(table_name, error_msg) from error
 
     def drop_table(self, table_name: str) -> None:
         table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
