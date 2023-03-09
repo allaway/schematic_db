@@ -1,21 +1,8 @@
 """RelationalDatabase"""
 from abc import ABC, abstractmethod
+from typing import Optional
 import pandas as pd
 from schematic_db.db_config import DBObjectConfig
-
-
-class UpdateDBTableError(Exception):
-    """UpdateDBTableError"""
-
-    def __init__(self, table_name: str, error_message: str) -> None:
-        self.message = "Error updating table"
-        self.table_name = table_name
-        self.error_message = error_message
-        super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return f"{self.message}; table: {self.table_name}; error: {self.error_message}"
-
 
 class RelationalDatabase(ABC):
     """An interface for relational database types"""
@@ -29,14 +16,14 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def get_table_config(self, table_name: str) -> DBObjectConfig:
+    def get_table_config(self, table_name: str) ->  Optional[DBObjectConfig]:
         """Returns a DBObjectConfig created from the current database table
 
         Args:
             table_name (str): The name of the table
 
         Returns:
-            DBObjectConfig: The config for the given table
+            Optional[DBObjectConfig]: The config for the given table
         """
 
     @abstractmethod

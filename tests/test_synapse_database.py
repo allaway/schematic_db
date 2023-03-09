@@ -132,38 +132,6 @@ class TestSynapseDatabase:
         annos1b = obj.synapse.get_entity_annotations(synapse_id1)
         assert not list(annos1b.keys())
 
-    def test_update_table(
-        self,
-        synapse_database: SynapseDatabase,
-        table_one_config: DBObjectConfig,
-        table_one: pd.DataFrame,
-    ) -> None:
-        """Testing for SynapseDatabase.update_table()"""
-        obj = synapse_database
-        table_one_keys = table_one[table_one_config.primary_key].to_list()
-        assert obj.synapse.get_table_names() == []
-
-        obj.update_table(table_one, table_one_config)
-        result1 = obj.query_table("table_one")
-        assert result1[table_one_config.primary_key].to_list() == table_one_keys
-
-        obj.drop_table("table_one")
-        assert obj.synapse.get_table_column_names("table_one") == []
-
-        obj.update_table(table_one, table_one_config)
-        result3 = obj.query_table("table_one")
-        assert result3[table_one_config.primary_key].to_list() == table_one_keys
-
-        table_one_x = table_one.copy()
-        table_one_x.loc[2] = ["key3", "c", np.NaN, np.NaN, np.NaN, np.NaN]
-        table_one_x.loc[3] = ["key_x", "d", np.NaN, np.NaN, np.NaN, np.NaN]
-        obj.update_table(table_one_x, table_one_config)
-        result4 = obj.query_table("table_one")
-        assert result4[table_one_config.primary_key].to_list() == table_one_keys + [
-            "key_x"
-        ]
-        assert result4["string_one_col"].to_list() == ["a", "b", "c", "d"]
-
     def test_annotate_table(
         self,
         synapse_database: SynapseDatabase,

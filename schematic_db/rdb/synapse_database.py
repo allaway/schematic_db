@@ -9,7 +9,7 @@ from schematic_db.db_config import (
     DBDatatype,
 )
 from schematic_db.synapse import Synapse, SynapseConfig
-from .rdb import RelationalDatabase, UpdateDBTableError
+from .rdb import RelationalDatabase
 
 CONFIG_DATATYPES = {
     "text": DBDatatype.TEXT,
@@ -223,7 +223,6 @@ class SynapseDatabase(RelationalDatabase):
     ) -> pd.DataFrame:
         return self.synapse.execute_sql_query(query, include_row_data)
 
-    '''
     def check_dependencies(
         self, data: pd.DataFrame, table_config: DBObjectConfig
     ) -> None:
@@ -253,41 +252,6 @@ class SynapseDatabase(RelationalDatabase):
                     values=insert_keys,
                     dependency=key.foreign_object_name,
                 )
-
-    def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
-        try:
-            self.check_dependencies(data, table_config)
-        except SynapseDatabaseUpdateTableError as error:
-            raise UpdateDBTableError(table_config.name, str(error)) from error
-
-        # synapse client can have some problems with <NA> values in string columns
-        for attribute in table_config.attributes:
-            if attribute.datatype == DBDatatype.TEXT and attribute.name in data.columns:
-                data[attribute.name].fillna("", inplace=True)
-
-        table_names = self.synapse.get_table_names()
-        table_name = table_config.name
-
-        # table doesn't exist in Synapse, and must be built
-        if table_name not in table_names:
-            self.synapse.add_table(table_name, table_config)
-            synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
-            self.annotate_table(table_name, table_config)
-            self.synapse.insert_table_rows(synapse_id, data)
-            return
-
-        # table exists but has no columns/rows, both must be added
-        current_columns = self.synapse.get_table_column_names(table_name)
-        if len(list(current_columns)) == 0:
-            synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
-            self.annotate_table(table_name, table_config)
-            self.synapse.add_table_columns(synapse_id, table_config)
-            self.synapse.insert_table_rows(synapse_id, data)
-            return
-
-        # table exists and possibly has data, upsert method must be used
-        self.upsert_table_rows(table_name, data)
-    '''
 
     def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
         table_names = self.synapse.get_table_names()
@@ -342,6 +306,7 @@ class SynapseDatabase(RelationalDatabase):
         """
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
         annotations = self.synapse.get_entity_annotations(table_id)
+        # if a synapse table has been "dropped" but not deleted, it will nto have any annotations
         if not annotations:
             return None
         attribute_annotations = [

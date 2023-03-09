@@ -67,7 +67,12 @@ class RDBUpdater:
             table_name (str): The name of the table
             manifest_table (pd.DataFrame): The input data
         """
-        config: DBObjectConfig = self.rdb.get_table_config(table_name)
+        config_attempt = self.rdb.get_table_config(table_name)
+        if config_attempt is None:
+            return
+            # todo: fix
+        config: DBObjectConfig = config_attempt
+
 
         # normalize table
         table_columns = set(config.get_attribute_names())
