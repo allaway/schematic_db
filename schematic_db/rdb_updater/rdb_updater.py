@@ -73,7 +73,6 @@ class RDBUpdater:
             # todo: fix
         config: DBObjectConfig = config_attempt
 
-
         # normalize table
         table_columns = set(config.get_attribute_names())
         manifest_columns = set(manifest_table.columns)

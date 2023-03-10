@@ -1,32 +1,71 @@
-"""Testing for Testing for RDBQueryer."""
+"""Testing for RDBUpdater."""
 from typing import Generator
 import os
 import pytest
-from schematic_db.rdb_queryer import RDBQueryer
-from schematic_db.query_store import QueryStore
-from schematic_db.rdb_updater import RDBUpdater
-from schematic_db.rdb import MySQLDatabase, PostgresDatabase
+from schematic_db.rdb import MySQLDatabase
+from schematic_db.rdb.postgres import PostgresDatabase
+from schematic_db.rdb_builder import RDBBuilder
 from schematic_db.schema import Schema
+from schematic_db.rdb_updater import RDBUpdater
+from schematic_db.manifest_store import ManifestStore, ManifestStoreConfig
+from schematic_db.query_store import QueryStore
+from schematic_db.rdb_queryer import RDBQueryer
 
 
-@pytest.fixture(scope="module", name="rdb_updater_mysql_test")
-def fixture_rdb_updater_mysql_test(
+@pytest.fixture(scope="module", name="rdb_builder_mysql")
+def fixture_rdb_builder_mysql(
     mysql_database: MySQLDatabase, test_schema2: Schema
 ) -> Generator:
-    """Yields a RDBUpdater with a mysql database and test schema"""
-    obj = RDBUpdater(rdb=mysql_database, schema=test_schema2)
-    obj.build_database()
+    """Yields a RDBBuilder with a mysql database and test schema"""
+    obj = RDBBuilder(rdb=mysql_database, schema=test_schema2)
     yield obj
     obj.rdb.drop_all_tables()
 
 
-@pytest.fixture(scope="module", name="rdb_updater_postgres_test")
-def fixture_rdb_updater_postgres_test(
+@pytest.fixture(scope="module", name="rdb_builder_postgres")
+def fixture_rdb_builder_postgres(
     postgres_database: PostgresDatabase, test_schema2: Schema
 ) -> Generator:
-    """Yields a RDBUpdater with a postgres database and test schema"""
-    obj = RDBUpdater(rdb=postgres_database, schema=test_schema2)
-    obj.build_database()
+    """Yields a RDBBuilder with a mysql database and test schema"""
+    obj = RDBBuilder(rdb=postgres_database, schema=test_schema2)
+    yield obj
+    obj.rdb.drop_all_tables()
+
+
+@pytest.fixture(scope="module", name="manifest_store")
+def fixture_manifest_store(
+    test_synapse_project_id: str,
+    test_synapse_asset_view_id: str,
+    secrets_dict: dict,
+    test_schema_json_url: str,
+) -> Generator:
+    """Yields a ManifestStore object"""
+    yield ManifestStore(
+        ManifestStoreConfig(
+            test_schema_json_url,
+            test_synapse_project_id,
+            test_synapse_asset_view_id,
+            secrets_dict["synapse"]["auth_token"],
+        )
+    )
+
+
+@pytest.fixture(scope="module", name="rdb_updater_mysql")
+def fixture_rdb_updater_mysql(
+    mysql_database: MySQLDatabase, manifest_store: ManifestStore
+) -> Generator:
+    """Yields a RDBUpdater with a mysql database and test schema"""
+    obj = RDBUpdater(rdb=mysql_database, manifest_store=manifest_store)
+    yield obj
+    obj.rdb.drop_all_tables()
+
+
+@pytest.fixture(scope="module", name="rdb_updater_postgres")
+def fixture_rdb_updater_postgres(
+    postgres_database: PostgresDatabase, manifest_store: ManifestStore
+) -> Generator:
+    """Yields a RDBUpdater with a mysql database and test schema"""
+    obj = RDBUpdater(rdb=postgres_database, manifest_store=manifest_store)
     yield obj
     obj.rdb.drop_all_tables()
 
@@ -38,20 +77,14 @@ def fixture_query_store(synapse_test_query_store: QueryStore) -> Generator:
     yield obj
 
 
-@pytest.fixture(scope="function", name="mysql_test_rdb_queryer")
-def fixture_mysql_test_rdb_queryer(
-    rdb_updater_mysql_test: RDBUpdater,
+@pytest.fixture(scope="function", name="rdb_queryer_mysql")
+def fixture_rdb_queryer_mysql(
+    mysql_database: MySQLDatabase,
     query_store: QueryStore,
-    test_schema_table_names: list[str],
 ) -> Generator:
     """Yields a RDBQueryer with a mysql database with test schema tables added"""
-    updater = rdb_updater_mysql_test
-    assert updater.rdb.get_table_names() == test_schema_table_names
-
-    assert query_store.get_table_names() == []
-
     obj = RDBQueryer(
-        rdb=updater.rdb,
+        rdb=mysql_database,
         query_store=query_store,
     )
     yield obj
@@ -59,20 +92,14 @@ def fixture_mysql_test_rdb_queryer(
         query_store.delete_table(table_name)
 
 
-@pytest.fixture(scope="function", name="postgres_test_rdb_queryer")
-def fixture_postgres_test_rdb_queryer(
-    rdb_updater_postgres_test: RDBUpdater,
+@pytest.fixture(scope="function", name="rdb_queryer_postgres")
+def fixture_rdb_queryer_postgres(
+    postgres_database: MySQLDatabase,
     query_store: QueryStore,
-    test_schema_table_names: list[str],
 ) -> Generator:
     """Yields a RDBQueryer with a postgres database with test schema tables added"""
-    updater = rdb_updater_postgres_test
-    assert updater.rdb.get_table_names() == test_schema_table_names
-
-    assert query_store.get_table_names() == []
-
     obj = RDBQueryer(
-        rdb=updater.rdb,
+        rdb=postgres_database,
         query_store=query_store,
     )
     yield obj
@@ -80,33 +107,58 @@ def fixture_postgres_test_rdb_queryer(
         query_store.delete_table(table_name)
 
 
-@pytest.mark.synapse
 @pytest.mark.schematic
-class TestRDBQueryerTest:
-    """Testing for RDBQueryer using the test schema database"""
+class TestRDBQueryer:
+    """Testing for RDBBuilder and test schema"""
 
-    def test_store_query_results_mysql(
+    def test_mysql(
         self,
-        mysql_test_rdb_queryer: RDBQueryer,
-        test_schema_table_names: list[str],
+        rdb_builder_mysql: RDBBuilder,
+        rdb_updater_mysql: RDBUpdater,
+        rdb_queryer_mysql: RDBQueryer,
         data_directory: str,
+        test_schema_table_names: list[str],
     ) -> None:
-        """Testing for RDBQueryer.store_query_results()"""
-        obj = mysql_test_rdb_queryer
-        assert obj.query_store.get_table_names() == []
+        """Creates the test database in MySQL"""
+        rdb_builder = rdb_builder_mysql
+        assert rdb_builder.rdb.get_table_names() == []
+        rdb_builder.build_database()
+        assert rdb_builder.rdb.get_table_names() == test_schema_table_names
+
+        rdb_updater = rdb_updater_mysql
+        rdb_updater.update_database()
+        for name in test_schema_table_names:
+            table = rdb_updater.rdb.query_table(name)
+            assert len(table.index) > 0
+
+        rdb_queryer = rdb_queryer_mysql
+        assert rdb_queryer.query_store.get_table_names() == []
         path = os.path.join(data_directory, "test_queries_mysql.csv")
-        obj.store_query_results(path)
-        assert obj.query_store.get_table_names() == test_schema_table_names
+        rdb_queryer.store_query_results(path)
+        assert rdb_queryer.query_store.get_table_names() == test_schema_table_names
 
-    def test_store_query_results_postgres(
+    def test_postgres(
         self,
-        postgres_test_rdb_queryer: RDBQueryer,
-        test_schema_table_names: list[str],
+        rdb_builder_postgres: RDBBuilder,
+        rdb_updater_postgres: RDBUpdater,
+        rdb_queryer_postgres: RDBQueryer,
         data_directory: str,
+        test_schema_table_names: list[str],
     ) -> None:
-        """Testing for RDBQueryer.store_query_results()"""
-        obj = postgres_test_rdb_queryer
-        assert obj.query_store.get_table_names() == []
+        """Creates the test database in Postgres"""
+        rdb_builder = rdb_builder_postgres
+        assert rdb_builder.rdb.get_table_names() == []
+        rdb_builder.build_database()
+        assert rdb_builder.rdb.get_table_names() == test_schema_table_names
+
+        rdb_updater = rdb_updater_postgres
+        rdb_updater.update_database()
+        for name in test_schema_table_names:
+            table = rdb_updater.rdb.query_table(name)
+            assert len(table.index) > 0
+
+        rdb_queryer = rdb_queryer_postgres
+        assert rdb_queryer.query_store.get_table_names() == []
         path = os.path.join(data_directory, "test_queries_postgres.csv")
-        obj.store_query_results(path)
-        assert obj.query_store.get_table_names() == test_schema_table_names
+        rdb_queryer.store_query_results(path)
+        assert rdb_queryer.query_store.get_table_names() == test_schema_table_names

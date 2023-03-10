@@ -82,6 +82,23 @@ class TestSQLGetters:
             assert isinstance(result, pd.DataFrame)
             obj.drop_all_tables()
 
+    def test_query_table(
+        self,
+        sql_databases: list[MySQLDatabase],
+        table_one_config: DBObjectConfig,
+    ) -> None:
+        """Tests RelationalDatabase.execute_sql_query()"""
+        for obj in sql_databases:
+            obj.add_table("table_one", table_one_config)
+            result1 = obj.query_table("table_one")
+            assert isinstance(result1, pd.DataFrame)
+
+            obj.add_table("Table_one", table_one_config)
+            result2 = obj.query_table("Table_one")
+            assert isinstance(result2, pd.DataFrame)
+
+            obj.drop_all_tables()
+
 
 @pytest.mark.fast
 class TestSQLUpdateTables:

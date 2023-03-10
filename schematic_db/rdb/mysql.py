@@ -245,9 +245,8 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
                 conn.execute(statement)
 
     def query_table(self, table_name: str) -> pd.DataFrame:
-        query = f"SELECT * FROM {table_name};"
-        table = self.execute_sql_query(query)
-        return table
+        query = f"SELECT * FROM `{table_name}`"
+        return self.execute_sql_query(query)
 
     def _execute_sql_statement(self, statement: str) -> Any:
         with self.engine.connect().execution_options(autocommit=True) as conn:
