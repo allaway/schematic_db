@@ -2,9 +2,7 @@
 
 from dataclasses import dataclass
 import pandas as pd
-import networkx
 from schematic_db.api_utils.api_utils import (
-    get_graph_by_edge_type,
     get_project_manifests,
     get_manifest,
     ManifestSynapseConfig,

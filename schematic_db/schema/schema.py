@@ -3,7 +3,6 @@
 from typing import Optional
 from dataclasses import dataclass
 import warnings
-import networkx
 
 from schematic_db.db_config import (
     DBConfig,
