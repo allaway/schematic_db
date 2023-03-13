@@ -14,12 +14,13 @@ from schematic_db.db_config import (
 )
 
 from schematic_db.api_utils.api_utils import (
-    get_graph_by_edge_type,
     find_class_specific_properties,
     get_property_label_from_display_name,
     is_node_required,
     get_node_validation_rules,
 )
+
+from schematic_db.schema_graph import SchemaGraph
 
 from .database_config import DatabaseConfig
 
@@ -109,20 +110,9 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         self.synapse_project_id = config.synapse_project_id
         self.synapse_asset_view_id = config.synapse_asset_view_id
         self.synapse_input_token = config.synapse_input_token
-        self.schema_graph = self.create_schema_graph()
         self.use_display_names_as_labels = use_display_names_as_labels
+        self.schema_graph = SchemaGraph(config.schema_url)
         self.update_db_config()
-
-    def create_schema_graph(self) -> networkx.DiGraph:
-        """Retrieve the edges from schematic API and store in networkx.DiGraph()
-
-        Returns:
-            networkx.DiGraph: The edges of the graph
-        """
-        subgraph = get_graph_by_edge_type(self.schema_url, "requiresComponent")
-        schema_graph = networkx.DiGraph()
-        schema_graph.add_edges_from(subgraph)
-        return schema_graph
 
     def get_db_config(self) -> DBConfig:
         "Gets the currents objects DBConfig"
@@ -130,24 +120,13 @@ class Schema:  # pylint: disable=too-many-instance-attributes
 
     def update_db_config(self) -> None:
         """Updates the DBConfig object."""
-        object_names = self._create_sorted_object_name_list()
+        object_names = self.schema_graph.create_sorted_object_name_list()
         object_configs = [
             config
             for config in [self.create_db_object_config(name) for name in object_names]
             if config is not None
         ]
         self.db_config = DBConfig(object_configs)
-
-    def _create_sorted_object_name_list(self) -> list[str]:
-        """
-        Uses the schema graph to create a object name list such objects always come after ones they
-         depend on.
-        This order is how objects in a database should be built and/or updated.
-
-        Returns:
-            list[str]: A list of objects names
-        """
-        return list(reversed(list(networkx.topological_sort(self.schema_graph))))
 
     def create_db_object_config(self, object_name: str) -> Optional[DBObjectConfig]:
         """Creates the config for one object in the database.
@@ -291,7 +270,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             list[DBForeignKey]: A list of foreign
         """
         # Uses the schema graph to find objects the current object depends on
-        parent_object_names = list(self.schema_graph.neighbors(object_name))
+        parent_object_names = self.schema_graph.get_neighbors(object_name)
         # Each parent of the current object needs a foreign key to that parent
         return [self.create_foreign_key(name) for name in parent_object_names]
 
