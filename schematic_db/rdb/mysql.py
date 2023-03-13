@@ -8,7 +8,6 @@ import sqlalchemy_utils.functions
 from sqlalchemy.inspection import inspect
 from sqlalchemy.dialects.mysql import insert
 from schematic_db.db_config import (
-    DBConfig,
     DBObjectConfig,
     DBDatatype,
     DBAttributeConfig,
@@ -176,11 +175,6 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         result = self._execute_sql_statement(query).fetchall()
         table = pd.DataFrame(result)
         return table
-
-    def get_db_config(self) -> DBConfig:
-        table_names = self.get_table_names()
-        config_list = [self.get_table_config(name) for name in table_names]
-        return DBConfig(config_list)
 
     def get_table_config(self, table_name: str) -> DBObjectConfig:
         """Creates a table config from a sqlalchemy table schema

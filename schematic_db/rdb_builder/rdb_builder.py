@@ -3,7 +3,7 @@ from schematic_db.rdb import RelationalDatabase
 from schematic_db.schema import Schema
 
 
-class RDBBuilder:
+class RDBBuilder: #pylint: disable=too-few-public-methods
     """Builds a database schema"""
 
     def __init__(self, rdb: RelationalDatabase, schema: Schema) -> None:

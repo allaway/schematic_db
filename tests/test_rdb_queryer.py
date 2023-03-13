@@ -111,7 +111,7 @@ def fixture_rdb_queryer_postgres(
 class TestRDBQueryer:
     """Testing for RDBBuilder and test schema"""
 
-    def test_mysql(
+    def test_mysql( #pylint: disable=too-many-arguments
         self,
         rdb_builder_mysql: RDBBuilder,
         rdb_updater_mysql: RDBUpdater,
@@ -137,7 +137,7 @@ class TestRDBQueryer:
         rdb_queryer.store_query_results(path)
         assert rdb_queryer.query_store.get_table_names() == test_schema_table_names
 
-    def test_postgres(
+    def test_postgres( #pylint: disable=too-many-arguments
         self,
         rdb_builder_postgres: RDBBuilder,
         rdb_updater_postgres: RDBUpdater,

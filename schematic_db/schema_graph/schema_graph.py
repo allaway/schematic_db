@@ -40,4 +40,12 @@ class SchemaGraph:
         return list(reversed(list(networkx.topological_sort(self.schema_graph))))
 
     def get_neighbors(self, object_name: str) -> list[str]:
+        """Gets the neighbors of the table in the schema graph
+
+        Args:
+            object_name (str): The name of the object to ge the neighbors of
+
+        Returns:
+            list[str]: A list of other objects
+        """
         return list(self.schema_graph.neighbors(object_name))

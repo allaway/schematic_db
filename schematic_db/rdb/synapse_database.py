@@ -199,6 +199,7 @@ class SynapseDatabase(RelationalDatabase):
             self._drop_table_and_dependencies(rd_table_name, db_config)
 
     def delete_all_tables(self) -> None:
+        """Deletes all tables in the project"""
         table_names = self.get_table_names()
         for name in table_names:
             self.delete_table(name)
@@ -302,6 +303,11 @@ class SynapseDatabase(RelationalDatabase):
         self.synapse.set_entity_annotations(synapse_id, annotations)
 
     def get_db_config(self) -> DBConfig:
+        """Gets the db config of the synapse database.
+
+        Returns:
+            DBConfig: The db config
+        """
         table_names = self.synapse.get_table_names()
         result_list = [self.get_table_config(name) for name in table_names]
         config_list = [config for config in result_list if config is not None]
