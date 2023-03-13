@@ -157,6 +157,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         self,
         config: SchemaConfig,
         database_config: DatabaseConfig = DatabaseConfig([]),
+        use_display_names_as_labels: bool = False,
     ) -> None:
         """
         The Schema class handles interactions with the schematic API.
@@ -164,8 +165,10 @@ class Schema:  # pylint: disable=too-many-instance-attributes
 
         Args:
             config (SchemaConfig): A config describing the basic inputs for the schema object
-            database_config (DatabaseConfig): A config describing optional
-             database specific attributes
+            database_config (DatabaseConfig): Experimental and will be deprecated in the near
+             future. A config describing optional database specific attributes.
+            use_display_names_as_labels(bool): Experimental and will be deprecated in the near
+             future. Use when display names and labels are the same in the schema.
         """
         self.database_config = database_config
         self.schema_url = config.schema_url
@@ -173,6 +176,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         self.synapse_asset_view_id = config.synapse_asset_view_id
         self.synapse_input_token = config.synapse_input_token
         self.schema_graph = self.create_schema_graph()
+        self.use_display_names_as_labels = use_display_names_as_labels
         self.update_manifest_configs()
         self.update_db_config()
 
@@ -273,11 +277,16 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             DBAttributeConfig: The DBAttributeConfig for the attribute
         """
+        attribute = self.database_config.get_attribute(object_name, attribute_name)
+        # Use attribute config if provided
+        if attribute is not None:
+            return attribute
+        # Create attribute config if not provided
         return DBAttributeConfig(
             name=attribute_name,
             datatype=self.get_attribute_datatype(attribute_name),
             required=is_node_required(self.schema_url, attribute_name),
-            index=self.index_attribute(attribute_name, object_name),
+            index=False,
         )
 
     def get_attribute_datatype(self, attribute_name: str) -> DBDatatype:
@@ -304,19 +313,6 @@ class Schema:  # pylint: disable=too-many-instance-attributes
             return SCHEMATIC_TYPE_DATATYPES[type_rules[0]]
         # Use text if there are no validation type rules
         return DBDatatype.TEXT
-
-    def index_attribute(self, attribute_name: str, object_name: str) -> bool:
-        """Determine whether or not to index an attribute(column in SQL databases)
-
-        Args:
-            attribute_name (str): The name of the attribute
-            object_name (str): The name of the object
-
-        Returns:
-            bool: True if the attribute needs to indexed
-        """
-        indices = self.database_config.get_indices(object_name)
-        return indices is not None and attribute_name in indices
 
     def get_primary_key(self, object_name: str) -> str:
         """Get the primary key for the attribute
@@ -377,9 +373,7 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         """
         # Assume the foreign key name is <object_name>_id where the object name is the
         #  name of the object the attribute the foreign key is in
-        attribute_name = get_property_label_from_display_name(
-            self.schema_url, f"{foreign_object_name}_id"
-        )
+        attribute_name = self.get_attribute_name(f"{foreign_object_name}_id")
 
         attempt = self.database_config.get_primary_key(foreign_object_name)
         foreign_attribute_name = "id" if attempt is None else attempt
@@ -465,4 +459,6 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         Returns:
             str: The attribute name of the column
         """
+        if self.use_display_names_as_labels:
+            return column_name
         return get_property_label_from_display_name(self.schema_url, column_name)

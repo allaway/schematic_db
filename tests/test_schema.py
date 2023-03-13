@@ -18,7 +18,6 @@ from schematic_db.schema import (
     get_manifest_ids_for_object,
     get_dataset_ids_for_object,
     get_manifest,
-    get_manifest_datatypes,
     get_node_validation_rules,
 )
 
@@ -42,7 +41,20 @@ def fixture_database_config() -> Generator:
                     "foreign_attribute_name": "att1",
                 },
             ],
-            "indices": ["att2", "att3"],
+            "attributes": [
+                {
+                    "attribute_name": "att2",
+                    "datatype": "str",
+                    "required": True,
+                    "index": True,
+                },
+                {
+                    "attribute_name": "att3",
+                    "datatype": "int",
+                    "required": False,
+                    "index": False,
+                },
+            ],
         },
         {"name": "object2", "primary_key": "att1"},
         {"name": "object3", "primary_key": "att1"},
@@ -69,7 +81,6 @@ def fixture_database_object_config() -> Generator:
                 "foreign_attribute_name": "att1",
             },
         ],
-        "indices": ["att2", "att3"],
     }
     obj = DatabaseObjectConfig(**data)  # type: ignore
     yield obj
@@ -96,12 +107,12 @@ class TestDatabaseConfig:
         assert obj.get_foreign_keys("object2") is None
         assert obj.get_foreign_keys("object3") is None
 
-    def test_get_indices(self, database_config: DatabaseConfig) -> None:
-        """Testing for get_indices"""
+    def test_get_attributes(self, database_config: DatabaseConfig) -> None:
+        """Testing for get_attributes"""
         obj = database_config
-        assert obj.get_indices("object1") == ["att2", "att3"]
-        assert obj.get_indices("object2") is None
-        assert obj.get_indices("object3") is None
+        assert obj.get_attributes("object1") is not None
+        assert obj.get_attributes("object2") is None
+        assert obj.get_attributes("object3") is None
 
 
 @pytest.fixture(name="test_manifests")
@@ -205,17 +216,6 @@ class TestAPIUtils:
                 "1",
                 test_synapse_asset_view_id,
             )
-
-    def test_get_manifest_datatypes(
-        self, secrets_dict: dict, test_synapse_asset_view_id: str
-    ) -> None:
-        """Testing for get_manifest_datatypes()"""
-        datatypes = get_manifest_datatypes(
-            secrets_dict["synapse"]["auth_token"],
-            "syn30988380",
-            test_synapse_asset_view_id,
-        )
-        assert isinstance(datatypes, dict)
 
     def test_get_node_validation_rules(self, test_schema_json_url: str) -> None:
         """Testing for get_node_validation_rules"""
