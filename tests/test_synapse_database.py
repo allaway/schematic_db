@@ -128,10 +128,6 @@ class TestSynapseDatabase:
         annos3 = obj.synapse.get_entity_annotations(synapse_id3)
         assert not list(annos3.keys())
 
-        obj.drop_table("table_one")
-        annos1b = obj.synapse.get_entity_annotations(synapse_id1)
-        assert not list(annos1b.keys())
-
     def test_annotate_table(
         self,
         synapse_database: SynapseDatabase,

@@ -1,5 +1,5 @@
 """SynapseDatabase"""
-from typing import Union, Optional
+from typing import Union
 import pandas as pd
 from schematic_db.db_config import (
     DBConfig,
@@ -18,6 +18,18 @@ CONFIG_DATATYPES = {
     "float": DBDatatype.FLOAT,
     "boolean": DBDatatype.BOOLEAN,
 }
+
+
+class SynapseDatabaseMissingTableAnnotationsError(Exception):
+    """Raised when a table is missing expected annotations"""
+
+    def __init__(self, message: str, table_name: str) -> None:
+        self.message = message
+        self.table_name = table_name
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return f"{self.message}; " f"name: {self.table_name};"
 
 
 class SynapseDatabaseDropTableError(Exception):
@@ -295,20 +307,22 @@ class SynapseDatabase(RelationalDatabase):
         config_list = [config for config in result_list if config is not None]
         return DBConfig(config_list)
 
-    def get_table_config(self, table_name: str) -> Optional[DBObjectConfig]:
+    def get_table_config(self, table_name: str) -> DBObjectConfig:
         """Creates a DBObjectConfig if the table is annotated, otherwise None
 
         Args:
-            table_name (str): The name fo the table
+            table_name (str): The name of the table
 
         Returns:
             DBObjectConfig: A generic representation of the table
         """
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
         annotations = self.synapse.get_entity_annotations(table_id)
-        # if a synapse table has been "dropped" but not deleted, it will nto have any annotations
+        # if a synapse table has been "dropped" but not deleted or rebuilt
         if not annotations:
-            return None
+            raise SynapseDatabaseMissingTableAnnotationsError(
+                "Table has no annotations", table_name
+            )
         attribute_annotations = [
             v[0] for k, v in annotations.items() if k.startswith("attribute")
         ]
@@ -400,7 +414,12 @@ class SynapseDatabase(RelationalDatabase):
             data (pd.DataFrame): The table the rows will come from
         """
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
-        primary_key = self.synapse.get_entity_annotations(table_id)["primary_key"][0]
+        annotations = self.synapse.get_entity_annotations(table_id)
+        if "primary_key" not in annotations:
+            raise SynapseDatabaseMissingTableAnnotationsError(
+                "Table has no primary_key annotation", table_name
+            )
+        primary_key = annotations["primary_key"][0]
         self._upsert_table_rows(table_id, data, primary_key)
 
     def _upsert_table_rows(

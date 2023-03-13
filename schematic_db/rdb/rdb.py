@@ -1,6 +1,5 @@
 """RelationalDatabase"""
 from abc import ABC, abstractmethod
-from typing import Optional
 import pandas as pd
 from schematic_db.db_config import DBObjectConfig
 
@@ -17,7 +16,7 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def get_table_config(self, table_name: str) -> Optional[DBObjectConfig]:
+    def get_table_config(self, table_name: str) -> DBObjectConfig:
         """Returns a DBObjectConfig created from the current database table
 
         Args:

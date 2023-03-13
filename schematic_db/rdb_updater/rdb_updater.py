@@ -1,7 +1,6 @@
 """RDBUpdater"""
 import warnings
 import pandas as pd
-from schematic_db.db_config import DBObjectConfig
 from schematic_db.rdb import RelationalDatabase
 from schematic_db.manifest_store import ManifestStore
 
@@ -67,11 +66,7 @@ class RDBUpdater:
             table_name (str): The name of the table
             manifest_table (pd.DataFrame): The input data
         """
-        config_attempt = self.rdb.get_table_config(table_name)
-        if config_attempt is None:
-            return
-            # todo: fix
-        config: DBObjectConfig = config_attempt
+        config = self.rdb.get_table_config(table_name)
 
         # normalize table
         table_columns = set(config.get_attribute_names())
