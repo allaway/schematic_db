@@ -1,6 +1,8 @@
 """SynapseDatabase"""
 from typing import Union
+from functools import partial
 import pandas as pd
+import synapseclient as sc  # type: ignore
 from schematic_db.db_config import (
     DBConfig,
     DBObjectConfig,
@@ -138,6 +140,27 @@ def create_attributes(strings: list[str]) -> list[DBAttributeConfig]:
     ]
 
 
+def create_synapse_column(name: str, datatype: DBDatatype) -> sc.Column:
+    """Creates a Synapse column object
+
+    Args:
+        name (str): The name of the column
+        datatype (DBDatatype): The datatype of the column
+
+    Returns:
+        sc.Column: _description_
+    """
+    datatypes = {
+        DBDatatype.TEXT: partial(sc.Column, columnType="LARGETEXT"),
+        DBDatatype.DATE: partial(sc.Column, columnType="DATE"),
+        DBDatatype.INT: partial(sc.Column, columnType="INTEGER"),
+        DBDatatype.FLOAT: partial(sc.Column, columnType="DOUBLE"),
+        DBDatatype.BOOLEAN: partial(sc.Column, columnType="BOOLEAN"),
+    }
+    func = datatypes[datatype]
+    return func(name=name)
+
+
 class SynapseDatabase(RelationalDatabase):
     """Represents a database stored as Synapse tables"""
 
@@ -269,12 +292,16 @@ class SynapseDatabase(RelationalDatabase):
     def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
+        columns = [
+            create_synapse_column(att.name, att.datatype)
+            for att in table_config.attributes
+        ]
 
         if table_name not in table_names:
-            self.synapse.add_table(table_name, table_config)
+            self.synapse.add_table(table_name, columns)
         else:
             synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
-            self.synapse.add_table_columns(synapse_id, table_config)
+            self.synapse.add_table_columns(synapse_id, columns)
 
         self.annotate_table(table_name, table_config)
 

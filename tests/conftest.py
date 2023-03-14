@@ -6,6 +6,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from yaml import safe_load
+import synapseclient as sc  # type: ignore
 from schematic_db.db_config import (
     DBConfig,
     DBObjectConfig,
@@ -357,6 +358,19 @@ def fixture_table_one_config() -> Generator:
     yield table_config
 
 
+@pytest.fixture(name="table_one_columns", scope="session")
+def fixture_table_one_columns() -> Generator:
+    """Yields a list of synapse columns for table one"""
+    yield [
+        sc.Column(name="pk_one_col", columnType="LARGETEXT"),
+        sc.Column(name="string_one_col", columnType="LARGETEXT"),
+        sc.Column(name="int_one_col", columnType="INTEGER"),
+        sc.Column(name="double_one_col", columnType="DOUBLE"),
+        sc.Column(name="date_one_col", columnType="DATE"),
+        sc.Column(name="bool_one_col", columnType="BOOLEAN"),
+    ]
+
+
 @pytest.fixture(scope="session")
 def table_two() -> Generator:
     """
@@ -369,6 +383,15 @@ def table_two() -> Generator:
         }
     )
     yield dataframe
+
+
+@pytest.fixture(name="table_two_columns", scope="session")
+def fixture_table_two_columns() -> Generator:
+    """Yields a list of synapse columns for table two"""
+    yield [
+        sc.Column(name="pk_two_col", columnType="LARGETEXT"),
+        sc.Column(name="string_two_col", columnType="LARGETEXT"),
+    ]
 
 
 @pytest.fixture(scope="session")
@@ -479,6 +502,17 @@ def fixture_table_three_config() -> Generator:
         ],
     )
     yield table_config
+
+
+@pytest.fixture(name="table_three_columns", scope="session")
+def fixture_table_three_columns() -> Generator:
+    """Yields a list of synapse columns for table three"""
+    yield [
+        sc.Column(name="pk_zero_col", columnType="LARGETEXT"),
+        sc.Column(name="pk_one_col", columnType="LARGETEXT"),
+        sc.Column(name="pk_two_col", columnType="LARGETEXT"),
+        sc.Column(name="string_three_col", columnType="LARGETEXT"),
+    ]
 
 
 @pytest.fixture(scope="session")

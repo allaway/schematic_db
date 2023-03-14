@@ -3,6 +3,7 @@ from typing import Generator
 import pytest
 import pandas as pd
 import numpy as np
+import synapseclient as sc  # type: ignore
 from schematic_db.rdb.synapse_database import (
     SynapseDatabase,
     SynapseDatabaseDropTableError,
@@ -27,12 +28,15 @@ def fixture_synapse_with_empty_tables(
     table_one_config: DBObjectConfig,
     table_two_config: DBObjectConfig,
     table_three_config: DBObjectConfig,
+    table_one_columns: list[sc.Column],
+    table_two_columns: list[sc.Column],
+    table_three_columns: list[sc.Column],
 ) -> Generator:
     """Yields a SynapseDatabase object with tables added"""
     obj = synapse_database
-    obj.synapse.add_table("table_one", table_one_config)
-    obj.synapse.add_table("table_two", table_two_config)
-    obj.synapse.add_table("table_three", table_three_config)
+    obj.synapse.add_table("table_one", table_one_columns)
+    obj.synapse.add_table("table_two", table_two_columns)
+    obj.synapse.add_table("table_three", table_three_columns)
     obj.annotate_table("table_one", table_one_config)
     obj.annotate_table("table_two", table_two_config)
     obj.annotate_table("table_three", table_three_config)
@@ -133,13 +137,15 @@ class TestSynapseDatabase:
         synapse_database: SynapseDatabase,
         table_one_config: DBObjectConfig,
         table_three_config: DBObjectConfig,
+        table_one_columns: list[sc.Column],
+        table_three_columns: list[sc.Column],
     ) -> None:
         """Testing for SynapseDatabase.annotate_table()"""
         obj = synapse_database
         assert obj.get_table_names() == []
 
-        obj.synapse.add_table("table_one", table_one_config)
-        obj.synapse.add_table("table_three", table_three_config)
+        obj.synapse.add_table("table_one", table_one_columns)
+        obj.synapse.add_table("table_three", table_three_columns)
 
         synapse_id1 = obj.synapse.get_synapse_id_from_table_name("table_one")
         annotations = obj.synapse.get_entity_annotations(synapse_id1)
