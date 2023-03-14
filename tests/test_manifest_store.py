@@ -1,30 +1,8 @@
 """Testing for ManifestStore."""
-from typing import Generator
 import pytest
-from schematic_db.manifest_store import (
-    ManifestStore,
-    ManifestStoreConfig,
-)
+from schematic_db.manifest_store import ManifestStore
 
 from schematic_db.api_utils import ManifestSynapseConfig
-
-
-@pytest.fixture(name="manifest_store")
-def fixture_manifest_store(
-    test_synapse_project_id: str,
-    test_synapse_asset_view_id: str,
-    secrets_dict: dict,
-    test_schema_json_url: str,
-) -> Generator:
-    """Yields a ManifestStore object"""
-    yield ManifestStore(
-        ManifestStoreConfig(
-            test_schema_json_url,
-            test_synapse_project_id,
-            test_synapse_asset_view_id,
-            secrets_dict["synapse"]["auth_token"],
-        )
-    )
 
 
 @pytest.mark.schematic

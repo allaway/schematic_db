@@ -14,6 +14,11 @@ from schematic_db.db_config import (
     DBForeignKey,
 )
 
+from schematic_db.manifest_store import (
+    ManifestStore,
+    ManifestStoreConfig,
+)
+
 from schematic_db.query_store import QueryStore, SynapseQueryStore
 from schematic_db.rdb import MySQLDatabase, MySQLConfig
 from schematic_db.rdb.postgres import PostgresDatabase
@@ -211,6 +216,24 @@ def fixture_test_schema2(
     )
     obj = Schema(config, database_config=database_config)
     yield obj
+
+
+@pytest.fixture(scope="session", name="manifest_store")
+def fixture_manifest_store(
+    test_synapse_project_id: str,
+    test_synapse_asset_view_id: str,
+    secrets_dict: dict,
+    test_schema_json_url: str,
+) -> Generator:
+    """Yields a ManifestStore object"""
+    yield ManifestStore(
+        ManifestStoreConfig(
+            test_schema_json_url,
+            test_synapse_project_id,
+            test_synapse_asset_view_id,
+            secrets_dict["synapse"]["auth_token"],
+        )
+    )
 
 
 @pytest.fixture(scope="session", name="synapse_test_query_store")
