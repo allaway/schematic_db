@@ -23,7 +23,7 @@ def fixture_synapse_no_extra_tables(synapse_database: SynapseDatabase) -> Genera
 
 
 @pytest.fixture(name="synapse_with_empty_tables")
-def fixture_synapse_with_empty_tables(
+def fixture_synapse_with_empty_tables(  # pylint: disable=too-many-arguments
     synapse_database: SynapseDatabase,
     table_one_config: DBObjectConfig,
     table_two_config: DBObjectConfig,
@@ -132,7 +132,7 @@ class TestSynapseDatabase:
         annos3 = obj.synapse.get_entity_annotations(synapse_id3)
         assert not list(annos3.keys())
 
-    def test_annotate_table(
+    def test_annotate_table(  # pylint: disable=too-many-arguments
         self,
         synapse_database: SynapseDatabase,
         table_one_config: DBObjectConfig,

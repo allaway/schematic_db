@@ -7,19 +7,6 @@ from schematic_db.db_config.db_config import DBObjectConfig
 from schematic_db.synapse import Synapse, SynapseConfig
 
 
-@pytest.fixture(name="table_one_columns", scope="module")
-def fixture_table_one_columns() -> Generator:
-    """Yields a list of synapse columns for table one"""
-    yield [
-        sc.Column(name="pk_one_col", columnType="LARGETEXT"),
-        sc.Column(name="string_one_col", columnType="LARGETEXT"),
-        sc.Column(name="int_one_col", columnType="INTEGER"),
-        sc.Column(name="double_one_col", columnType="DOUBLE"),
-        sc.Column(name="date_one_col", columnType="DATE"),
-        sc.Column(name="bool_one_col", columnType="BOOLEAN"),
-    ]
-
-
 @pytest.fixture(name="synapse_with_test_table_one", scope="class")
 def fixture_synapse_with_test_table_one(
     synapse_database_project: Synapse,
