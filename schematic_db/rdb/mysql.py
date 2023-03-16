@@ -7,7 +7,7 @@ import sqlalchemy as sa
 import sqlalchemy_utils.functions
 from sqlalchemy.inspection import inspect
 from sqlalchemy.dialects.mysql import insert
-from schematic_db.db_config import (
+from schematic_db.db_config.db_config import (
     DBObjectConfig,
     DBDatatype,
     DBAttributeConfig,

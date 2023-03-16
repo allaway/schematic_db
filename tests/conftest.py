@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from yaml import safe_load
 import synapseclient as sc  # type: ignore
-from schematic_db.db_config import (
+from schematic_db.db_config.db_config import (
     DBConfig,
     DBObjectConfig,
     DBAttributeConfig,
@@ -15,18 +15,20 @@ from schematic_db.db_config import (
     DBForeignKey,
 )
 
-from schematic_db.manifest_store import (
+from schematic_db.manifest_store.manifest_store import (
     ManifestStore,
     ManifestStoreConfig,
 )
 
-from schematic_db.query_store import QueryStore, SynapseQueryStore
-from schematic_db.rdb import MySQLDatabase, MySQLConfig
+from schematic_db.query_store.query_store import QueryStore
+from schematic_db.query_store.synapse_query_store import SynapseQueryStore
+from schematic_db.rdb.mysql import MySQLDatabase, MySQLConfig
 from schematic_db.rdb.postgres import PostgresDatabase
 from schematic_db.rdb.synapse_database import SynapseDatabase
-from schematic_db.rdb_queryer import RDBQueryer
-from schematic_db.synapse import Synapse, SynapseConfig
-from schematic_db.schema import Schema, SchemaConfig, DatabaseConfig
+from schematic_db.rdb_queryer.rdb_queryer import RDBQueryer
+from schematic_db.synapse.synapse import Synapse, SynapseConfig
+from schematic_db.schema.schema import Schema, SchemaConfig
+from schematic_db.schema.database_config import DatabaseConfig
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(TESTS_DIR, "data")

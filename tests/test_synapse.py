@@ -4,7 +4,7 @@ import pytest
 import pandas as pd
 import synapseclient as sc  # type: ignore
 from schematic_db.db_config.db_config import DBObjectConfig
-from schematic_db.synapse import Synapse, SynapseConfig
+from schematic_db.synapse.synapse import Synapse, SynapseConfig
 
 
 @pytest.fixture(name="synapse_with_test_table_one", scope="class")

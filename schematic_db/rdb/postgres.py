@@ -4,7 +4,7 @@ import sqlalchemy as sa
 import sqlalchemy.dialects.postgresql as sa_postgres
 import pandas as pd
 import numpy as np
-from schematic_db.db_config import DBDatatype, DBAttributeConfig
+from schematic_db.db_config.db_config import DBDatatype, DBAttributeConfig
 from .mysql import MySQLDatabase, MySQLConfig
 
 POSTGRES_DATATYPES = {

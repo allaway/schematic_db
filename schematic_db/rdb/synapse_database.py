@@ -3,14 +3,14 @@ from typing import Union
 from functools import partial
 import pandas as pd
 import synapseclient as sc  # type: ignore
-from schematic_db.db_config import (
+from schematic_db.db_config.db_config import (
     DBConfig,
     DBObjectConfig,
     DBForeignKey,
     DBAttributeConfig,
     DBDatatype,
 )
-from schematic_db.synapse import Synapse, SynapseConfig
+from schematic_db.synapse.synapse import Synapse, SynapseConfig
 from .rdb import RelationalDatabase
 
 CONFIG_DATATYPES = {

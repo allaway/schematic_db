@@ -1,8 +1,8 @@
 """Testing for ManifestStore."""
 import pytest
-from schematic_db.manifest_store import ManifestStore
+from schematic_db.manifest_store.manifest_store import ManifestStore
 
-from schematic_db.api_utils import ManifestSynapseConfig
+from schematic_db.api_utils.api_utils import ManifestSynapseConfig
 
 
 @pytest.mark.schematic
