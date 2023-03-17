@@ -22,7 +22,8 @@ from schematic_db.manifest_store.manifest_store import (
 
 from schematic_db.query_store.query_store import QueryStore
 from schematic_db.query_store.synapse_query_store import SynapseQueryStore
-from schematic_db.rdb.mysql import MySQLDatabase, MySQLConfig
+from schematic_db.rdb.sql_alchemy_database import SQLConfig
+from schematic_db.rdb.mysql import MySQLDatabase
 from schematic_db.rdb.postgres import PostgresDatabase
 from schematic_db.rdb.synapse_database import SynapseDatabase
 from schematic_db.rdb_queryer.rdb_queryer import RDBQueryer
@@ -107,7 +108,7 @@ def fixture_test_schema_json_url2() -> Generator:
 @pytest.fixture(scope="session", name="mysql_config")
 def fixture_mysql_config(secrets_dict: dict) -> Generator:
     """Yields a MYSQlConfig object"""
-    yield MySQLConfig(
+    yield SQLConfig(
         username=secrets_dict["mysql"]["username"],
         password=secrets_dict["mysql"]["password"],
         host=secrets_dict["mysql"]["host"],
@@ -117,8 +118,8 @@ def fixture_mysql_config(secrets_dict: dict) -> Generator:
 
 @pytest.fixture(scope="session", name="postgres_config")
 def fixture_postgres_config(secrets_dict: dict) -> Generator:
-    """Yields a MYSQlConfig object"""
-    yield MySQLConfig(
+    """Yields a SQlConfig object"""
+    yield SQLConfig(
         username=secrets_dict["postgres"]["username"],
         password=secrets_dict["postgres"]["password"],
         host=secrets_dict["postgres"]["host"],
@@ -127,17 +128,15 @@ def fixture_postgres_config(secrets_dict: dict) -> Generator:
 
 
 @pytest.fixture(scope="session", name="mysql_database")
-def fixture_mysql_database(mysql_config: MySQLConfig) -> Generator:
-    """
-    Yields a MYSQL object
-    """
+def fixture_mysql_database(mysql_config: SQLConfig) -> Generator:
+    """Yields a SQlConfig object"""
     obj = MySQLDatabase(mysql_config)
     yield obj
     obj.drop_database()
 
 
 @pytest.fixture(scope="session", name="postgres_database")
-def fixture_postgres_database(postgres_config: MySQLConfig) -> Generator:
+def fixture_postgres_database(postgres_config: SQLConfig) -> Generator:
     """
     Yields a Postgres object
     """
