@@ -234,11 +234,11 @@ class SQLAlchemyDatabase(
     def _create_column(
         self, attribute: DBAttributeConfig, table_config: DBObjectConfig
     ) -> sa.Column:
-        '''
+        """
         sql_datatype = self._get_datatype(
             attribute, table_config.primary_key, table_config.get_foreign_key_names()
         )
-        '''
+        """
         sql_datatype = self._get_datatype(
             attribute, table_config.primary_key, table_config.get_foreign_key_names()
         )
