@@ -9,7 +9,7 @@ from schematic_db.synapse.synapse import Synapse, SynapseConfig
 
 @pytest.fixture(name="synapse_with_test_table_one", scope="class")
 def fixture_synapse_with_test_table_one(
-    synapse_database_project: Synapse,
+    synapse_object: Synapse,
     table_one_columns: list[sc.Column],
     table_one: pd.DataFrame,
 ) -> Generator:
@@ -17,7 +17,7 @@ def fixture_synapse_with_test_table_one(
     Yields a Synapse object with "test_table_one" added, used only for tests that
      don't alter the state of the Synapse project
     """
-    obj = synapse_database_project
+    obj = synapse_object
     obj.add_table("test_table_one", table_one_columns)
     synapse_id = obj.get_synapse_id_from_table_name("test_table_one")
     obj.insert_table_rows(synapse_id, table_one)
@@ -27,11 +27,11 @@ def fixture_synapse_with_test_table_one(
 
 
 @pytest.fixture(name="synapse_with_no_tables")
-def fixture_synapse_with_no_tables(synapse_database_project: Synapse) -> Generator:
+def fixture_synapse_with_no_tables(synapse_object: Synapse) -> Generator:
     """
     Yields a Synapse object
     """
-    obj = synapse_database_project
+    obj = synapse_object
     yield obj
     table_names = obj.get_table_names()
     for name in table_names:
