@@ -6,12 +6,18 @@ import pytest
 import pandas as pd
 import numpy as np
 from yaml import safe_load
+import synapseclient as sc  # type: ignore
 from schematic_db.db_config import (
     DBConfig,
     DBObjectConfig,
     DBAttributeConfig,
     DBDatatype,
     DBForeignKey,
+)
+
+from schematic_db.manifest_store import (
+    ManifestStore,
+    ManifestStoreConfig,
 )
 
 from schematic_db.query_store import QueryStore, SynapseQueryStore
@@ -226,6 +232,24 @@ def fixture_test_schema2(
     yield obj
 
 
+@pytest.fixture(scope="session", name="manifest_store")
+def fixture_manifest_store(
+    test_synapse_project_id: str,
+    test_synapse_asset_view_id: str,
+    secrets_dict: dict,
+    test_schema_json_url: str,
+) -> Generator:
+    """Yields a ManifestStore object"""
+    yield ManifestStore(
+        ManifestStoreConfig(
+            test_schema_json_url,
+            test_synapse_project_id,
+            test_synapse_asset_view_id,
+            secrets_dict["synapse"]["auth_token"],
+        )
+    )
+
+
 @pytest.fixture(scope="session", name="synapse_test_query_store")
 def fixture_synapse_test_query_store(secrets_dict: dict) -> Generator:
     """
@@ -317,6 +341,19 @@ def fixture_table_one_config() -> Generator:
     yield table_config
 
 
+@pytest.fixture(name="table_one_columns", scope="session")
+def fixture_table_one_columns() -> Generator:
+    """Yields a list of synapse columns for table one"""
+    yield [
+        sc.Column(name="pk_one_col", columnType="LARGETEXT"),
+        sc.Column(name="string_one_col", columnType="LARGETEXT"),
+        sc.Column(name="int_one_col", columnType="INTEGER"),
+        sc.Column(name="double_one_col", columnType="DOUBLE"),
+        sc.Column(name="date_one_col", columnType="DATE"),
+        sc.Column(name="bool_one_col", columnType="BOOLEAN"),
+    ]
+
+
 @pytest.fixture(scope="session")
 def table_two() -> Generator:
     """
@@ -329,6 +366,15 @@ def table_two() -> Generator:
         }
     )
     yield dataframe
+
+
+@pytest.fixture(name="table_two_columns", scope="session")
+def fixture_table_two_columns() -> Generator:
+    """Yields a list of synapse columns for table two"""
+    yield [
+        sc.Column(name="pk_two_col", columnType="LARGETEXT"),
+        sc.Column(name="string_two_col", columnType="LARGETEXT"),
+    ]
 
 
 @pytest.fixture(scope="session")
@@ -439,6 +485,17 @@ def fixture_table_three_config() -> Generator:
         ],
     )
     yield table_config
+
+
+@pytest.fixture(name="table_three_columns", scope="session")
+def fixture_table_three_columns() -> Generator:
+    """Yields a list of synapse columns for table three"""
+    yield [
+        sc.Column(name="pk_zero_col", columnType="LARGETEXT"),
+        sc.Column(name="pk_one_col", columnType="LARGETEXT"),
+        sc.Column(name="pk_two_col", columnType="LARGETEXT"),
+        sc.Column(name="string_three_col", columnType="LARGETEXT"),
+    ]
 
 
 @pytest.fixture(scope="session")

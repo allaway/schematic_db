@@ -54,6 +54,10 @@ class PostgresDatabase(MySQLDatabase):
             with self.engine.connect().execution_options(autocommit=True) as conn:
                 conn.execute(statement)
 
+    def query_table(self, table_name: str) -> pd.DataFrame:
+        query = f'SELECT * FROM "{table_name}"'
+        return self.execute_sql_query(query)
+
     def _get_datatype(
         self, attribute: DBAttributeConfig, primary_key: str, foreign_keys: list[str]
     ) -> Any:

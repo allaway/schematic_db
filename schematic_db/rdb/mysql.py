@@ -7,15 +7,13 @@ import sqlalchemy as sa
 import sqlalchemy_utils.functions
 from sqlalchemy.inspection import inspect
 from sqlalchemy.dialects.mysql import insert
-from sqlalchemy import exc
 from schematic_db.db_config import (
-    DBConfig,
     DBObjectConfig,
     DBDatatype,
     DBAttributeConfig,
     DBForeignKey,
 )
-from .rdb import RelationalDatabase, UpdateDBTableError
+from .rdb import RelationalDatabase
 
 MYSQL_DATATYPES = {
     DBDatatype.TEXT: sa.VARCHAR(5000),
@@ -173,18 +171,10 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
         for tbl in reversed(self.metadata.sorted_tables):
             self.drop_table(tbl)
 
-    def delete_all_tables(self) -> None:
-        self.drop_all_tables()
-
     def execute_sql_query(self, query: str) -> pd.DataFrame:
         result = self._execute_sql_statement(query).fetchall()
         table = pd.DataFrame(result)
         return table
-
-    def get_db_config(self) -> DBConfig:
-        table_names = self.get_table_names()
-        config_list = [self.get_table_config(name) for name in table_names]
-        return DBConfig(config_list)
 
     def get_table_config(self, table_name: str) -> DBObjectConfig:
         """Creates a table config from a sqlalchemy table schema
@@ -204,17 +194,6 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
             foreign_keys=create_foreign_key_configs(table_schema),
             attributes=create_attribute_configs(table_schema, indices),
         )
-
-    def update_table(self, data: pd.DataFrame, table_config: DBObjectConfig) -> None:
-        table_names = self.get_table_names()
-        table_name = table_config.name
-        if table_name not in table_names:
-            self.add_table(table_name, table_config)
-        try:
-            self.upsert_table_rows(table_name, data)
-        except exc.SQLAlchemyError as error:
-            error_msg = str(error.__dict__["orig"])
-            raise UpdateDBTableError(table_name, error_msg) from error
 
     def drop_table(self, table_name: str) -> None:
         table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
@@ -260,9 +239,8 @@ class MySQLDatabase(RelationalDatabase):  # pylint: disable=too-many-instance-at
                 conn.execute(statement)
 
     def query_table(self, table_name: str) -> pd.DataFrame:
-        query = f"SELECT * FROM {table_name};"
-        table = self.execute_sql_query(query)
-        return table
+        query = f"SELECT * FROM `{table_name}`"
+        return self.execute_sql_query(query)
 
     def _execute_sql_statement(self, statement: str) -> Any:
         with self.engine.connect().execution_options(autocommit=True) as conn:

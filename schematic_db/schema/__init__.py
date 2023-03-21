@@ -3,5 +3,4 @@ The Schema class interacts with the Schematic API to create a DBConfig object or
  manifests for the schema.
 """
 from .schema import *
-from .api_utils import *
 from .database_config import *
