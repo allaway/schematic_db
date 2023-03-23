@@ -1,6 +1,6 @@
 """RDBBuilder"""
-from schematic_db.rdb import RelationalDatabase
-from schematic_db.schema import Schema
+from schematic_db.rdb.rdb import RelationalDatabase
+from schematic_db.schema.schema import Schema
 
 
 class RDBBuilder:  # pylint: disable=too-few-public-methods

@@ -1,13 +1,14 @@
 """Testing for Schema."""
 from typing import Generator
 import pytest
-from schematic_db.db_config import (
+from schematic_db.db_config.db_config import (
     DBConfig,
     DBForeignKey,
     DBAttributeConfig,
     DBDatatype,
 )
-from schematic_db.schema import Schema, DatabaseConfig, DatabaseObjectConfig
+from schematic_db.schema.schema import Schema, DatabaseConfig
+from schematic_db.schema.database_config import DatabaseObjectConfig
 
 
 @pytest.fixture(name="database_config")

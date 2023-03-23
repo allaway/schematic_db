@@ -2,7 +2,7 @@
 A config for database specific items
 """
 from typing import Optional, Any
-from schematic_db.db_config import DBForeignKey, DBAttributeConfig, DBDatatype
+from schematic_db.db_config.db_config import DBForeignKey, DBAttributeConfig, DBDatatype
 
 
 DATATYPES = {

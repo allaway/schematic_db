@@ -8,7 +8,7 @@ from schematic_db.api_utils.api_utils import (
     ManifestSynapseConfig,
 )
 
-from schematic_db.schema_graph import SchemaGraph
+from schematic_db.schema_graph.schema_graph import SchemaGraph
 
 
 class ManifestMissingPrimaryKeyError(Exception):
