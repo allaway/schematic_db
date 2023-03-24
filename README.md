@@ -22,10 +22,16 @@ Start the virtual environment by doing:
 poetry shell
 ```
 
-Install the dependencies by doing:
+Install all the dependencies by doing:
 
 ```bash
 poetry install --all-extras
+```
+
+If you just want to install dependencies for one type of database (ie. Synapse):
+
+```bash
+poetry install -E synapse
 ```
 
 ### Tests
@@ -38,7 +44,9 @@ Create a secrets file from template:
 cp tests/data/example_secrets.yml tests/data/secrets.yml
 ```
 
-tests/data/secrets.yml is in the .gitignore file so it can not be commited by git. There are sections for each type of database. Update the section(s) that are relevant to the code you will be working on.
+`tests/data/secrets.yml` is in the `.gitignore` file so it can not be commited by git. There are sections for each type of database. Update the section(s) that are relevant to the code you will be working on.
+
+If you want to work on and test code relating to Synapse Databases you will need a project in Synapse to test on. You will need to create an empty Synapse project. The `project_id` field is the Synapse id for the project. The `username` and `auth_token` must be for an account with edit and delete permission for the project.
 
 #### Formatting tests
 
