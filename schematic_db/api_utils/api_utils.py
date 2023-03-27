@@ -1,12 +1,9 @@
 """Functions that interact with the schematic API"""
 
 from dataclasses import dataclass
+from os import getenv
 import requests
 import pandas
-
-# Currently this is the url for the API when running locally.
-API_URL = "http://0.0.0.0:3001"
-API_SERVER = "v1"
 
 
 class SchematicAPIError(Exception):
@@ -29,7 +26,9 @@ class SchematicAPIError(Exception):
 
 
 def create_schematic_api_response(
-    endpoint_path: str, params: dict, timeout: int = 30
+    endpoint_path: str,
+    params: dict,
+    timeout: int = 30,
 ) -> requests.Response:
     """Performs a GET request on the schematic API
 
@@ -44,7 +43,8 @@ def create_schematic_api_response(
     Returns:
         requests.Response: The response from the API
     """
-    endpoint_url = f"{API_URL}/{API_SERVER}/{endpoint_path}"
+    api_url = getenv("API_URL", "https://schematic.api.sagebionetworks.org/v1/")
+    endpoint_url = f"{api_url}/{endpoint_path}"
     response = requests.get(endpoint_url, params=params, timeout=timeout)
     if response.status_code != 200:
         raise SchematicAPIError(endpoint_url, response.status_code, response.reason)
