@@ -4,6 +4,79 @@ This package is used to manage backends in the FAIR data flow.
 
 It is assumed that manifests are stored in a project at [Synapse](https://www.synapse.org/), and have been validated via [Schematic](https://github.com/Sage-Bionetworks/schematic), or the [Data Curator App](dca.app.sagebionetworks.org).
 
+## Use as a package
+
+### Installation
+
+Schematic DB's is published to [PyPI](https://pypi.org/project/schematic-db/) whenever there is a new release.
+
+Note that Schematic DB has 3 extra packages [mysql, postgres, synapse]. These serve as the database backend for Schematic DB. You will need one of these to run this package and can be installed like:
+
+```bash
+pip install schematic_db[synapse]
+```
+
+If using Schematic DB as part of a package you will want setup the `pyproject.toml` like `schematic-db = {version = "x.y.z", extras = ["synapse"]}`
+
+### Usage
+
+#### Schema object
+
+The Schema class interacts with the [Schematic API](https://schematic.api.sagebionetworks.org/v1/ui/). It is used to create a database schema from a schema in json ld form.
+
+It is assumed that you have setup a Synapse project where your manifests exist.
+
+To create the schema:
+
+```python
+from schematic_db.schema import Schema, SchemaConfig
+config = SchemaConfig(
+        schema_url = "https://raw.githubusercontent.com/Sage-Bionetworks/Schematic-DB-Test-Schemas/main/test_schema.jsonld",
+        synapse_project_id = "syn1",
+        synapse_asset_view_id = "syn2",
+        synapse_input_token = "xxx"
+    )
+schema = Schema(config)
+```
+
+#### Relational database objects
+
+The various database objects are how Schematic DB interacts with the underlying database
+
+For a SQL based database:
+
+```python
+from schematic_db.rdb.sql_alchemy_database import SQLConfig
+from schematic_db.rdb.mysql import MySQLDatabase
+from schematic_db.rdb.postgres import PostgresDatabase
+
+config = SQLConfig(
+        username="username",
+        password="pass",
+        host="host",
+        name="test_schema",
+    )
+
+database = PostgresDatabase(config)
+database = MySQLDatabase(config)
+
+```
+
+For a Synapse based database:
+
+```python
+from schematic_db.rdb.synapse_database import SynapseDatabase
+from schematic_db.synapse.synapse import SynapseConfig
+
+config = SynapseConfig(
+        project_id="syn1,
+        username="user.name@synapse.org",
+        auth_token="xxx,
+    )
+
+database =  SynapseDatabase(config)
+```
+
 ## Local Development
 
 ### Setup
