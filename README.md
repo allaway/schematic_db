@@ -8,6 +8,14 @@ It is assumed that manifests are stored in a project at [Synapse](https://www.sy
 
 ### Setup
 
+Schematic DB can make use of various db(and non db) backends. Currently these include:
+
+- [MySQL](https://dev.mysql.com/doc/mysql-installation-excerpt/5.7/en/)
+- [Postgres](https://www.postgresql.org/download/)
+- [Synapse](https://www.synapse.org/)
+
+If you intend to use either MySQL or Postgres you will need to install those, and can follow the above links.
+
 Clone the `schematic_db` package repository.
 
 ```bash
@@ -21,6 +29,8 @@ Start the virtual environment by doing:
 ```bash
 poetry shell
 ```
+
+To install all the packages you will have needed to install both MySQL and Postgres(See above)
 
 Install all the dependencies by doing:
 
