@@ -3,7 +3,7 @@ Testing for DBConfig.
 """
 from typing import Generator
 import pytest
-from schematic_db.db_config import (
+from schematic_db.db_config.db_config import (
     DBConfig,
     DBObjectConfig,
     DBAttributeConfig,

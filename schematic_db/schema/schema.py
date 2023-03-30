@@ -4,7 +4,7 @@ from typing import Optional
 from dataclasses import dataclass
 import warnings
 
-from schematic_db.db_config import (
+from schematic_db.db_config.db_config import (
     DBConfig,
     DBObjectConfig,
     DBForeignKey,
@@ -19,7 +19,7 @@ from schematic_db.api_utils.api_utils import (
     get_node_validation_rules,
 )
 
-from schematic_db.schema_graph import SchemaGraph
+from schematic_db.schema_graph.schema_graph import SchemaGraph
 
 from .database_config import DatabaseConfig
 

@@ -1,8 +1,8 @@
 """RDBUpdater"""
 import warnings
 import pandas as pd
-from schematic_db.rdb import RelationalDatabase
-from schematic_db.manifest_store import ManifestStore
+from schematic_db.rdb.rdb import RelationalDatabase
+from schematic_db.manifest_store.manifest_store import ManifestStore
 
 
 class NoManifestWarning(Warning):

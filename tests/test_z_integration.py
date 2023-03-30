@@ -2,15 +2,15 @@
 from typing import Generator
 import os
 import pytest
-from schematic_db.rdb import MySQLDatabase
+from schematic_db.rdb.mysql import MySQLDatabase
 from schematic_db.rdb.postgres import PostgresDatabase
 from schematic_db.rdb.synapse_database import SynapseDatabase
-from schematic_db.rdb_builder import RDBBuilder
-from schematic_db.schema import Schema
-from schematic_db.rdb_updater import RDBUpdater
-from schematic_db.manifest_store import ManifestStore
-from schematic_db.query_store import QueryStore
-from schematic_db.rdb_queryer import RDBQueryer
+from schematic_db.rdb_builder.rdb_builder import RDBBuilder
+from schematic_db.schema.schema import Schema
+from schematic_db.rdb_updater.rdb_updater import RDBUpdater
+from schematic_db.manifest_store.manifest_store import ManifestStore
+from schematic_db.query_store.query_store import QueryStore
+from schematic_db.rdb_queryer.rdb_queryer import RDBQueryer
 
 
 @pytest.fixture(scope="module", name="rdb_builder_mysql")
