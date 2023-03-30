@@ -39,6 +39,25 @@ config = SchemaConfig(
 schema = Schema(config)
 ```
 
+#### Manifest Store object
+
+The [ManifestStore](https://github.com/Sage-Bionetworks/schematic_db/blob/main/schematic_db/manifest_store/manifest_store.py) class is used to interact with the Schematic API to download manifests needed to update the database.
+
+It is assumed that you have setup a Synapse project where your manifests exist.
+
+To create the manifest store:
+
+```python
+from schematic_db.manifest_store import ManifestStore, ManifestStoreConfig
+config = ManifestStoreConfig(
+        schema_url = "https://raw.githubusercontent.com/Sage-Bionetworks/Schematic-DB-Test-Schemas/main/test_schema.jsonld",
+        synapse_project_id = "syn1",
+        synapse_asset_view_id = "syn2",
+        synapse_input_token = "xxx"
+    )
+manifest_store = ManifestStore(config)
+```
+
 #### Relational database objects
 
 The various database objects are how Schematic DB interacts with the underlying database
@@ -75,6 +94,28 @@ config = SynapseConfig(
     )
 
 database =  SynapseDatabase(config)
+```
+
+#### Building the database
+
+The [RDBBuilder](https://github.com/Sage-Bionetworks/schematic_db/blob/main/schematic_db/rdb_builder/rdb_builder.py) class is responsible for building the database schema. Assuming you've built a Schema object, and RelationalDatabase object as described above, to build the database:
+
+```python
+from schematic_db.rdb_builder.rdb_builder import RDBBuilder
+
+rdb_builder = RDBBuilder(rdb=database, schema=schema)
+rdb_builder.build_database()
+```
+
+#### Updating the database
+
+The [RDBUpdater](https://github.com/Sage-Bionetworks/schematic_db/blob/main/schematic_db/rdb_updater/rdb_updater.py) class is responsible for updating the database when there are new or updated manifests. It does NOT update the schema. Assuming you've built a ManifestStore object, and RelationalDatabase object as described above, to update the database:
+
+```python
+from schematic_db.rdb_updater.rdb_updater import RDBUpdater
+
+RDBUpdater(rdb=database, manifest_store=manifest_store)
+rdb_updater.update_database()
 ```
 
 ## Local Development
