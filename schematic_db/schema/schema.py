@@ -1,8 +1,10 @@
 """Schema class"""
 
 from typing import Optional
-from dataclasses import dataclass
 import warnings
+
+from pydantic.dataclasses import dataclass
+from pydantic import validator
 
 from schematic_db.db_config.db_config import (
     DBConfig,
@@ -11,6 +13,7 @@ from schematic_db.db_config.db_config import (
     DBAttributeConfig,
     DBDatatype,
 )
+import validators
 
 from schematic_db.api_utils.api_utils import (
     find_class_specific_properties,
@@ -63,22 +66,53 @@ class MoreThanOneTypeRule(Exception):
         )
 
 
-@dataclass
+@dataclass()
 class SchemaConfig:
     """
     A config for a Schema.
     Properties:
         schema_url (str): A url to the jsonld schema file
-        synapse_project_id (str): The synapse id to the project where the manifests are stored.
-        synapse_asset_view_id (str): The synapse id to the asset view that tracks the manifests.
-        synapse_input_token (str): A synapse token with download permissions for both the
-         synapse_project_id and synapse_asset_view_id
     """
 
     schema_url: str
-    synapse_project_id: str
-    synapse_asset_view_id: str
-    synapse_input_token: str
+
+    @validator("schema_url")
+    @classmethod
+    def validate_url(cls, value: str) -> str:
+        """_summary_
+
+        Args:
+            value (str): _description_
+
+        Raises:
+            MoreThanOneTypeRule: _description_
+
+        Returns:
+            str: _description_
+        """
+        valid_url = validators.url(value)
+        if not valid_url:
+            raise ValueError(f"{value} is a valid url")
+        return value
+
+    @validator("schema_url")
+    @classmethod
+    def validate_is_jsonld(cls, value: str) -> str:
+        """_summary_
+
+        Args:
+            value (str): _description_
+
+        Raises:
+            MoreThanOneTypeRule: _description_
+
+        Returns:
+            str: _description_
+        """
+        is_jsonld = value.endswith(".jsonld")
+        if not is_jsonld:
+            raise ValueError(f"{value} does end with '.jsonld'")
+        return value
 
 
 class Schema:  # pylint: disable=too-many-instance-attributes
@@ -106,9 +140,6 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         """
         self.database_config = database_config
         self.schema_url = config.schema_url
-        self.synapse_project_id = config.synapse_project_id
-        self.synapse_asset_view_id = config.synapse_asset_view_id
-        self.synapse_input_token = config.synapse_input_token
         self.use_display_names_as_labels = use_display_names_as_labels
         self.schema_graph = SchemaGraph(config.schema_url)
         self.update_db_config()

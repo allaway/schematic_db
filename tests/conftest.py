@@ -172,36 +172,18 @@ def fixture_test_synapse_asset_view_id() -> Generator:
 
 @pytest.fixture(scope="session", name="test_schema1")
 def fixture_test_schema1(
-    test_synapse_project_id: str,
-    test_synapse_asset_view_id: str,
-    secrets_dict: dict,
     test_schema_json_url: str,
 ) -> Generator:
     """Yields a Schema using the database specific test schema"""
-    config = SchemaConfig(
-        test_schema_json_url,
-        test_synapse_project_id,
-        test_synapse_asset_view_id,
-        secrets_dict["synapse"]["auth_token"],
-    )
+    config = SchemaConfig(test_schema_json_url)
     obj = Schema(config)
     yield obj
 
 
 @pytest.fixture(scope="session", name="test_schema2")
-def fixture_test_schema2(
-    test_synapse_project_id: str,
-    test_synapse_asset_view_id: str,
-    secrets_dict: dict,
-    test_schema_json_url: str,
-) -> Generator:
+def fixture_test_schema2(test_schema_json_url: str) -> Generator:
     """Yields a Schema using the database specific test schema"""
-    config = SchemaConfig(
-        test_schema_json_url,
-        test_synapse_project_id,
-        test_synapse_asset_view_id,
-        secrets_dict["synapse"]["auth_token"],
-    )
+    config = SchemaConfig(test_schema_json_url)
     database_config = DatabaseConfig(
         [
             {
