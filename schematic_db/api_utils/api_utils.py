@@ -45,7 +45,7 @@ def create_schematic_api_response(
     Returns:
         requests.Response: The response from the API
     """
-    api_url = getenv("API_URL", "https://schematic.api.sagebionetworks.org/v1/")
+    api_url = getenv("API_URL", "https://schematic-dev.api.sagebionetworks.org/v1")
     endpoint_url = f"{api_url}/{endpoint_path}"
     response = requests.get(endpoint_url, params=params, timeout=timeout)
     if response.status_code != 200:
@@ -163,7 +163,8 @@ class ManifestMetadataList:
 
     def __init__(self, response_list: list[list[list[str]]]) -> None:
         metadata_list = []
-
+        import logging
+        logging.warning(response_list)
         for item in response_list:
             try:
                 metadata = ManifestMetadata(
@@ -177,6 +178,7 @@ class ManifestMetadataList:
                 pass
             else:
                 metadata_list.append(metadata)
+        logging.warning(metadata_list)
         self.metadata_list = metadata_list
 
     def get_dataset_ids_for_component(self, component_name: str) -> list[str]:
