@@ -2,10 +2,9 @@
 
 from typing import Optional
 import warnings
-
 from pydantic.dataclasses import dataclass
 from pydantic import validator
-
+import validators
 from schematic_db.db_config.db_config import (
     DBConfig,
     DBObjectConfig,
@@ -13,17 +12,13 @@ from schematic_db.db_config.db_config import (
     DBAttributeConfig,
     DBDatatype,
 )
-import validators
-
 from schematic_db.api_utils.api_utils import (
     find_class_specific_properties,
     get_property_label_from_display_name,
     is_node_required,
     get_node_validation_rules,
 )
-
 from schematic_db.schema_graph.schema_graph import SchemaGraph
-
 from .database_config import DatabaseConfig
 
 
