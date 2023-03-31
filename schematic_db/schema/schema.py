@@ -1,4 +1,5 @@
 """Schema class"""
+# pylint: disable=duplicate-code
 
 from typing import Optional
 import warnings
@@ -74,17 +75,7 @@ class SchemaConfig:
     @validator("schema_url")
     @classmethod
     def validate_url(cls, value: str) -> str:
-        """_summary_
-
-        Args:
-            value (str): _description_
-
-        Raises:
-            MoreThanOneTypeRule: _description_
-
-        Returns:
-            str: _description_
-        """
+        """Validates that the value is a valid URL"""
         valid_url = validators.url(value)
         if not valid_url:
             raise ValueError(f"{value} is a valid url")
@@ -93,17 +84,7 @@ class SchemaConfig:
     @validator("schema_url")
     @classmethod
     def validate_is_jsonld(cls, value: str) -> str:
-        """_summary_
-
-        Args:
-            value (str): _description_
-
-        Raises:
-            MoreThanOneTypeRule: _description_
-
-        Returns:
-            str: _description_
-        """
+        """Validates that the value is a jsonld file"""
         is_jsonld = value.endswith(".jsonld")
         if not is_jsonld:
             raise ValueError(f"{value} does end with '.jsonld'")

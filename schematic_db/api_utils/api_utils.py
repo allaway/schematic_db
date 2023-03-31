@@ -1,4 +1,5 @@
 """Functions that interact with the schematic API"""
+# pylint: disable=duplicate-code
 
 import re
 from os import getenv
