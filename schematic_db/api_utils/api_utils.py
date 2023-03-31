@@ -163,8 +163,6 @@ class ManifestMetadataList:
 
     def __init__(self, response_list: list[list[list[str]]]) -> None:
         metadata_list = []
-        import logging
-        logging.warning(response_list)
         for item in response_list:
             try:
                 metadata = ManifestMetadata(
@@ -178,7 +176,6 @@ class ManifestMetadataList:
                 pass
             else:
                 metadata_list.append(metadata)
-        logging.warning(metadata_list)
         self.metadata_list = metadata_list
 
     def get_dataset_ids_for_component(self, component_name: str) -> list[str]:
