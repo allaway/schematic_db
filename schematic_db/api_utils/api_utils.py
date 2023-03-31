@@ -188,6 +188,21 @@ class ManifestMetadataList:
             if metadata.component_name == component_name
         ]
 
+    def get_manifest_ids_for_component(self, component_name: str) -> list[str]:
+        """Gets the manifest ids from the manifest metadata matching the component name
+
+        Args:
+            component_name (str): The name of the component to get the manifest ids for
+
+        Returns:
+            list[str]: A list of synapse ids for the manifests
+        """
+        return [
+            metadata.manifest_id
+            for metadata in self.metadata_list
+            if metadata.component_name == component_name
+        ]
+
 
 def get_project_manifests(
     input_token: str, project_id: str, asset_view: str
