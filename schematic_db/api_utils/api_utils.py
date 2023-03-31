@@ -161,17 +161,23 @@ class ManifestMetadata:
 class ManifestMetadataList:
     """A list of Manifest Metadata"""
 
-    def __init__(self, metadata_list: list[list[list[str]]]) -> None:
-        self.metadata_list = [
-            ManifestMetadata(
-                dataset_id=item[0][0],
-                dataset_name=item[0][1],
-                manifest_id=item[1][0],
-                manifest_name=item[1][1],
-                component_name=item[2][0],
-            )
-            for item in metadata_list
-        ]
+    def __init__(self, response_list: list[list[list[str]]]) -> None:
+        metadata_list = []
+
+        for item in response_list:
+            try:
+                metadata = ManifestMetadata(
+                    dataset_id=item[0][0],
+                    dataset_name=item[0][1],
+                    manifest_id=item[1][0],
+                    manifest_name=item[1][1],
+                    component_name=item[2][0],
+                )
+            except ValueError:
+                pass
+            else:
+                metadata_list.append(metadata)
+        self.metadata_list = metadata_list
 
     def get_dataset_ids_for_component(self, component_name: str) -> list[str]:
         """Gets the dataset ids from the manifest metadata matching the component name
