@@ -112,8 +112,8 @@ def get_graph_by_edge_type(schema_url: str, relationship: str) -> list[tuple[str
 
 
 @dataclass()
-class ManifestSynapseConfig:
-    """A config for a manifest in Synapse."""
+class ManifestMetadata:
+    """Metadata for a manifest in Synapse."""
 
     dataset_id: str
     dataset_name: str
@@ -158,9 +158,40 @@ class ManifestSynapseConfig:
         return value
 
 
+class ManifestMetadataList:
+    """A list of Manifest Metadata"""
+
+    def __init__(self, metadata_list: list[list[list[str]]]) -> None:
+        self.metadata_list = [
+            ManifestMetadata(
+                dataset_id=item[0][0],
+                dataset_name=item[0][1],
+                manifest_id=item[1][0],
+                manifest_name=item[1][1],
+                component_name=item[2][0],
+            )
+            for item in metadata_list
+        ]
+
+    def get_dataset_ids_for_component(self, component_name: str) -> list[str]:
+        """Gets the dataset ids from the manifest metadata matching the component name
+
+        Args:
+            component_name (str): The name of the component to get the manifest datasets ids for
+
+        Returns:
+            list[str]: A list of synapse ids for the manifest datasets
+        """
+        return [
+            metadata.dataset_id
+            for metadata in self.metadata_list
+            if metadata.component_name == component_name
+        ]
+
+
 def get_project_manifests(
     input_token: str, project_id: str, asset_view: str
-) -> list[ManifestSynapseConfig]:
+) -> ManifestMetadataList:
     """Gets all metadata manifest files across all datasets in a specified project.
 
     Args:
@@ -171,7 +202,7 @@ def get_project_manifests(
             data assets for a given project.(i.e. master_fileview in config.yml)
 
     Returns:
-        list[ManifestSynapseConfig]: A list of manifests in Synapse
+        ManifestMetadataList: A list of manifests in Synapse
     """
     params = {
         "input_token": input_token,
@@ -181,17 +212,7 @@ def get_project_manifests(
     response = create_schematic_api_response(
         "storage/project/manifests", params, timeout=60
     )
-    manifests = [
-        ManifestSynapseConfig(
-            dataset_id=item[0][0],
-            dataset_name=item[0][1],
-            manifest_id=item[1][0],
-            manifest_name=item[1][1],
-            component_name=item[2][0],
-        )
-        for item in response.json()
-    ]
-    return manifests
+    return ManifestMetadataList(response.json())
 
 
 def get_manifest(

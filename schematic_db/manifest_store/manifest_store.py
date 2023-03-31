@@ -2,12 +2,7 @@
 
 from dataclasses import dataclass
 import pandas as pd
-from schematic_db.api_utils.api_utils import (
-    get_project_manifests,
-    get_manifest,
-    ManifestSynapseConfig,
-)
-
+from schematic_db.api_utils.api_utils import get_project_manifests, get_manifest
 from schematic_db.schema_graph.schema_graph import SchemaGraph
 
 
@@ -36,25 +31,6 @@ class ManifestMissingPrimaryKeyError(Exception):
         )
 
 
-def get_dataset_ids_for_component(
-    object_name: str, manifests: list[ManifestSynapseConfig]
-) -> list[str]:
-    """Gets the dataset ids from a list of manifests matching the object name
-
-    Args:
-        object_name (str): The name of the object to get the manifests for
-        manifests (list[ManifestSynapseConfig]): A list of manifests in Synapse
-
-    Returns:
-        list[str]: A list of synapse ids for the manifest datasets
-    """
-    return [
-        manifest.dataset_id
-        for manifest in manifests
-        if manifest.component_name == object_name and manifest.manifest_id != ""
-    ]
-
-
 @dataclass
 class ManifestStoreConfig:
     """
@@ -73,7 +49,7 @@ class ManifestStoreConfig:
     synapse_input_token: str
 
 
-class ManifestStore:  # pylint: disable=too-many-instance-attributes
+class ManifestStore:
     """
     The ManifestStore class interacts with the Schematic API download manifests.
     """
@@ -94,7 +70,7 @@ class ManifestStore:  # pylint: disable=too-many-instance-attributes
         self.synapse_asset_view_id = config.synapse_asset_view_id
         self.synapse_input_token = config.synapse_input_token
         self.schema_graph = SchemaGraph(config.schema_url)
-        self.update_manifest_configs()
+        self.update_manifest_metadata()
 
     def create_sorted_object_name_list(self) -> list[str]:
         """
@@ -107,17 +83,13 @@ class ManifestStore:  # pylint: disable=too-many-instance-attributes
         """
         return self.schema_graph.create_sorted_object_name_list()
 
-    def update_manifest_configs(self) -> None:
+    def update_manifest_metadata(self) -> None:
         """Updates the current objects manifest_configs."""
-        self.manifest_configs = get_project_manifests(
+        self.manifest_metadata = get_project_manifests(
             input_token=self.synapse_input_token,
             project_id=self.synapse_project_id,
             asset_view=self.synapse_asset_view_id,
         )
-
-    def get_manifest_configs(self) -> list[ManifestSynapseConfig]:
-        """Gets the currents objects manifest_configs"""
-        return self.manifest_configs
 
     def get_manifests(self, name: str) -> list[pd.DataFrame]:
         """Gets the manifests associated with a component
@@ -128,7 +100,7 @@ class ManifestStore:  # pylint: disable=too-many-instance-attributes
         Returns:
             list[pd.DataFrame]: A list of manifests in dataframe form for the component
         """
-        dataset_ids = get_dataset_ids_for_component(name, self.manifest_configs)
+        dataset_ids = self.manifest_metadata.get_dataset_ids_for_component(name)
         manifests = [
             get_manifest(
                 self.synapse_input_token,
