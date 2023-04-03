@@ -273,7 +273,9 @@ class TestSQLUpdateRows:
         for obj in sql_databases:
             with pytest.raises(UpsertDatabaseError):
                 obj.add_table("table_two", table_two_config)
-                obj.upsert_table_rows("table_two", pd.DataFrame({"pk_two_col": [pd.NA]}))
+                obj.upsert_table_rows(
+                    "table_two", pd.DataFrame({"pk_two_col": [pd.NA]})
+                )
 
     def test_delete_table_rows1(
         self,
