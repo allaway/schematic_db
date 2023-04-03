@@ -45,7 +45,7 @@ class PostgresDatabase(SQLAlchemyDatabase):
                 )
                 with self.engine.connect().execution_options(autocommit=True) as conn:
                     conn.execute(statement)
-            except sa.exc.IntegrityError as exc:
+            except (sa.exc.OperationalError, sa.exc.IntegrityError) as exc:
                 raise UpsertDatabaseError(table_name) from exc
 
     def query_table(self, table_name: str) -> pd.DataFrame:
