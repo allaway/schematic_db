@@ -1,5 +1,6 @@
 """Functions that interact with the schematic API"""
 
+from typing import Any
 from dataclasses import dataclass
 from os import getenv
 import requests
@@ -9,11 +10,14 @@ import pandas
 class SchematicAPIError(Exception):
     """When schematic API response status code is anything other than 200"""
 
-    def __init__(self, endpoint_url: str, status_code: int, reason: str) -> None:
+    def __init__(
+        self, endpoint_url: str, status_code: int, reason: str, params: dict[str, Any]
+    ) -> None:
         self.message = "Error accessing Schematic endpoint"
         self.endpoint_url = endpoint_url
         self.status_code = status_code
         self.reason = reason
+        self.params = params
         super().__init__(self.message)
 
     def __str__(self) -> str:
@@ -21,13 +25,14 @@ class SchematicAPIError(Exception):
             f"{self.message}; "
             f"URL: {self.endpoint_url}; "
             f"Code: {self.status_code}; "
-            f"Reason: {self.reason}"
+            f"Reason: {self.reason}; "
+            f"Parameters: {self.params}"
         )
 
 
 def create_schematic_api_response(
     endpoint_path: str,
-    params: dict,
+    params: dict[str, Any],
     timeout: int = 30,
 ) -> requests.Response:
     """Performs a GET request on the schematic API
@@ -47,8 +52,26 @@ def create_schematic_api_response(
     endpoint_url = f"{api_url}/{endpoint_path}"
     response = requests.get(endpoint_url, params=params, timeout=timeout)
     if response.status_code != 200:
-        raise SchematicAPIError(endpoint_url, response.status_code, response.reason)
+        params = filter_params(params)
+        raise SchematicAPIError(
+            endpoint_url, response.status_code, response.reason, params
+        )
     return response
+
+
+def filter_params(params: dict[str, Any]) -> dict[str, Any]:
+    """Removes any parameters from the input dictionary that should not be seen.
+
+    Args:
+        params (dict[str, Any]): A dictionary of parameters
+
+    Returns:
+        dict[str, Any]: A dictionary of parameters with any secrets removed
+    """
+    secret_params = ["input_token"]
+    for param in secret_params:
+        params.pop(param, None)
+    return params
 
 
 def find_class_specific_properties(schema_url: str, schema_class: str) -> list[str]:
