@@ -13,16 +13,6 @@ class NoManifestWarning(Warning):
         super().__init__(self.message)
 
 
-class UpdateTableWarning(Warning):
-    """
-    Occurs when trying to update a database table and the rdb subclass encounters an error
-    """
-
-    def __init__(self, message: str) -> None:
-        self.message = message
-        super().__init__(self.message)
-
-
 class RDBUpdater:
     """An for updating a database."""
 
