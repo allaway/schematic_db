@@ -11,6 +11,7 @@ class NoManifestWarning(Warning):
         self.message = message
         super().__init__(self.message)
 
+
 class UpsertError(Exception):
     """Raised when there is an error doing an upsert"""
 
@@ -84,4 +85,3 @@ class RDBUpdater:
             self.rdb.upsert_table_rows(table_name, manifest_table)
         except UpsertDatabaseError as exc:
             raise UpsertError(table_name, dataset_id) from exc
-
