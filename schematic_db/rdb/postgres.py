@@ -34,9 +34,9 @@ class PostgresDatabase(SQLAlchemyDatabase):
             table_name (str): _The name of the table to be upserted
             data (pd.DataFrame): The rows to be upserted
         """
+        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
         data = data.replace({np.nan: None})
         rows = data.to_dict("records")
-        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
         for row in rows:
             try:
                 statement = sa_postgres.insert(table).values(row)
