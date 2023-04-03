@@ -30,8 +30,11 @@ class MySQLDatabase(SQLAlchemyDatabase):
         super().__init__(config, verbose, "mysql")
 
     def _upsert_table_row(
-        self, row: dict[str, Any], table: sa.table, table_name: str
-    ) -> None:  # pylint: disable=unused-argument
+        self,
+        row: dict[str, Any],
+        table: sa.table,
+        table_name: str,  # pylint: disable=unused-argument
+    ) -> None:
         statement = insert(table).values(row).on_duplicate_key_update(**row)
         with self.engine.connect().execution_options(autocommit=True) as conn:
             conn.execute(statement)
