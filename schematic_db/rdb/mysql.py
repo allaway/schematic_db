@@ -9,6 +9,7 @@ from schematic_db.db_config.db_config import (
     DBAttributeConfig,
 )
 from .sql_alchemy_database import SQLAlchemyDatabase, SQLConfig
+from .rdb import UpsertDatabaseError
 
 
 class MySQLDatabase(SQLAlchemyDatabase):
@@ -42,9 +43,12 @@ class MySQLDatabase(SQLAlchemyDatabase):
         rows = data.to_dict("records")
         table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
         for row in rows:
-            statement = insert(table).values(row).on_duplicate_key_update(**row)
-            with self.engine.connect().execution_options(autocommit=True) as conn:
-                conn.execute(statement)
+            try:
+                statement = insert(table).values(row).on_duplicate_key_update(**row)
+                with self.engine.connect().execution_options(autocommit=True) as conn:
+                    conn.execute(statement)
+            except sa.exc.OperationalError as exc:
+                raise UpsertDatabaseError(table_name) from exc
 
     def _get_datatype(
         self, attribute: DBAttributeConfig, primary_key: str, foreign_keys: list[str]
