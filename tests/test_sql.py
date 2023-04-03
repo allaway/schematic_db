@@ -276,6 +276,7 @@ class TestSQLUpdateRows:
                 obj.upsert_table_rows(
                     "table_two", pd.DataFrame({"pk_two_col": [pd.NA]})
                 )
+            obj.drop_table("table_two")
 
     def test_delete_table_rows1(
         self,

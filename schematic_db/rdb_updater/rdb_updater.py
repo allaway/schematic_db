@@ -1,6 +1,5 @@
 """RDBUpdater"""
 import warnings
-import pandas as pd
 from schematic_db.rdb.rdb import RelationalDatabase
 from schematic_db.manifest_store.manifest_store import ManifestStore
 
@@ -36,27 +35,26 @@ class RDBUpdater:
         Args:
             table_name (str): The name of the table to be updated
         """
-        manifest_tables = self.manifest_store.get_manifests(table_name)
+        dataset_ids = self.manifest_store.get_dataset_ids(table_name)
 
         # If there are no manifests a warning is raised and breaks out of function.
-        if len(manifest_tables) == 0:
+        if len(dataset_ids) == 0:
             msg = f"There were no manifests found for table: {table_name}"
             warnings.warn(NoManifestWarning(msg))
             return
 
-        for table in manifest_tables:
-            self.upsert_table_with_manifest(table_name, table)
+        for dataset_id in dataset_ids:
+            self.upsert_table_with_dataset_id(table_name, dataset_id)
 
-    def upsert_table_with_manifest(
-        self, table_name: str, manifest_table: pd.DataFrame
-    ) -> None:
+    def upsert_table_with_dataset_id(self, table_name: str, dataset_id: str) -> None:
         """Updates a table int he database with a manifest
 
         Args:
             table_name (str): The name of the table
-            manifest_table (pd.DataFrame): The input data
+            dataset_id (str): The id of the dataset
         """
         config = self.rdb.get_table_config(table_name)
+        manifest_table = self.manifest_store.get_manifest(dataset_id)
 
         # normalize table
         table_columns = set(config.get_attribute_names())

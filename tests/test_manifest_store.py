@@ -14,8 +14,25 @@ class TestSchema:
         for item in obj.manifest_metadata.metadata_list:
             assert isinstance(item, ManifestMetadata)
 
-    def test_get_manifests(self, manifest_store: ManifestStore) -> None:
-        """Testing for Schema.get_manifests()"""
+    def test_get_dataset_ids(self, manifest_store: ManifestStore) -> None:
+        """Testing for Schema.get_get_dataset_ids()"""
         obj = manifest_store
-        manifests = obj.get_manifests("Patient")
-        assert len(manifests) == 2
+        assert obj.get_dataset_ids("Patient") == ["syn47994831", "syn47996086"]
+
+    def test_get_manifest(self, manifest_store: ManifestStore) -> None:
+        """Testing for Schema.get_manifest()"""
+        obj = manifest_store
+        manifest = obj.get_manifest("syn47994831")
+        assert sorted(list(manifest.columns)) == sorted(
+            [
+                "patientId",
+                "sex",
+                "yearOfBirth",
+                "diagnosis",
+                "Component",
+                "cancerType",
+                "familyHistory",
+                "entityId",
+                "id",
+            ]
+        )
