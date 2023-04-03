@@ -1,6 +1,6 @@
 """RDBUpdater"""
 import warnings
-from schematic_db.rdb.rdb import RelationalDatabase
+from schematic_db.rdb.rdb import RelationalDatabase, UpsertDatabaseError
 from schematic_db.manifest_store.manifest_store import ManifestStore
 
 
@@ -10,6 +10,22 @@ class NoManifestWarning(Warning):
     def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(self.message)
+
+class UpsertError(Exception):
+    """Raised when there is an error doing an upsert"""
+
+    def __init__(self, table_name: str, dataset_id: str) -> None:
+        self.message = "Error upserting table"
+        self.table_name = table_name
+        self.dataset_id = dataset_id
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return (
+            f"{self.message}; "
+            f"Table Name: {self.table_name}; "
+            f"Dataset ID: {self.dataset_id}"
+        )
 
 
 class RDBUpdater:
@@ -64,4 +80,8 @@ class RDBUpdater:
         manifest_table = manifest_table.drop_duplicates(subset=config.primary_key)
         manifest_table.reset_index(inplace=True, drop=True)
 
-        self.rdb.upsert_table_rows(table_name, manifest_table)
+        try:
+            self.rdb.upsert_table_rows(table_name, manifest_table)
+        except UpsertDatabaseError as exc:
+            raise UpsertError(table_name, dataset_id) from exc
+
