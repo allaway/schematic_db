@@ -3,6 +3,7 @@
 from typing import Any
 from dataclasses import dataclass
 from os import getenv
+from datetime import datetime
 import requests
 import pandas
 
@@ -10,13 +11,19 @@ import pandas
 class SchematicAPIError(Exception):
     """When schematic API response status code is anything other than 200"""
 
-    def __init__(
-        self, endpoint_url: str, status_code: int, reason: str, params: dict[str, Any]
+    def __init__( # pylint:disable=too-many-arguments
+        self,
+        endpoint_url: str,
+        status_code: int,
+        reason: str,
+        time: datetime,
+        params: dict[str, Any],
     ) -> None:
         self.message = "Error accessing Schematic endpoint"
         self.endpoint_url = endpoint_url
         self.status_code = status_code
         self.reason = reason
+        self.time = time
         self.params = params
         super().__init__(self.message)
 
@@ -26,6 +33,7 @@ class SchematicAPIError(Exception):
             f"URL: {self.endpoint_url}; "
             f"Code: {self.status_code}; "
             f"Reason: {self.reason}; "
+            f"Time: {self.time}; "
             f"Parameters: {self.params}"
         )
 
@@ -50,11 +58,12 @@ def create_schematic_api_response(
     """
     api_url = getenv("API_URL", "https://schematic.api.sagebionetworks.org/v1/")
     endpoint_url = f"{api_url}/{endpoint_path}"
+    start_time = datetime.now()
     response = requests.get(endpoint_url, params=params, timeout=timeout)
     if response.status_code != 200:
         params = filter_params(params)
         raise SchematicAPIError(
-            endpoint_url, response.status_code, response.reason, params
+            endpoint_url, response.status_code, response.reason, start_time, params
         )
     return response
 
