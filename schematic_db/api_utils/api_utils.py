@@ -11,7 +11,7 @@ import pandas
 class SchematicAPIError(Exception):
     """When schematic API response status code is anything other than 200"""
 
-    def __init__( # pylint:disable=too-many-arguments
+    def __init__(  # pylint:disable=too-many-arguments
         self,
         endpoint_url: str,
         status_code: int,
