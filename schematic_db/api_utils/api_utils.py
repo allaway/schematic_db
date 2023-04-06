@@ -4,6 +4,7 @@ from typing import Any
 from dataclasses import dataclass
 from os import getenv
 from datetime import datetime
+import pytz
 import requests
 import pandas
 
@@ -33,7 +34,7 @@ class SchematicAPIError(Exception):
             f"URL: {self.endpoint_url}; "
             f"Code: {self.status_code}; "
             f"Reason: {self.reason}; "
-            f"Time: {self.time}; "
+            f"Time (PST): {self.time}; "
             f"Parameters: {self.params}"
         )
 
@@ -58,7 +59,7 @@ def create_schematic_api_response(
     """
     api_url = getenv("API_URL", "https://schematic.api.sagebionetworks.org/v1/")
     endpoint_url = f"{api_url}/{endpoint_path}"
-    start_time = datetime.now()
+    start_time = datetime.now(pytz.timezone("US/Pacific"))
     response = requests.get(endpoint_url, params=params, timeout=timeout)
     if response.status_code != 200:
         params = filter_params(params)
