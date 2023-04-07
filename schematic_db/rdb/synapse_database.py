@@ -177,14 +177,14 @@ class SynapseDatabase(RelationalDatabase):
         return table
 
     def drop_all_tables(self) -> None:
-        db_config = self.get_db_config()
+        database_schema = self.get_db_config()
         deps = {
-            table: db_config.get_dependencies(table)
-            for table in db_config.get_config_names()
+            table: database_schema.get_dependencies(table)
+            for table in database_schema.get_schema_names()
         }
         tables_with_no_deps = [key for key, value in deps.items() if value == []]
         for table in tables_with_no_deps:
-            self._drop_table_and_dependencies(table, db_config)
+            self._drop_table_and_dependencies(table, database_schema)
 
     def drop_table_and_dependencies(self, table_name: str) -> None:
         """Drops the table and any tables that depend on it.
@@ -365,20 +365,20 @@ class SynapseDatabase(RelationalDatabase):
         )
 
     def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
-        db_config = self.get_db_config()
-        primary_key = db_config.get_config_by_name(table_name).primary_key
+        database_schema = self.get_db_config()
+        primary_key = database_schema.get_schema_by_name(table_name).primary_key
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
         merged_data = self._merge_dataframe_with_primary_key_table(
             table_id, data, primary_key
         )
-        self._delete_table_rows(table_name, table_id, merged_data, db_config)
+        self._delete_table_rows(table_name, table_id, merged_data, database_schema)
 
     def _delete_table_rows(
         self,
         table_name: str,
         table_id: str,
         data: pd.DataFrame,
-        db_config: DatabaseSchema,
+        database_schema: DatabaseSchema,
     ) -> None:
         """Deletes rows from the given table
 
@@ -387,16 +387,18 @@ class SynapseDatabase(RelationalDatabase):
             table_id (str): The id of the table the rows will be deleted from
             data (pd.DataFrame): A pandas.DataFrame, of just it's primary key, ROW_ID, and
              ROW_VERSION
-            db_config (DatabaseSchema): The configuration for the database
+            database_schema (DatabaseSchema): The schema for the database
         """
-        primary_key = db_config.get_config_by_name(table_name).primary_key
-        self._delete_table_dependency_rows(table_name, db_config, data[[primary_key]])
+        primary_key = database_schema.get_schema_by_name(table_name).primary_key
+        self._delete_table_dependency_rows(
+            table_name, database_schema, data[[primary_key]]
+        )
         self.synapse.delete_table_rows(table_id, data)
 
     def _delete_table_dependency_rows(
         self,
         table_name: str,
-        db_config: DatabaseSchema,
+        database_schema: DatabaseSchema,
         data: pd.DataFrame,
     ) -> None:
         """Deletes rows from the tables that are dependant on the given table
@@ -404,15 +406,17 @@ class SynapseDatabase(RelationalDatabase):
         Args:
             table_name (str): The name of the table whose reverse dependencies will have their rows
              deleted from
-            db_config (DatabaseSchema): The configuration for the database
+            database_schema (DatabaseSchema): The schema for the database
             data (pd.DataFrame): A pandas.DataFrame, of just it's primary key.
         """
-        reverse_dependencies = db_config.get_reverse_dependencies(table_name)
+        reverse_dependencies = database_schema.get_reverse_dependencies(table_name)
         for rd_table_name in reverse_dependencies:
             # gathering data about the reverse dependency
             table_id = self.synapse.get_synapse_id_from_table_name(rd_table_name)
-            primary_key = db_config.get_config_by_name(rd_table_name).primary_key
-            foreign_keys = db_config.get_config_by_name(rd_table_name).foreign_keys
+            primary_key = database_schema.get_schema_by_name(rd_table_name).primary_key
+            foreign_keys = database_schema.get_schema_by_name(
+                rd_table_name
+            ).foreign_keys
             foreign_key = [
                 key for key in foreign_keys if key.foreign_table_name == table_name
             ][0]
@@ -435,7 +439,7 @@ class SynapseDatabase(RelationalDatabase):
                 continue
 
             data = data[[primary_key, "ROW_ID", "ROW_VERSION"]]
-            self._delete_table_rows(rd_table_name, table_id, data, db_config)
+            self._delete_table_rows(rd_table_name, table_id, data, database_schema)
 
     def upsert_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
         """Upserts rows into the given table

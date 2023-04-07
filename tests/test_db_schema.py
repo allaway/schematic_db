@@ -10,9 +10,9 @@ from schematic_db.db_schema.db_schema import (
     ColumnDatatype,
     ForeignKeySchema,
     TableColumnError,
-    ConfigForeignKeyMissingObjectError,
+    SchemaMissingTableError,
     TableKeyError,
-    ConfigForeignKeyMissingAttributeError,
+    SchemaMissingColumnError,
 )
 
 
@@ -164,9 +164,7 @@ class TestTableSchema:
     def test_db_object_config_exceptions(self, pk_col1_attribute: ColumnSchema) -> None:
         """Tests for TableSchema() that raise exceptions"""
         # test columns
-        with pytest.raises(
-            TableColumnError, match="There are no columns: table_name"
-        ):
+        with pytest.raises(TableColumnError, match="There are no columns: table_name"):
             TableSchema(
                 name="table_name",
                 columns=[],
@@ -311,10 +309,10 @@ class TestDatabaseSchema:
         """Tests for DatabaseSchema() that raise exceptions"""
 
         with pytest.raises(
-            ConfigForeignKeyMissingObjectError,
+            SchemaMissingTableError,
             match=(
-                "Foreign key 'pk_col2' in object 'table2' references "
-                "object 'table' which does not exist in config."
+                "Foreign key 'pk_col2' in table 'table2' references "
+                "table 'table' which does not exist in schema."
             ),
         ):
             DatabaseSchema(
@@ -335,10 +333,10 @@ class TestDatabaseSchema:
             )
 
         with pytest.raises(
-            ConfigForeignKeyMissingAttributeError,
+            SchemaMissingColumnError,
             match=(
-                "Foreign key 'pk_col2' in object 'table2' references attribute "
-                "'pk_col3' which does not exist in object'table'"
+                "Foreign key 'pk_col2' in table 'table2' references column "
+                "'pk_col3' which does not exist in table 'table'"
             ),
         ):
             DatabaseSchema(

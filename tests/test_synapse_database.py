@@ -181,8 +181,8 @@ class TestSynapseDatabase:
     def get_db_config(self, synapse_with_empty_tables: SynapseDatabase) -> None:
         """Testing for SynapseDatabase.get_db_config()"""
         obj = synapse_with_empty_tables
-        db_config = obj.get_db_config()
-        assert db_config.get_config_names == [
+        database_schema = obj.get_db_config()
+        assert database_schema.get_schema_names == [
             "table_one",
             "table_three",
             "table_two",

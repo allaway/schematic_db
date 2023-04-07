@@ -1,4 +1,4 @@
-"""DB config
+"""DB schema
 These are a set of classes for defining a database table in a dialect agnostic way.
 """
 from dataclasses import dataclass
@@ -163,7 +163,7 @@ class TableSchema:
         return [column.name for column in self.columns]
 
     def get_foreign_key_dependencies(self) -> list[str]:
-        """Returns a list of table names the current object depends on
+        """Returns a list of table names the current table depends on
 
         Returns:
             list[str]: A list of table names
@@ -227,65 +227,65 @@ class TableSchema:
             )
 
 
-class ConfigForeignKeyMissingObjectError(Exception):
-    """When a foreign key references an object that doesn't exist"""
+class SchemaMissingTableError(Exception):
+    """When a foreign key references an table that doesn't exist"""
 
     def __init__(
-        self, foreign_key: str, object_name: str, foreign_object_name: str
+        self, foreign_key: str, table_name: str, foreign_table_name: str
     ) -> None:
-        self.message = "Foreign key references object which does not exist in config."
+        self.message = "Foreign key references table which does not exist in schema."
         self.foreign_key = foreign_key
-        self.object_name = object_name
-        self.foreign_object_name = foreign_object_name
+        self.table_name = table_name
+        self.foreign_table_name = foreign_table_name
         super().__init__(self.message)
 
     def __str__(self) -> str:
         msg = (
-            f"Foreign key '{self.foreign_key}' in object '{self.object_name}' references object "
-            f"'{self.foreign_object_name}' which does not exist in config."
+            f"Foreign key '{self.foreign_key}' in table '{self.table_name}' references table "
+            f"'{self.foreign_table_name}' which does not exist in schema."
         )
         return msg
 
 
-class ConfigForeignKeyMissingAttributeError(Exception):
-    """When a foreign key references an object attribute the object doesn't have"""
+class SchemaMissingColumnError(Exception):
+    """When a foreign key references an table column the table doesn't have"""
 
     def __init__(
         self,
         foreign_key: str,
-        object_name: str,
-        foreign_object_name: str,
-        foreign_object_attribute: str,
+        table_name: str,
+        foreign_table_name: str,
+        foreign_table_column: str,
     ) -> None:
-        self.message = "Foreign key references attribute which does not exist."
+        self.message = "Foreign key references column which does not exist."
         self.foreign_key = foreign_key
-        self.object_name = object_name
-        self.foreign_object_name = foreign_object_name
-        self.foreign_object_attribute = foreign_object_attribute
+        self.table_name = table_name
+        self.foreign_table_name = foreign_table_name
+        self.foreign_table_column = foreign_table_column
         super().__init__(self.message)
 
     def __str__(self) -> str:
         msg = (
-            f"Foreign key '{self.foreign_key}' in object '{self.object_name}' references "
-            f"attribute '{self.foreign_object_attribute}' which does not exist in object"
-            f"'{self.foreign_object_name}'"
+            f"Foreign key '{self.foreign_key}' in table '{self.table_name}' references "
+            f"column '{self.foreign_table_column}' which does not exist in table "
+            f"'{self.foreign_table_name}'"
         )
         return msg
 
 
 @dataclass
 class DatabaseSchema:
-    """A group of configs for generic database tables."""
+    """A database agnostic schema"""
 
-    configs: list[TableSchema]
+    table_schemas: list[TableSchema]
 
     def __post_init__(self) -> None:
-        for config in self.configs:
-            self._check_foreign_keys(config)
+        for schema in self.table_schemas:
+            self._check_foreign_keys(schema)
 
     def __eq__(self, other: Any) -> bool:
         """Overrides the default implementation"""
-        return self.get_sorted_configs() == other.get_sorted_configs()
+        return self.get_sorted_table_schemas() == other.get_sorted_table_schemas()
 
     def is_equivalent(self, other: T) -> bool:
         """
@@ -299,87 +299,87 @@ class DatabaseSchema:
         return all(
             x.is_equivalent(y)
             for x, y in zip(
-                self.get_sorted_configs(),
-                other.get_sorted_configs(),
+                self.get_sorted_table_schemas(),
+                other.get_sorted_table_schemas(),
             )
         )
 
-    def get_sorted_configs(self) -> list[TableSchema]:
-        """Gets the the configs sorted by name
+    def get_sorted_table_schemas(self) -> list[TableSchema]:
+        """Gets the table schemas sorted by name
 
         Returns:
-            list[TableSchema]: The list of sorted configs
+            list[TableSchema]: The list of sorted table schemas
         """
-        return sorted(self.configs, key=lambda x: x.name)
+        return sorted(self.table_schemas, key=lambda x: x.name)
 
-    def get_dependencies(self, object_name: str) -> list[str]:
-        """Gets the objects dependencies
+    def get_dependencies(self, table_name: str) -> list[str]:
+        """Gets the tables dependencies
 
         Args:
-            object_name (str): The name of the object
+            table_name (str): The name of the table
 
         Returns:
-            list[str]: A list of objects names the object depends on
+            list[str]: A list of tables names the table depends on
         """
-        return self.get_config_by_name(object_name).get_foreign_key_dependencies()
+        return self.get_schema_by_name(table_name).get_foreign_key_dependencies()
 
-    def get_reverse_dependencies(self, object_name: str) -> list[str]:
-        """Gets the names of Objects that depend on the input object
+    def get_reverse_dependencies(self, table_name: str) -> list[str]:
+        """Gets the names of the tables that depend on the input table
 
         Args:
-            object_name (str): The name of the object
+            table_name (str): The name of the table
 
         Returns:
-            list[str]: A list of object names that depend on the input object
+            list[str]: A list of table names that depend on the input table
         """
         return [
-            config.name
-            for config in self.configs
-            if object_name in config.get_foreign_key_dependencies()
+            schema.name
+            for schema in self.table_schemas
+            if table_name in schema.get_foreign_key_dependencies()
         ]
 
-    def get_config_names(self) -> list[str]:
-        """Returns a list of names of the configs
+    def get_schema_names(self) -> list[str]:
+        """Returns a list of names of the schemas
 
         Returns:
-            List[str]: A list of names of the configs
+            List[str]: A list of names of the schemas
         """
-        return [config.name for config in self.configs]
+        return [schema.name for schema in self.table_schemas]
 
-    def get_config_by_name(self, name: str) -> TableSchema:
-        """Returns the config
+    def get_schema_by_name(self, name: str) -> TableSchema:
+        """Returns the schema
 
         Args:
-            name (str): name of the config
+            name (str): name of the schema
 
         Returns:
             TableSchema: The TableSchema asked for
         """
-        return [config for config in self.configs if config.name == name][0]
+        return [schema for schema in self.table_schemas if schema.name == name][0]
 
-    def _check_foreign_keys(self, config: TableSchema) -> None:
-        for key in config.foreign_keys:
-            self._check_foreign_key_object(config, key)
-            self._check_foreign_key_attribute(config, key)
+    def _check_foreign_keys(self, schema: TableSchema) -> None:
+        for key in schema.foreign_keys:
+            self._check_foreign_key_table(schema, key)
+            self._check_foreign_key_column(schema, key)
 
-    def _check_foreign_key_object(
-        self, config: TableSchema, key: ForeignKeySchema
+    def _check_foreign_key_table(
+        self, schema: TableSchema, key: ForeignKeySchema
     ) -> None:
-        if key.foreign_table_name not in self.get_config_names():
-            raise ConfigForeignKeyMissingObjectError(
+        if key.foreign_table_name not in self.get_schema_names():
+            raise SchemaMissingTableError(
                 foreign_key=key.name,
-                object_name=config.name,
-                foreign_object_name=key.foreign_table_name,
+                table_name=schema.name,
+                foreign_table_name=key.foreign_table_name,
             )
 
-    def _check_foreign_key_attribute(
-        self, config: TableSchema, key: ForeignKeySchema
+    def _check_foreign_key_column(
+        self, schema: TableSchema, key: ForeignKeySchema
     ) -> None:
-        foreign_config = self.get_config_by_name(key.foreign_table_name)
-        if key.foreign_column_name not in foreign_config.get_column_names():
-            raise ConfigForeignKeyMissingAttributeError(
+        foreign_schema = self.get_schema_by_name(key.foreign_table_name)
+        if key.foreign_column_name not in foreign_schema.get_column_names():
+            raise SchemaMissingColumnError(
                 foreign_key=key.name,
-                object_name=config.name,
-                foreign_object_name=key.foreign_table_name,
-                foreign_object_attribute=key.foreign_column_name,
+                table_name=schema.name,
+                foreign_table_name=key.foreign_table_name,
+                foreign_table_column=key.foreign_column_name,
             )

@@ -113,7 +113,7 @@ class TestSchema:
         obj = test_schema1
         config = obj.get_db_config()
         assert isinstance(config, DatabaseSchema)
-        assert config.get_config_names() == [
+        assert config.get_schema_names() == [
             "Patient",
             "Biospecimen",
             "BulkRnaSeq",
@@ -209,7 +209,7 @@ class TestSchema2:
         obj = test_schema2
         config = obj.get_db_config()
         assert isinstance(config, DatabaseSchema)
-        assert config.get_config_names() == [
+        assert config.get_schema_names() == [
             "Patient",
             "Biospecimen",
             "BulkRnaSeq",
