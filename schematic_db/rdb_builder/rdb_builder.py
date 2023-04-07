@@ -15,6 +15,6 @@ class RDBBuilder:  # pylint: disable=too-few-public-methods
         Builds the database based on the schema.
         """
         self.rdb.drop_all_tables()
-        database_schema = self.schema.get_db_config()
+        database_schema = self.schema.get_database_schema()
         for table_schema in database_schema.table_schemas:
             self.rdb.add_table(table_schema.name, table_schema)

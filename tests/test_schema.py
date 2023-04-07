@@ -99,9 +99,9 @@ class TestDatabaseConfig:
     def test_get_attributes(self, database_config: DatabaseConfig) -> None:
         """Testing for get_attributes"""
         obj = database_config
-        assert obj.get_attributes("object1") is not None
-        assert obj.get_attributes("object2") is None
-        assert obj.get_attributes("object3") is None
+        assert obj.get_columns("object1") is not None
+        assert obj.get_columns("object2") is None
+        assert obj.get_columns("object3") is None
 
 
 @pytest.mark.schematic
@@ -111,7 +111,7 @@ class TestSchema:
     def test_init(self, test_schema1: Schema) -> None:
         """Testing for Schema.__init__"""
         obj = test_schema1
-        config = obj.get_db_config()
+        config = obj.get_database_schema()
         assert isinstance(config, DatabaseSchema)
         assert config.get_schema_names() == [
             "Patient",
@@ -119,10 +119,10 @@ class TestSchema:
             "BulkRnaSeq",
         ]
 
-    def test_create_attributes(self, test_schema1: Schema) -> None:
+    def test_create_column_schemas(self, test_schema1: Schema) -> None:
         """Testing for Schema.attributes()"""
         obj = test_schema1
-        assert obj.create_attributes("Patient") == [
+        assert obj.create_column_schemas("Patient") == [
             ColumnSchema(
                 name="id", datatype=ColumnDatatype.TEXT, required=True, index=False
             ),
@@ -144,7 +144,7 @@ class TestSchema:
             ),
             ColumnSchema(name="date", datatype=ColumnDatatype.DATE, required=False),
         ]
-        assert obj.create_attributes("Biospecimen") == [
+        assert obj.create_column_schemas("Biospecimen") == [
             ColumnSchema(
                 name="id", datatype=ColumnDatatype.TEXT, required=True, index=False
             ),
@@ -161,7 +161,7 @@ class TestSchema:
                 index=False,
             ),
         ]
-        assert obj.create_attributes("BulkRnaSeq") == [
+        assert obj.create_column_schemas("BulkRnaSeq") == [
             ColumnSchema(
                 name="id", datatype=ColumnDatatype.TEXT, required=True, index=False
             ),
@@ -207,18 +207,18 @@ class TestSchema2:
     def test_init(self, test_schema2: Schema) -> None:
         """Testing for Schema.__init__"""
         obj = test_schema2
-        config = obj.get_db_config()
-        assert isinstance(config, DatabaseSchema)
-        assert config.get_schema_names() == [
+        database_schema = obj.get_database_schema()
+        assert isinstance(database_schema, DatabaseSchema)
+        assert database_schema.get_schema_names() == [
             "Patient",
             "Biospecimen",
             "BulkRnaSeq",
         ]
 
-    def test_create_attributes(self, test_schema2: Schema) -> None:
+    def test_create_column_schemas(self, test_schema2: Schema) -> None:
         """Testing for Schema.attributes()"""
         obj = test_schema2
-        assert obj.create_attributes("Patient") == [
+        assert obj.create_column_schemas("Patient") == [
             ColumnSchema(
                 name="id", datatype=ColumnDatatype.TEXT, required=True, index=False
             ),
@@ -240,7 +240,7 @@ class TestSchema2:
             ),
             ColumnSchema(name="date", datatype=ColumnDatatype.DATE, required=False),
         ]
-        assert obj.create_attributes("Biospecimen") == [
+        assert obj.create_column_schemas("Biospecimen") == [
             ColumnSchema(
                 name="id", datatype=ColumnDatatype.TEXT, required=True, index=False
             ),
@@ -257,7 +257,7 @@ class TestSchema2:
                 index=False,
             ),
         ]
-        assert obj.create_attributes("BulkRnaSeq") == [
+        assert obj.create_column_schemas("BulkRnaSeq") == [
             ColumnSchema(
                 name="id", datatype=ColumnDatatype.TEXT, required=True, index=False
             ),
