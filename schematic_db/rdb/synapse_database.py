@@ -88,7 +88,7 @@ def create_foreign_key_annotation_string(key: ForeignKeySchema) -> str:
     return f"{key.name};{key.foreign_table_name};{key.foreign_column_name}"
 
 
-def create_attribute_annotation_string(attribute: ColumnSchema) -> str:
+def create_attribute_annotation_string(column_schema: ColumnSchema) -> str:
     """Creates a string that will serve as a foreign key Synapse annotation
 
     Args:
@@ -97,7 +97,7 @@ def create_attribute_annotation_string(attribute: ColumnSchema) -> str:
     Returns:
         str: The attribute in string form.
     """
-    return f"{attribute.name};{attribute.datatype.value};{str(attribute.required)}"
+    return f"{column_schema.name};{column_schema.datatype.value};{str(column_schema.required)}"
 
 
 def create_foreign_keys(strings: list[str]) -> list[ForeignKeySchema]:
@@ -122,21 +122,21 @@ def create_foreign_keys(strings: list[str]) -> list[ForeignKeySchema]:
     ]
 
 
-def create_attributes(strings: list[str]) -> list[ColumnSchema]:
+def create_column_schemas(column_annotations: list[str]) -> list[ColumnSchema]:
     """Creates a list of ColumnSchemas from a list of Synapse table entity strings
 
     Args:
-        strings (list[str]): A list of strings each representing an attribute
+        strings (list[str]): A list of strings each representing an column
 
     Returns:
         list[ColumnSchema]: A list of ColumnSchemas
     """
-    attribute_lists = [att.split(";") for att in strings]
+    column_lists = [att.split(";") for att in column_annotations]
     return [
         ColumnSchema(
             name=att[0], datatype=CONFIG_DATATYPES[att[1]], required=att[2] == "True"
         )
-        for att in attribute_lists
+        for att in column_lists
     ]
 
 
@@ -354,14 +354,14 @@ class SynapseDatabase(RelationalDatabase):
             raise SynapseDatabaseMissingTableAnnotationsError(
                 "Table has no annotations", table_name
             )
-        attribute_annotations = [
+        column_annotations = [
             v[0] for k, v in annotations.items() if k.startswith("attribute")
         ]
         return TableSchema(
             name=table_name,
             primary_key=annotations["primary_key"][0],
             foreign_keys=create_foreign_keys(annotations.get("foreign_keys")),
-            columns=create_attributes(attribute_annotations),
+            columns=create_column_schemas(column_annotations),
         )
 
     def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
