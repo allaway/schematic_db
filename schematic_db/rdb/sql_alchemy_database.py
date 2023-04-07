@@ -170,14 +170,14 @@ class SQLAlchemyDatabase(
         table = pd.DataFrame(result)
         return table
 
-    def get_table_config(self, table_name: str) -> TableSchema:
-        """Creates a table config from a sqlalchemy table schema
+    def get_table_schema(self, table_name: str) -> TableSchema:
+        """Creates a table schema from a sqlalchemy table schema
 
         Args:
             table_name (str): The name of the table
 
         Returns:
-            TableSchema: A config for the table
+            TableSchema: A schema for the table
         """
         table_schema = self.metadata.tables[table_name]
         primary_key = inspect(table_schema).primary_key.columns.values()[0].name
@@ -186,7 +186,7 @@ class SQLAlchemyDatabase(
             name=table_name,
             primary_key=primary_key,
             foreign_keys=create_foreign_key_configs(table_schema),
-            attributes=create_attribute_configs(table_schema, indices),
+            columns=create_attribute_configs(table_schema, indices),
         )
 
     def drop_table(self, table_name: str) -> None:
@@ -206,14 +206,14 @@ class SQLAlchemyDatabase(
         inspector = sa.inspect(self.engine)
         return sorted(inspector.get_table_names())
 
-    def add_table(self, table_name: str, table_config: TableSchema) -> None:
+    def add_table(self, table_name: str, table_schema: TableSchema) -> None:
         """Adds a table to the schema
 
         Args:
             table_name (str): The name of the table
-            table_config (TableSchema): The config for the table to be added
+            table_schema (TableSchema): The schema for the table to be added
         """
-        columns = self._create_columns(table_config)
+        columns = self._create_columns(table_schema)
         sa.Table(table_name, self.metadata, *columns)
         self.metadata.create_all(self.engine)
 
@@ -226,11 +226,11 @@ class SQLAlchemyDatabase(
             result = conn.execute(statement)
         return result
 
-    def _create_columns(self, table_config: TableSchema) -> list[sa.Column]:
+    def _create_columns(self, table_schema: TableSchema) -> list[sa.Column]:
         columns = [
-            self._create_column(att, table_config) for att in table_config.attributes
+            self._create_column(att, table_schema) for att in table_schema.columns
         ]
-        columns.append(sa.PrimaryKeyConstraint(table_config.primary_key))
+        columns.append(sa.PrimaryKeyConstraint(table_schema.primary_key))
         return columns
 
     def _create_column(

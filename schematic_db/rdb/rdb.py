@@ -16,14 +16,14 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def get_table_config(self, table_name: str) -> TableSchema:
+    def get_table_schema(self, table_name: str) -> TableSchema:
         """Returns a TableSchema created from the current database table
 
         Args:
             table_name (str): The name of the table
 
         Returns:
-            Optional[TableSchema]: The config for the given table
+            Optional[TableSchema]: The schema for the given table
         """
 
     @abstractmethod
@@ -51,12 +51,12 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def add_table(self, table_name: str, table_config: TableSchema) -> None:
+    def add_table(self, table_name: str, table_schema: TableSchema) -> None:
         """Adds a table to the schema
 
         Args:
             table_name (str): The name of the table
-            table_config (TableSchema): The config for the table being added
+            table_schema (TableSchema): The schema for the table being added
         """
 
     @abstractmethod

@@ -292,7 +292,7 @@ def fixture_table_one_config() -> Generator:
     """
     table_config = TableSchema(
         name="table_one",
-        attributes=[
+        columns=[
             ColumnSchema(
                 name="pk_one_col",
                 datatype=ColumnDatatype.TEXT,
@@ -381,7 +381,7 @@ def fixture_table_two_config() -> Generator:
     """
     table_config = TableSchema(
         name="table_two",
-        attributes=[
+        columns=[
             ColumnSchema(
                 name="pk_two_col", datatype=ColumnDatatype.TEXT, required=True
             ),
@@ -402,7 +402,7 @@ def fixture_table_two_config_combined() -> Generator:
     """
     table_config = TableSchema(
         name="table_two",
-        attributes=[
+        columns=[
             ColumnSchema(
                 name="pk_two_col", datatype=ColumnDatatype.TEXT, required=True
             ),
@@ -439,7 +439,7 @@ def fixture_table_three_config() -> Generator:
     """
     table_config = TableSchema(
         name="table_three",
-        attributes=[
+        columns=[
             ColumnSchema(
                 name="pk_zero_col", datatype=ColumnDatatype.TEXT, required=True
             ),

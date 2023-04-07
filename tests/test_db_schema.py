@@ -85,21 +85,21 @@ class TestTableSchema:
         """Testing for TableSchema.is_equivalent"""
         obj1 = TableSchema(
             name="table",
-            attributes=[pk_col1_attribute],
+            columns=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[],
         )
 
         obj2 = TableSchema(
             name="table",
-            attributes=[pk_col1_attribute],
+            columns=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[],
         )
 
         obj3 = TableSchema(
             name="table",
-            attributes=[pk_col1b_attribute],
+            columns=[pk_col1b_attribute],
             primary_key="pk_col1",
             foreign_keys=[],
         )
@@ -117,7 +117,7 @@ class TestTableSchema:
         """Testing for TableSchema.get_foreign_key_dependencies()"""
         obj1 = TableSchema(
             name="table",
-            attributes=[pk_col1_attribute],
+            columns=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[],
         )
@@ -125,7 +125,7 @@ class TestTableSchema:
 
         obj2 = TableSchema(
             name="table",
-            attributes=[pk_col1_attribute],
+            columns=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[
                 ForeignKeySchema(
@@ -141,7 +141,7 @@ class TestTableSchema:
         """Successful tests for TableSchema()"""
         obj1 = TableSchema(
             name="table",
-            attributes=[pk_col1_attribute],
+            columns=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[],
         )
@@ -149,7 +149,7 @@ class TestTableSchema:
 
         obj2 = TableSchema(
             name="table",
-            attributes=[pk_col1_attribute],
+            columns=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[
                 ForeignKeySchema(
@@ -163,35 +163,35 @@ class TestTableSchema:
 
     def test_db_object_config_exceptions(self, pk_col1_attribute: ColumnSchema) -> None:
         """Tests for TableSchema() that raise exceptions"""
-        # test attributes
+        # test columns
         with pytest.raises(
-            ConfigAttributeError, match="Attributes is empty: table_name"
+            ConfigAttributeError, match="There are no columns: table_name"
         ):
             TableSchema(
                 name="table_name",
-                attributes=[],
+                columns=[],
                 primary_key="pk_col1",
                 foreign_keys=[],
             )
 
         with pytest.raises(
             ConfigKeyError,
-            match="Primary key is missing from attributes: table_name; pk_col2",
+            match="Primary key is missing from columns: table_name; pk_col2",
         ):
             TableSchema(
                 name="table_name",
-                attributes=[pk_col1_attribute],
+                columns=[pk_col1_attribute],
                 primary_key="pk_col2",
                 foreign_keys=[],
             )
         # test foreign_keys
         with pytest.raises(
             ConfigKeyError,
-            match="Foreign key is missing from attributes: table_name",
+            match="Foreign key is missing from columns: table_name",
         ):
             TableSchema(
                 name="table_name",
-                attributes=[pk_col1_attribute],
+                columns=[pk_col1_attribute],
                 primary_key="pk_col1",
                 foreign_keys=[
                     ForeignKeySchema(
@@ -204,11 +204,11 @@ class TestTableSchema:
 
         with pytest.raises(
             ConfigKeyError,
-            match="Foreign key references its own object: table_name",
+            match="Foreign key references its own table: table_name",
         ):
             TableSchema(
                 name="table_name",
-                attributes=[pk_col1_attribute],
+                columns=[pk_col1_attribute],
                 primary_key="pk_col1",
                 foreign_keys=[
                     ForeignKeySchema(
@@ -234,13 +234,13 @@ class TestDatabaseSchema:
             [
                 TableSchema(
                     name="table1",
-                    attributes=[pk_col1_attribute],
+                    columns=[pk_col1_attribute],
                     primary_key="pk_col1",
                     foreign_keys=[],
                 ),
                 TableSchema(
                     name="table2",
-                    attributes=[pk_col2_attribute],
+                    columns=[pk_col2_attribute],
                     primary_key="pk_col2",
                     foreign_keys=[],
                 ),
@@ -250,13 +250,13 @@ class TestDatabaseSchema:
             [
                 TableSchema(
                     name="table2",
-                    attributes=[pk_col2_attribute],
+                    columns=[pk_col2_attribute],
                     primary_key="pk_col2",
                     foreign_keys=[],
                 ),
                 TableSchema(
                     name="table1",
-                    attributes=[pk_col1_attribute],
+                    columns=[pk_col1_attribute],
                     primary_key="pk_col1",
                     foreign_keys=[],
                 ),
@@ -273,7 +273,7 @@ class TestDatabaseSchema:
             [
                 TableSchema(
                     name="table",
-                    attributes=[pk_col1_attribute],
+                    columns=[pk_col1_attribute],
                     primary_key="pk_col1",
                     foreign_keys=[],
                 )
@@ -285,13 +285,13 @@ class TestDatabaseSchema:
             [
                 TableSchema(
                     name="table",
-                    attributes=[pk_col1_attribute],
+                    columns=[pk_col1_attribute],
                     primary_key="pk_col1",
                     foreign_keys=[],
                 ),
                 TableSchema(
                     name="table2",
-                    attributes=[pk_col2_attribute],
+                    columns=[pk_col2_attribute],
                     primary_key="pk_col2",
                     foreign_keys=[
                         ForeignKeySchema(
@@ -321,7 +321,7 @@ class TestDatabaseSchema:
                 [
                     TableSchema(
                         name="table2",
-                        attributes=[pk_col2_attribute],
+                        columns=[pk_col2_attribute],
                         primary_key="pk_col2",
                         foreign_keys=[
                             ForeignKeySchema(
@@ -345,13 +345,13 @@ class TestDatabaseSchema:
                 [
                     TableSchema(
                         name="table",
-                        attributes=[pk_col1_attribute],
+                        columns=[pk_col1_attribute],
                         primary_key="pk_col1",
                         foreign_keys=[],
                     ),
                     TableSchema(
                         name="table2",
-                        attributes=[pk_col2_attribute],
+                        columns=[pk_col2_attribute],
                         primary_key="pk_col2",
                         foreign_keys=[
                             ForeignKeySchema(

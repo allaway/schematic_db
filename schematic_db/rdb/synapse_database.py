@@ -287,12 +287,12 @@ class SynapseDatabase(RelationalDatabase):
                     dependency=key.foreign_table_name,
                 )
 
-    def add_table(self, table_name: str, table_config: TableSchema) -> None:
+    def add_table(self, table_name: str, table_schema: TableSchema) -> None:
         table_names = self.synapse.get_table_names()
-        table_name = table_config.name
+        table_name = table_schema.name
         columns = [
             create_synapse_column(att.name, att.datatype)
-            for att in table_config.attributes
+            for att in table_schema.columns
         ]
 
         if table_name not in table_names:
@@ -301,12 +301,12 @@ class SynapseDatabase(RelationalDatabase):
             synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
             self.synapse.add_table_columns(synapse_id, columns)
 
-        self.annotate_table(table_name, table_config)
+        self.annotate_table(table_name, table_schema)
 
     def get_table_names(self) -> list[str]:
         return self.synapse.get_table_names()
 
-    def annotate_table(self, table_name: str, table_config: TableSchema) -> None:
+    def annotate_table(self, table_name: str, table_schema: TableSchema) -> None:
         """Annotates the table with it's primary key and foreign keys
 
         Args:
@@ -316,29 +316,29 @@ class SynapseDatabase(RelationalDatabase):
         synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
         annotations: dict[str, Union[str, list[str]]] = {
             f"attribute{str(i)}": create_attribute_annotation_string(att)
-            for i, att in enumerate(table_config.attributes)
+            for i, att in enumerate(table_schema.columns)
         }
-        annotations["primary_key"] = table_config.primary_key
-        if len(table_config.foreign_keys) > 0:
+        annotations["primary_key"] = table_schema.primary_key
+        if len(table_schema.foreign_keys) > 0:
             foreign_key_strings = [
                 create_foreign_key_annotation_string(key)
-                for key in table_config.foreign_keys
+                for key in table_schema.foreign_keys
             ]
             annotations["foreign_keys"] = foreign_key_strings
         self.synapse.set_entity_annotations(synapse_id, annotations)
 
     def get_db_config(self) -> DatabaseSchema:
-        """Gets the db config of the synapse database.
+        """Gets the schema of the synapse database.
 
         Returns:
             DatabaseSchema: The db config
         """
         table_names = self.synapse.get_table_names()
-        result_list = [self.get_table_config(name) for name in table_names]
-        config_list = [config for config in result_list if config is not None]
-        return DatabaseSchema(config_list)
+        result_list = [self.get_table_schema(name) for name in table_names]
+        schema_list = [schema for schema in result_list if schema is not None]
+        return DatabaseSchema(schema_list)
 
-    def get_table_config(self, table_name: str) -> TableSchema:
+    def get_table_schema(self, table_name: str) -> TableSchema:
         """Creates a TableSchema if the table is annotated, otherwise None
 
         Args:
@@ -361,7 +361,7 @@ class SynapseDatabase(RelationalDatabase):
             name=table_name,
             primary_key=annotations["primary_key"][0],
             foreign_keys=create_foreign_keys(annotations.get("foreign_keys")),
-            attributes=create_attributes(attribute_annotations),
+            columns=create_attributes(attribute_annotations),
         )
 
     def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:

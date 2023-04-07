@@ -189,22 +189,22 @@ class TestSynapseDatabase:
             "test_table_one",
         ]
 
-    def test_get_table_config(self, synapse_with_empty_tables: SynapseDatabase) -> None:
-        """Testing for SynapseDatabase.get_table_config()"""
+    def test_get_table_schema(self, synapse_with_empty_tables: SynapseDatabase) -> None:
+        """Testing for SynapseDatabase.get_table_schema()"""
         obj = synapse_with_empty_tables
-        table_config1 = obj.get_table_config("table_one")
-        assert table_config1 is not None
-        assert table_config1.name == "table_one"
-        assert table_config1.primary_key == "pk_one_col"
-        assert table_config1.foreign_keys == []
-        assert table_config1.attributes != []
+        table_schema1 = obj.get_table_schema("table_one")
+        assert table_schema1 is not None
+        assert table_schema1.name == "table_one"
+        assert table_schema1.primary_key == "pk_one_col"
+        assert table_schema1.foreign_keys == []
+        assert table_schema1.columns != []
 
-        table_config3 = obj.get_table_config("table_three")
-        assert table_config3 is not None
-        assert table_config3.name == "table_three"
-        assert table_config3.primary_key == "pk_zero_col"
-        assert table_config3.foreign_keys != []
-        assert table_config3.attributes != []
+        table_schema3 = obj.get_table_schema("table_three")
+        assert table_schema3 is not None
+        assert table_schema3.name == "table_three"
+        assert table_schema3.primary_key == "pk_zero_col"
+        assert table_schema3.foreign_keys != []
+        assert table_schema3.columns != []
 
     def test_delete_table_rows(
         self,

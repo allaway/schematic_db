@@ -134,26 +134,26 @@ class Schema:  # pylint: disable=too-many-instance-attributes
         ]
         self.db_config = DatabaseSchema(object_configs)
 
-    def create_db_object_config(self, object_name: str) -> Optional[TableSchema]:
-        """Creates the config for one object in the database.
+    def create_db_object_config(self, table_name: str) -> Optional[TableSchema]:
+        """Creates the config for one table in the database.
 
         Args:
-            object_name (str): The name of the object the config will be created for.
+            table_name (str): The name of the table the schema will be created for.
 
         Returns:
             Optional[TableSchema]: The config for the object if the object has attributes
               otherwise None.
         """
         # Some components will not have any attributes for various reasons
-        attributes = self.create_attributes(object_name)
+        attributes = self.create_attributes(table_name)
         if not attributes:
             return None
 
         return TableSchema(
-            name=object_name,
-            attributes=attributes,
-            primary_key=self.get_primary_key(object_name),
-            foreign_keys=self.get_foreign_keys(object_name),
+            name=table_name,
+            columns=attributes,
+            primary_key=self.get_primary_key(table_name),
+            foreign_keys=self.get_foreign_keys(table_name),
         )
 
     def create_attributes(

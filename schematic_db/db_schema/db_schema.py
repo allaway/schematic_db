@@ -105,12 +105,12 @@ class TableSchema:
     """A schema for a database table."""
 
     name: str
-    attributes: list[ColumnSchema]
+    columns: list[ColumnSchema]
     primary_key: str
     foreign_keys: list[ForeignKeySchema]
 
     def __post_init__(self) -> None:
-        self.attributes.sort(key=lambda x: x.name)
+        self.columns.sort(key=lambda x: x.name)
         self.foreign_keys.sort(key=lambda x: x.name)
         self._check_attributes()
         self._check_primary_key()
@@ -118,7 +118,7 @@ class TableSchema:
 
     def __eq__(self, other: Any) -> bool:
         """Overrides the default implementation"""
-        return self.get_sorted_attributes() == other.get_sorted_attributes()
+        return self.get_sorted_columns() == other.get_sorted_columns()
 
     def is_equivalent(self, other: Y) -> bool:
         """
@@ -129,44 +129,44 @@ class TableSchema:
         Returns:
             bool
         """
-        attributes_equivalent = all(
+        columns_equivalent = all(
             x.is_equivalent(y)
             for x, y in zip(
-                self.get_sorted_attributes(),
-                other.get_sorted_attributes(),
+                self.get_sorted_columns(),
+                other.get_sorted_columns(),
             )
         )
 
         return all(
             [
-                attributes_equivalent,
+                columns_equivalent,
                 self.name == other.name,
                 self.primary_key == other.primary_key,
                 self.foreign_keys == other.foreign_keys,
             ]
         )
 
-    def get_sorted_attributes(self) -> list[ColumnSchema]:
-        """Gets the configs attributes sorted by name
+    def get_sorted_columns(self) -> list[ColumnSchema]:
+        """Gets the tables columns sorted by name
 
         Returns:
-            list[ColumnSchema]: Sorted list of attributes
+            list[ColumnSchema]: Sorted list of columns
         """
-        return sorted(self.attributes, key=lambda x: x.name)
+        return sorted(self.columns, key=lambda x: x.name)
 
-    def get_attribute_names(self) -> list[str]:
-        """Returns a list of names of the attributes
+    def get_column_names(self) -> list[str]:
+        """Returns a list of names of the columns
 
         Returns:
             List[str]: A list of names of the attributes
         """
-        return [att.name for att in self.attributes]
+        return [column.name for column in self.columns]
 
     def get_foreign_key_dependencies(self) -> list[str]:
-        """Returns a list of object names the current object depends on
+        """Returns a list of table names the current object depends on
 
         Returns:
-            list[str]: A list of object names
+            list[str]: A list of table names
         """
         return [key.foreign_table_name for key in self.foreign_keys]
 
@@ -189,27 +189,27 @@ class TableSchema:
         """
         return [key for key in self.foreign_keys if key.name == name][0]
 
-    def get_attribute_by_name(self, name: str) -> ColumnSchema:
-        """Returns the attribute
+    def get_column_by_name(self, name: str) -> ColumnSchema:
+        """Returns the column
 
         Args:
-            name (str): name of the attribute
+            name (str): name of the column
 
         Returns:
             ColumnSchema: The ColumnSchema asked for
         """
-        return [att for att in self.attributes if att.name == name][0]
+        return [column for column in self.columns if column.name == name][0]
 
     def _check_attributes(self) -> None:
-        if len(self.attributes) == 0:
-            raise ConfigAttributeError("Attributes is empty", self.name)
-        if len(self.get_attribute_names()) != len(set(self.get_attribute_names())):
-            raise ConfigAttributeError("Attributes has duplicates", self.name)
+        if len(self.columns) == 0:
+            raise ConfigAttributeError("There are no columns", self.name)
+        if len(self.get_column_names()) != len(set(self.get_column_names())):
+            raise ConfigAttributeError("There are duplicate columns", self.name)
 
     def _check_primary_key(self) -> None:
-        if self.primary_key not in self.get_attribute_names():
+        if self.primary_key not in self.get_column_names():
             raise ConfigKeyError(
-                "Primary key is missing from attributes", self.name, self.primary_key
+                "Primary key is missing from columns", self.name, self.primary_key
             )
 
     def _check_foreign_keys(self) -> None:
@@ -217,13 +217,13 @@ class TableSchema:
             self._check_foreign_key(key)
 
     def _check_foreign_key(self, key: ForeignKeySchema) -> None:
-        if key.name not in self.get_attribute_names():
+        if key.name not in self.get_column_names():
             raise ConfigKeyError(
-                "Foreign key is missing from attributes", self.name, key.name
+                "Foreign key is missing from columns", self.name, key.name
             )
         if key.foreign_table_name == self.name:
             raise ConfigKeyError(
-                "Foreign key references its own object", self.name, key.name
+                "Foreign key references its own table", self.name, key.name
             )
 
 
@@ -376,7 +376,7 @@ class DatabaseSchema:
         self, config: TableSchema, key: ForeignKeySchema
     ) -> None:
         foreign_config = self.get_config_by_name(key.foreign_table_name)
-        if key.foreign_column_name not in foreign_config.get_attribute_names():
+        if key.foreign_column_name not in foreign_config.get_column_names():
             raise ConfigForeignKeyMissingAttributeError(
                 foreign_key=key.name,
                 object_name=config.name,

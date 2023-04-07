@@ -143,7 +143,7 @@ class TestSynapseGetters:
         """Testing for Synapse.get_table_column_names()"""
         assert sorted(
             synapse_with_test_table_one.get_table_column_names("test_table_one")
-        ) == sorted(table_one_config.get_attribute_names())
+        ) == sorted(table_one_config.get_column_names())
 
     def test_get_table_id_and_name(self, synapse_with_test_table_one: Synapse) -> None:
         """Testing for Synapse.get_table_id_from_name()"""

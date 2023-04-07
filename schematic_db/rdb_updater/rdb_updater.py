@@ -60,20 +60,20 @@ class RDBUpdater:
     def upsert_table_with_manifest(
         self, table_name: str, manifest_table: pd.DataFrame
     ) -> None:
-        """Updates a table int he database with a manifest
+        """Updates a table in the database with a manifest
 
         Args:
             table_name (str): The name of the table
             manifest_table (pd.DataFrame): The input data
         """
-        config = self.rdb.get_table_config(table_name)
+        table_schema = self.rdb.get_table_schema(table_name)
 
         # normalize table
-        table_columns = set(config.get_attribute_names())
+        table_columns = set(table_schema.get_column_names())
         manifest_columns = set(manifest_table.columns)
         columns = list(table_columns.intersection(manifest_columns))
         manifest_table = manifest_table[columns]
-        manifest_table = manifest_table.drop_duplicates(subset=config.primary_key)
+        manifest_table = manifest_table.drop_duplicates(subset=table_schema.primary_key)
         manifest_table.reset_index(inplace=True, drop=True)
 
         self.rdb.upsert_table_rows(table_name, manifest_table)
