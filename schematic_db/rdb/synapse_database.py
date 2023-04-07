@@ -3,22 +3,22 @@ from typing import Union
 from functools import partial
 import pandas as pd
 import synapseclient as sc  # type: ignore
-from schematic_db.db_config.db_config import (
-    DBConfig,
-    DBObjectConfig,
-    DBForeignKey,
-    DBAttributeConfig,
-    DBDatatype,
+from schematic_db.db_schema.db_schema import (
+    DatabaseSchema,
+    TableSchema,
+    ForeignKeySchema,
+    ColumnSchema,
+    ColumnDatatype,
 )
 from schematic_db.synapse.synapse import Synapse, SynapseConfig
 from .rdb import RelationalDatabase
 
 CONFIG_DATATYPES = {
-    "text": DBDatatype.TEXT,
-    "date": DBDatatype.DATE,
-    "int": DBDatatype.INT,
-    "float": DBDatatype.FLOAT,
-    "boolean": DBDatatype.BOOLEAN,
+    "text": ColumnDatatype.TEXT,
+    "date": ColumnDatatype.DATE,
+    "int": ColumnDatatype.INT,
+    "float": ColumnDatatype.FLOAT,
+    "boolean": ColumnDatatype.BOOLEAN,
 }
 
 
@@ -76,23 +76,23 @@ class SynapseDatabaseUpdateTableError(Exception):
         )
 
 
-def create_foreign_key_annotation_string(key: DBForeignKey) -> str:
+def create_foreign_key_annotation_string(key: ForeignKeySchema) -> str:
     """Creates a string that will serve as a foreign key Synapse annotation
 
     Args:
-        key (DBForeignKey): The foreign key to be turned into a string
+        key (ForeignKeySchema): The foreign key to be turned into a string
 
     Returns:
         str: The foreign key in string form.
     """
-    return f"{key.name};{key.foreign_object_name};{key.foreign_attribute_name}"
+    return f"{key.name};{key.foreign_table_name};{key.foreign_column_name}"
 
 
-def create_attribute_annotation_string(attribute: DBAttributeConfig) -> str:
+def create_attribute_annotation_string(attribute: ColumnSchema) -> str:
     """Creates a string that will serve as a foreign key Synapse annotation
 
     Args:
-        key (DBAttributeConfig): The attribute to be turned into a string
+        key (ColumnSchema): The attribute to be turned into a string
 
     Returns:
         str: The attribute in string form.
@@ -100,62 +100,62 @@ def create_attribute_annotation_string(attribute: DBAttributeConfig) -> str:
     return f"{attribute.name};{attribute.datatype.value};{str(attribute.required)}"
 
 
-def create_foreign_keys(strings: list[str]) -> list[DBForeignKey]:
-    """Creates a list of DBForeignKeys from a list of Synapse table entity strings
+def create_foreign_keys(strings: list[str]) -> list[ForeignKeySchema]:
+    """Creates a list of ForeignKeySchemas from a list of Synapse table entity strings
 
     Args:
         strings (list[str]): A list of strings each representing a foreign key
 
     Returns:
-        list[DBForeignKey]: A list of DBForeignKeys
+        list[ForeignKeySchema]: A list of ForeignKeySchemas
     """
     if strings is None:
         return []
     lists: list[list[str]] = [key.split(";") for key in strings]
     return [
-        DBForeignKey(
+        ForeignKeySchema(
             name=key[0],
-            foreign_object_name=key[1],
-            foreign_attribute_name=key[2],
+            foreign_table_name=key[1],
+            foreign_column_name=key[2],
         )
         for key in lists
     ]
 
 
-def create_attributes(strings: list[str]) -> list[DBAttributeConfig]:
-    """Creates a list of DBAttributeConfigs from a list of Synapse table entity strings
+def create_attributes(strings: list[str]) -> list[ColumnSchema]:
+    """Creates a list of ColumnSchemas from a list of Synapse table entity strings
 
     Args:
         strings (list[str]): A list of strings each representing an attribute
 
     Returns:
-        list[DBAttributeConfig]: A list of DBAttributeConfigs
+        list[ColumnSchema]: A list of ColumnSchemas
     """
     attribute_lists = [att.split(";") for att in strings]
     return [
-        DBAttributeConfig(
+        ColumnSchema(
             name=att[0], datatype=CONFIG_DATATYPES[att[1]], required=att[2] == "True"
         )
         for att in attribute_lists
     ]
 
 
-def create_synapse_column(name: str, datatype: DBDatatype) -> sc.Column:
+def create_synapse_column(name: str, datatype: ColumnDatatype) -> sc.Column:
     """Creates a Synapse column object
 
     Args:
         name (str): The name of the column
-        datatype (DBDatatype): The datatype of the column
+        datatype (ColumnDatatype): The datatype of the column
 
     Returns:
         sc.Column: _description_
     """
     datatypes = {
-        DBDatatype.TEXT: partial(sc.Column, columnType="LARGETEXT"),
-        DBDatatype.DATE: partial(sc.Column, columnType="DATE"),
-        DBDatatype.INT: partial(sc.Column, columnType="INTEGER"),
-        DBDatatype.FLOAT: partial(sc.Column, columnType="DOUBLE"),
-        DBDatatype.BOOLEAN: partial(sc.Column, columnType="BOOLEAN"),
+        ColumnDatatype.TEXT: partial(sc.Column, columnType="LARGETEXT"),
+        ColumnDatatype.DATE: partial(sc.Column, columnType="DATE"),
+        ColumnDatatype.INT: partial(sc.Column, columnType="INTEGER"),
+        ColumnDatatype.FLOAT: partial(sc.Column, columnType="DOUBLE"),
+        ColumnDatatype.BOOLEAN: partial(sc.Column, columnType="BOOLEAN"),
     }
     func = datatypes[datatype]
     return func(name=name)
@@ -196,26 +196,26 @@ class SynapseDatabase(RelationalDatabase):
         self._drop_table_and_dependencies(table_name, db_config)
 
     def _drop_table_and_dependencies(
-        self, table_name: str, db_config: DBConfig
+        self, table_name: str, db_config: DatabaseSchema
     ) -> None:
         """Drops the table and any tables that depend on it.
 
         Args:
             table_name (str): The name of the table
-            db_config (DBConfig): The configuration for the database
+            db_config (DatabaseSchema): The configuration for the database
         """
         self._drop_all_table_dependencies(table_name, db_config)
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
         self._drop_table(table_id)
 
     def _drop_all_table_dependencies(
-        self, table_name: str, db_config: DBConfig
+        self, table_name: str, db_config: DatabaseSchema
     ) -> None:
         """Drops all tables that depend on the input table
 
         Args:
             table_name (str): The name of the table whose dependent table will be dropped
-            db_config (DBConfig): The configuration fo the database
+            db_config (DatabaseSchema): The configuration fo the database
         """
         reverse_dependencies = db_config.get_reverse_dependencies(table_name)
         for rd_table_name in reverse_dependencies:
@@ -259,14 +259,12 @@ class SynapseDatabase(RelationalDatabase):
     ) -> pd.DataFrame:
         return self.synapse.execute_sql_query(query, include_row_data)
 
-    def check_dependencies(
-        self, data: pd.DataFrame, table_config: DBObjectConfig
-    ) -> None:
+    def check_dependencies(self, data: pd.DataFrame, table_config: TableSchema) -> None:
         """Checks if the dataframe's foreign keys are in the tables dependencies
 
         Args:
             data (pd.DataFrame): The dataframe to be inserted
-            table_config (DBObjectConfig): The config of the table to be inserted into
+            table_config (TableSchema): The config of the table to be inserted into
 
         Raises:
             SynapseDatabaseUpdateTableError: Raised when there are values in foreign key columns
@@ -277,19 +275,19 @@ class SynapseDatabase(RelationalDatabase):
                 continue
             insert_keys = [key for key in data[key.name].tolist() if not pd.isnull(key)]
             table_id = self.synapse.get_synapse_id_from_table_name(
-                key.foreign_object_name
+                key.foreign_table_name
             )
-            table = self._create_primary_key_table(table_id, key.foreign_attribute_name)
-            current_keys = table[key.foreign_attribute_name].tolist()
+            table = self._create_primary_key_table(table_id, key.foreign_column_name)
+            current_keys = table[key.foreign_column_name].tolist()
             if not set(insert_keys).issubset(current_keys):
                 raise SynapseDatabaseUpdateTableError(
                     table_name=table_config.name,
                     foreign_key=key.name,
                     values=insert_keys,
-                    dependency=key.foreign_object_name,
+                    dependency=key.foreign_table_name,
                 )
 
-    def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
+    def add_table(self, table_name: str, table_config: TableSchema) -> None:
         table_names = self.synapse.get_table_names()
         table_name = table_config.name
         columns = [
@@ -308,12 +306,12 @@ class SynapseDatabase(RelationalDatabase):
     def get_table_names(self) -> list[str]:
         return self.synapse.get_table_names()
 
-    def annotate_table(self, table_name: str, table_config: DBObjectConfig) -> None:
+    def annotate_table(self, table_name: str, table_config: TableSchema) -> None:
         """Annotates the table with it's primary key and foreign keys
 
         Args:
             table_name (str): The name of the table to be annotated
-            table_config (DBObjectConfig): The config for the table
+            table_config (TableSchema): The config for the table
         """
         synapse_id = self.synapse.get_synapse_id_from_table_name(table_name)
         annotations: dict[str, Union[str, list[str]]] = {
@@ -329,25 +327,25 @@ class SynapseDatabase(RelationalDatabase):
             annotations["foreign_keys"] = foreign_key_strings
         self.synapse.set_entity_annotations(synapse_id, annotations)
 
-    def get_db_config(self) -> DBConfig:
+    def get_db_config(self) -> DatabaseSchema:
         """Gets the db config of the synapse database.
 
         Returns:
-            DBConfig: The db config
+            DatabaseSchema: The db config
         """
         table_names = self.synapse.get_table_names()
         result_list = [self.get_table_config(name) for name in table_names]
         config_list = [config for config in result_list if config is not None]
-        return DBConfig(config_list)
+        return DatabaseSchema(config_list)
 
-    def get_table_config(self, table_name: str) -> DBObjectConfig:
-        """Creates a DBObjectConfig if the table is annotated, otherwise None
+    def get_table_config(self, table_name: str) -> TableSchema:
+        """Creates a TableSchema if the table is annotated, otherwise None
 
         Args:
             table_name (str): The name of the table
 
         Returns:
-            DBObjectConfig: A generic representation of the table
+            TableSchema: A generic representation of the table
         """
         table_id = self.synapse.get_synapse_id_from_table_name(table_name)
         annotations = self.synapse.get_entity_annotations(table_id)
@@ -359,7 +357,7 @@ class SynapseDatabase(RelationalDatabase):
         attribute_annotations = [
             v[0] for k, v in annotations.items() if k.startswith("attribute")
         ]
-        return DBObjectConfig(
+        return TableSchema(
             name=table_name,
             primary_key=annotations["primary_key"][0],
             foreign_keys=create_foreign_keys(annotations.get("foreign_keys")),
@@ -380,7 +378,7 @@ class SynapseDatabase(RelationalDatabase):
         table_name: str,
         table_id: str,
         data: pd.DataFrame,
-        db_config: DBConfig,
+        db_config: DatabaseSchema,
     ) -> None:
         """Deletes rows from the given table
 
@@ -389,7 +387,7 @@ class SynapseDatabase(RelationalDatabase):
             table_id (str): The id of the table the rows will be deleted from
             data (pd.DataFrame): A pandas.DataFrame, of just it's primary key, ROW_ID, and
              ROW_VERSION
-            db_config (DBConfig): The configuration for the database
+            db_config (DatabaseSchema): The configuration for the database
         """
         primary_key = db_config.get_config_by_name(table_name).primary_key
         self._delete_table_dependency_rows(table_name, db_config, data[[primary_key]])
@@ -398,7 +396,7 @@ class SynapseDatabase(RelationalDatabase):
     def _delete_table_dependency_rows(
         self,
         table_name: str,
-        db_config: DBConfig,
+        db_config: DatabaseSchema,
         data: pd.DataFrame,
     ) -> None:
         """Deletes rows from the tables that are dependant on the given table
@@ -406,7 +404,7 @@ class SynapseDatabase(RelationalDatabase):
         Args:
             table_name (str): The name of the table whose reverse dependencies will have their rows
              deleted from
-            db_config (DBConfig): The configuration for the database
+            db_config (DatabaseSchema): The configuration for the database
             data (pd.DataFrame): A pandas.DataFrame, of just it's primary key.
         """
         reverse_dependencies = db_config.get_reverse_dependencies(table_name)
@@ -416,7 +414,7 @@ class SynapseDatabase(RelationalDatabase):
             primary_key = db_config.get_config_by_name(rd_table_name).primary_key
             foreign_keys = db_config.get_config_by_name(rd_table_name).foreign_keys
             foreign_key = [
-                key for key in foreign_keys if key.foreign_object_name == table_name
+                key for key in foreign_keys if key.foreign_table_name == table_name
             ][0]
 
             # get the reverse dependency data with just its primary and foreign key
@@ -429,7 +427,7 @@ class SynapseDatabase(RelationalDatabase):
                 data,
                 how="inner",
                 left_on=foreign_key.name,
-                right_on=foreign_key.foreign_attribute_name,
+                right_on=foreign_key.foreign_column_name,
             )
 
             # if data has no rows continue to next reverse dependency

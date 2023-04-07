@@ -4,9 +4,9 @@ import pandas as pd
 import numpy as np
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import insert
-from schematic_db.db_config.db_config import (
-    DBDatatype,
-    DBAttributeConfig,
+from schematic_db.db_schema.db_schema import (
+    ColumnDatatype,
+    ColumnSchema,
 )
 from .sql_alchemy_database import SQLAlchemyDatabase, SQLConfig
 
@@ -47,22 +47,22 @@ class MySQLDatabase(SQLAlchemyDatabase):
                 conn.execute(statement)
 
     def _get_datatype(
-        self, attribute: DBAttributeConfig, primary_key: str, foreign_keys: list[str]
+        self, attribute: ColumnSchema, primary_key: str, foreign_keys: list[str]
     ) -> Any:
         datatypes = {
-            DBDatatype.TEXT: sa.VARCHAR(5000),
-            DBDatatype.DATE: sa.Date,
-            DBDatatype.INT: sa.Integer,
-            DBDatatype.FLOAT: sa.Float,
-            DBDatatype.BOOLEAN: sa.Boolean,
+            ColumnDatatype.TEXT: sa.VARCHAR(5000),
+            ColumnDatatype.DATE: sa.Date,
+            ColumnDatatype.INT: sa.Integer,
+            ColumnDatatype.FLOAT: sa.Float,
+            ColumnDatatype.BOOLEAN: sa.Boolean,
         }
         # Keys need to be max 100 chars
-        if attribute.datatype == DBDatatype.TEXT and (
+        if attribute.datatype == ColumnDatatype.TEXT and (
             attribute.name == primary_key or attribute.name in foreign_keys
         ):
             return sa.VARCHAR(100)
         # Strings that need to be indexed need to be max 1000 chars
-        if attribute.index and attribute.datatype == DBDatatype.TEXT:
+        if attribute.index and attribute.datatype == ColumnDatatype.TEXT:
             return sa.VARCHAR(1000)
 
         # Otherwise use datatypes dict

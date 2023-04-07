@@ -5,11 +5,11 @@ import pandas as pd
 import sqlalchemy as sa
 import sqlalchemy_utils.functions
 from sqlalchemy.inspection import inspect
-from schematic_db.db_config.db_config import (
-    DBObjectConfig,
-    DBDatatype,
-    DBAttributeConfig,
-    DBForeignKey,
+from schematic_db.db_schema.db_schema import (
+    TableSchema,
+    ColumnDatatype,
+    ColumnSchema,
+    ForeignKeySchema,
 )
 from .rdb import RelationalDatabase
 
@@ -55,21 +55,23 @@ def create_foreign_key_column(
     return col
 
 
-def create_foreign_key_configs(table_schema: sa.sql.schema.Table) -> list[DBForeignKey]:
+def create_foreign_key_configs(
+    table_schema: sa.sql.schema.Table,
+) -> list[ForeignKeySchema]:
     """Creates a list of foreign key configs from a sqlalchemy table schema
 
     Args:
         table_schema (sa.sql.schema.Table): A sqlalchemy table schema
 
     Returns:
-        list[DBForeignKey]: A list of foreign key configs
+        list[ForeignKeySchema]: A list of foreign key configs
     """
     foreign_keys = inspect(table_schema).foreign_keys
     return [
-        DBForeignKey(
+        ForeignKeySchema(
             name=key.parent.name,
-            foreign_object_name=key.column.table.name,
-            foreign_attribute_name=key.column.name,
+            foreign_table_name=key.column.table.name,
+            foreign_column_name=key.column.name,
         )
         for key in foreign_keys
     ]
@@ -77,26 +79,26 @@ def create_foreign_key_configs(table_schema: sa.sql.schema.Table) -> list[DBFore
 
 def create_attribute_configs(
     table_schema: sa.sql.schema.Table, indices: list[str]
-) -> list[DBAttributeConfig]:
+) -> list[ColumnSchema]:
     """Creates a list of attribute configs from a sqlalchemy table schema
 
     Args:
         table_schema (sa.sql.schema.Table):A sqlalchemy table schema
 
     Returns:
-        list[DBAttributeConfig]: A list of foreign key configs
+        list[ColumnSchema]: A list of foreign key configs
     """
     datatypes = {
-        sa.String: DBDatatype.TEXT,
-        sa.VARCHAR: DBDatatype.TEXT,
-        sa.Date: DBDatatype.DATE,
-        sa.Integer: DBDatatype.INT,
-        sa.Float: DBDatatype.FLOAT,
-        sa.Boolean: DBDatatype.BOOLEAN,
+        sa.String: ColumnDatatype.TEXT,
+        sa.VARCHAR: ColumnDatatype.TEXT,
+        sa.Date: ColumnDatatype.DATE,
+        sa.Integer: ColumnDatatype.INT,
+        sa.Float: ColumnDatatype.FLOAT,
+        sa.Boolean: ColumnDatatype.BOOLEAN,
     }
     columns = table_schema.c
     return [
-        DBAttributeConfig(
+        ColumnSchema(
             name=col.name,
             datatype=datatypes[type(col.type)],
             required=not col.nullable,
@@ -168,19 +170,19 @@ class SQLAlchemyDatabase(
         table = pd.DataFrame(result)
         return table
 
-    def get_table_config(self, table_name: str) -> DBObjectConfig:
+    def get_table_config(self, table_name: str) -> TableSchema:
         """Creates a table config from a sqlalchemy table schema
 
         Args:
             table_name (str): The name of the table
 
         Returns:
-            DBObjectConfig: A config for the table
+            TableSchema: A config for the table
         """
         table_schema = self.metadata.tables[table_name]
         primary_key = inspect(table_schema).primary_key.columns.values()[0].name
         indices = self._get_column_indices(table_name)
-        return DBObjectConfig(
+        return TableSchema(
             name=table_name,
             primary_key=primary_key,
             foreign_keys=create_foreign_key_configs(table_schema),
@@ -204,12 +206,12 @@ class SQLAlchemyDatabase(
         inspector = sa.inspect(self.engine)
         return sorted(inspector.get_table_names())
 
-    def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
+    def add_table(self, table_name: str, table_config: TableSchema) -> None:
         """Adds a table to the schema
 
         Args:
             table_name (str): The name of the table
-            table_config (DBObjectConfig): The config for the table to be added
+            table_config (TableSchema): The config for the table to be added
         """
         columns = self._create_columns(table_config)
         sa.Table(table_name, self.metadata, *columns)
@@ -224,7 +226,7 @@ class SQLAlchemyDatabase(
             result = conn.execute(statement)
         return result
 
-    def _create_columns(self, table_config: DBObjectConfig) -> list[sa.Column]:
+    def _create_columns(self, table_config: TableSchema) -> list[sa.Column]:
         columns = [
             self._create_column(att, table_config) for att in table_config.attributes
         ]
@@ -232,7 +234,7 @@ class SQLAlchemyDatabase(
         return columns
 
     def _create_column(
-        self, attribute: DBAttributeConfig, table_config: DBObjectConfig
+        self, attribute: ColumnSchema, table_config: TableSchema
     ) -> sa.Column:
         """
         sql_datatype = self._get_datatype(
@@ -249,8 +251,8 @@ class SQLAlchemyDatabase(
             return create_foreign_key_column(
                 attribute.name,
                 sql_datatype,
-                key.foreign_object_name,
-                key.foreign_attribute_name,
+                key.foreign_table_name,
+                key.foreign_column_name,
             )
 
         return sa.Column(
@@ -269,17 +271,17 @@ class SQLAlchemyDatabase(
 
     def _get_datatype(
         self,
-        attribute: DBAttributeConfig,
+        attribute: ColumnSchema,
         primary_key: str,  # pylint: disable=unused-argument
         foreign_keys: list[str],  # pylint: disable=unused-argument
     ) -> Any:
         """Some _get_datatype methods depend on primary and foreign"""
         datatypes = {
-            DBDatatype.TEXT: sa.VARCHAR,
-            DBDatatype.DATE: sa.Date,
-            DBDatatype.INT: sa.Integer,
-            DBDatatype.FLOAT: sa.Float,
-            DBDatatype.BOOLEAN: sa.Boolean,
+            ColumnDatatype.TEXT: sa.VARCHAR,
+            ColumnDatatype.DATE: sa.Date,
+            ColumnDatatype.INT: sa.Integer,
+            ColumnDatatype.FLOAT: sa.Float,
+            ColumnDatatype.BOOLEAN: sa.Boolean,
         }
         return datatypes[attribute.datatype]
 

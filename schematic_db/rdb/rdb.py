@@ -1,7 +1,7 @@
 """RelationalDatabase"""
 from abc import ABC, abstractmethod
 import pandas as pd
-from schematic_db.db_config.db_config import DBObjectConfig
+from schematic_db.db_schema.db_schema import TableSchema
 
 
 class RelationalDatabase(ABC):
@@ -16,14 +16,14 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def get_table_config(self, table_name: str) -> DBObjectConfig:
-        """Returns a DBObjectConfig created from the current database table
+    def get_table_config(self, table_name: str) -> TableSchema:
+        """Returns a TableSchema created from the current database table
 
         Args:
             table_name (str): The name of the table
 
         Returns:
-            Optional[DBObjectConfig]: The config for the given table
+            Optional[TableSchema]: The config for the given table
         """
 
     @abstractmethod
@@ -51,12 +51,12 @@ class RelationalDatabase(ABC):
         """
 
     @abstractmethod
-    def add_table(self, table_name: str, table_config: DBObjectConfig) -> None:
+    def add_table(self, table_name: str, table_config: TableSchema) -> None:
         """Adds a table to the schema
 
         Args:
             table_name (str): The name of the table
-            table_config (DBObjectConfig): The config for the table being added
+            table_config (TableSchema): The config for the table being added
         """
 
     @abstractmethod

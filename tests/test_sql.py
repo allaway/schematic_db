@@ -18,7 +18,7 @@ postgres:
 from typing import Generator, Any
 import pytest
 import pandas as pd
-from schematic_db.db_config.db_config import DBObjectConfig
+from schematic_db.db_schema.db_schema import TableSchema
 from schematic_db.rdb.mysql import MySQLDatabase
 from schematic_db.rdb.postgres import PostgresDatabase
 
@@ -37,7 +37,7 @@ class TestSQLGetters:
     """Testing for RelationalDatabase getters"""
 
     def test_get_table_names(
-        self, sql_databases: list[MySQLDatabase], table_one_config: DBObjectConfig
+        self, sql_databases: list[MySQLDatabase], table_one_config: TableSchema
     ) -> None:
         """Tests RelationalDatabase.get_table_names()"""
         for obj in sql_databases:
@@ -50,9 +50,9 @@ class TestSQLGetters:
     def test_get_table_config(
         self,
         sql_databases: list[MySQLDatabase],
-        table_one_config: DBObjectConfig,
-        table_two_config: DBObjectConfig,
-        table_three_config: DBObjectConfig,
+        table_one_config: TableSchema,
+        table_two_config: TableSchema,
+        table_three_config: TableSchema,
     ) -> None:
         """Tests RelationalDatabase.get_table_config()"""
         for obj in sql_databases:
@@ -71,7 +71,7 @@ class TestSQLGetters:
     def test_execute_sql_query(
         self,
         sql_databases: list[MySQLDatabase],
-        table_one_config: DBObjectConfig,
+        table_one_config: TableSchema,
     ) -> None:
         """Tests RelationalDatabase.execute_sql_query()"""
         for obj in sql_databases:
@@ -85,7 +85,7 @@ class TestSQLGetters:
     def test_query_table(
         self,
         sql_databases: list[MySQLDatabase],
-        table_one_config: DBObjectConfig,
+        table_one_config: TableSchema,
     ) -> None:
         """Tests RelationalDatabase.execute_sql_query()"""
         for obj in sql_databases:
@@ -107,9 +107,9 @@ class TestSQLUpdateTables:
     def test_add_drop_table(
         self,
         sql_databases: list[MySQLDatabase],
-        table_one_config: DBObjectConfig,
-        table_two_config: DBObjectConfig,
-        table_three_config: DBObjectConfig,
+        table_one_config: TableSchema,
+        table_two_config: TableSchema,
+        table_three_config: TableSchema,
     ) -> None:
         """Testing for MySQLDatabase.add_table() and and MySQLDatabase.drop_table()"""
         for obj in sql_databases:
@@ -130,9 +130,9 @@ class TestSQLUpdateTables:
     def test_drop_all_tables(
         self,
         sql_databases: list[MySQLDatabase],
-        table_one_config: DBObjectConfig,
-        table_two_config: DBObjectConfig,
-        table_three_config: DBObjectConfig,
+        table_one_config: TableSchema,
+        table_two_config: TableSchema,
+        table_three_config: TableSchema,
     ) -> None:
         """Testing for MySQLDatabase.drop_all_tables()"""
         for obj in sql_databases:
@@ -153,7 +153,7 @@ class TestSQLUpdateRows:
         self,
         sql_databases: Any,
         table_one: pd.DataFrame,
-        table_one_config: DBObjectConfig,
+        table_one_config: TableSchema,
     ) -> None:
         """
         Testing for RelationalDatabase.upsert_table_rows()
@@ -184,7 +184,7 @@ class TestSQLUpdateRows:
         self,
         sql_databases: Any,
         table_one: pd.DataFrame,
-        table_one_config: DBObjectConfig,
+        table_one_config: TableSchema,
     ) -> None:
         """
         Testing for RelationalDatabase.upsert_table_rows()
@@ -212,7 +212,7 @@ class TestSQLUpdateRows:
         self,
         sql_databases: Any,
         table_two: pd.DataFrame,
-        table_two_config: DBObjectConfig,
+        table_two_config: TableSchema,
     ) -> None:
         """
         Testing for RelationalDatabase.upsert_table_rows()
@@ -262,7 +262,7 @@ class TestSQLUpdateRows:
     def test_delete_table_rows1(
         self,
         sql_databases: Any,
-        table_one_config: DBObjectConfig,
+        table_one_config: TableSchema,
         table_one: pd.DataFrame,
     ) -> None:
         """Testing for RelationalDatabase.delete_table_rows()"""

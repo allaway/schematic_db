@@ -1,14 +1,14 @@
 """
-Testing for DBConfig.
+Testing for DatabaseSchema.
 """
 from typing import Generator
 import pytest
-from schematic_db.db_config.db_config import (
-    DBConfig,
-    DBObjectConfig,
-    DBAttributeConfig,
-    DBDatatype,
-    DBForeignKey,
+from schematic_db.db_schema.db_schema import (
+    DatabaseSchema,
+    TableSchema,
+    ColumnSchema,
+    ColumnDatatype,
+    ForeignKeySchema,
     ConfigAttributeError,
     ConfigForeignKeyMissingObjectError,
     ConfigKeyError,
@@ -19,19 +19,19 @@ from schematic_db.db_config.db_config import (
 @pytest.fixture(name="pk_col1_attribute", scope="module")
 def fixture_pk_col1_attribute() -> Generator:
     """
-    Yields a DBAttributeConfig
+    Yields a ColumnSchema
     """
-    att = DBAttributeConfig(name="pk_col1", datatype=DBDatatype.TEXT, required=True)
+    att = ColumnSchema(name="pk_col1", datatype=ColumnDatatype.TEXT, required=True)
     yield att
 
 
 @pytest.fixture(name="pk_col1b_attribute", scope="module")
 def fixture_pk_col1b_attribute() -> Generator:
     """
-    Yields a DBAttributeConfig
+    Yields a ColumnSchema
     """
-    att = DBAttributeConfig(
-        name="pk_col1", datatype=DBDatatype.TEXT, required=True, index=True
+    att = ColumnSchema(
+        name="pk_col1", datatype=ColumnDatatype.TEXT, required=True, index=True
     )
     yield att
 
@@ -39,65 +39,65 @@ def fixture_pk_col1b_attribute() -> Generator:
 @pytest.fixture(name="pk_col2_attribute", scope="module")
 def fixture_pk_col2_attribute() -> Generator:
     """
-    Yields a DBAttributeConfig
+    Yields a ColumnSchema
     """
-    att = DBAttributeConfig(name="pk_col2", datatype=DBDatatype.TEXT, required=True)
+    att = ColumnSchema(name="pk_col2", datatype=ColumnDatatype.TEXT, required=True)
     yield att
 
 
 @pytest.fixture(name="pk_col3_attribute", scope="module")
 def fixture_pk_col3_attribute() -> Generator:
     """
-    Yields a DBAttributeConfig
+    Yields a ColumnSchema
     """
-    att = DBAttributeConfig(name="pk_col3", datatype=DBDatatype.TEXT, required=True)
+    att = ColumnSchema(name="pk_col3", datatype=ColumnDatatype.TEXT, required=True)
     yield att
 
 
 @pytest.mark.fast
-class TestDBForeignKey:  # pylint: disable=too-few-public-methods
-    """Testing for DBForeignKey"""
+class TestForeignKeySchema:  # pylint: disable=too-few-public-methods
+    """Testing for ForeignKeySchema"""
 
     def test_get_attribute_dict(self) -> None:
-        """Testing for DBForeignKey.get_attribute_dict"""
-        obj = DBForeignKey(
+        """Testing for ForeignKeySchema.get_attribute_dict"""
+        obj = ForeignKeySchema(
             name="test",
-            foreign_object_name="test_object",
-            foreign_attribute_name="test_name",
+            foreign_table_name="test_object",
+            foreign_column_name="test_name",
         )
-        assert isinstance(obj, DBForeignKey)
-        assert obj.get_attribute_dict() == {
+        assert isinstance(obj, ForeignKeySchema)
+        assert obj.get_column_dict() == {
             "name": "test",
-            "foreign_object_name": "test_object",
-            "foreign_attribute_name": "test_name",
+            "foreign_table_name": "test_object",
+            "foreign_column_name": "test_name",
         }
 
 
 @pytest.mark.fast
-class TestDBObjectConfig:
-    """Testing for DBObjectConfig"""
+class TestTableSchema:
+    """Testing for TableSchema"""
 
     def test_is_equivalent(
         self,
-        pk_col1_attribute: DBAttributeConfig,
-        pk_col1b_attribute: DBAttributeConfig,
+        pk_col1_attribute: ColumnSchema,
+        pk_col1b_attribute: ColumnSchema,
     ) -> None:
-        """Testing for DBObjectConfig.is_equivalent"""
-        obj1 = DBObjectConfig(
+        """Testing for TableSchema.is_equivalent"""
+        obj1 = TableSchema(
             name="table",
             attributes=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[],
         )
 
-        obj2 = DBObjectConfig(
+        obj2 = TableSchema(
             name="table",
             attributes=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[],
         )
 
-        obj3 = DBObjectConfig(
+        obj3 = TableSchema(
             name="table",
             attributes=[pk_col1b_attribute],
             primary_key="pk_col1",
@@ -112,10 +112,10 @@ class TestDBObjectConfig:
         assert obj1 != obj3
 
     def test_get_foreign_key_dependencies(
-        self, pk_col1_attribute: DBAttributeConfig
+        self, pk_col1_attribute: ColumnSchema
     ) -> None:
-        """Testing for DBObjectConfig.get_foreign_key_dependencies()"""
-        obj1 = DBObjectConfig(
+        """Testing for TableSchema.get_foreign_key_dependencies()"""
+        obj1 = TableSchema(
             name="table",
             attributes=[pk_col1_attribute],
             primary_key="pk_col1",
@@ -123,55 +123,51 @@ class TestDBObjectConfig:
         )
         assert obj1.get_foreign_key_dependencies() == []
 
-        obj2 = DBObjectConfig(
+        obj2 = TableSchema(
             name="table",
             attributes=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[
-                DBForeignKey(
+                ForeignKeySchema(
                     name="pk_col1",
-                    foreign_object_name="table_two",
-                    foreign_attribute_name="pk_two_col",
+                    foreign_table_name="table_two",
+                    foreign_column_name="pk_two_col",
                 )
             ],
         )
         assert obj2.get_foreign_key_dependencies() == ["table_two"]
 
-    def test_db_object_config_success(
-        self, pk_col1_attribute: DBAttributeConfig
-    ) -> None:
-        """Successful tests for DBObjectConfig()"""
-        obj1 = DBObjectConfig(
+    def test_db_object_config_success(self, pk_col1_attribute: ColumnSchema) -> None:
+        """Successful tests for TableSchema()"""
+        obj1 = TableSchema(
             name="table",
             attributes=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[],
         )
-        assert isinstance(obj1, DBObjectConfig)
+        assert isinstance(obj1, TableSchema)
 
-        obj2 = DBObjectConfig(
+        obj2 = TableSchema(
             name="table",
             attributes=[pk_col1_attribute],
             primary_key="pk_col1",
             foreign_keys=[
-                DBForeignKey(
+                ForeignKeySchema(
                     name="pk_col1",
-                    foreign_object_name="table_two",
-                    foreign_attribute_name="pk_two_col",
+                    foreign_table_name="table_two",
+                    foreign_column_name="pk_two_col",
                 )
             ],
         )
-        assert isinstance(obj2, DBObjectConfig)
+        assert isinstance(obj2, TableSchema)
 
-    def test_db_object_config_exceptions(
-        self, pk_col1_attribute: DBAttributeConfig
-    ) -> None:
-        """Tests for DBObjectConfig() that raise exceptions"""
+    def test_db_object_config_exceptions(self, pk_col1_attribute: ColumnSchema) -> None:
+        """Tests for TableSchema() that raise exceptions"""
         # test attributes
         with pytest.raises(
             ConfigAttributeError, match="Attributes is empty: table_name"
         ):
-            DBObjectConfig(
+            TableSchema(
                 name="table_name",
                 attributes=[],
                 primary_key="pk_col1",
@@ -182,7 +178,7 @@ class TestDBObjectConfig:
             ConfigKeyError,
             match="Primary key is missing from attributes: table_name; pk_col2",
         ):
-            DBObjectConfig(
+            TableSchema(
                 name="table_name",
                 attributes=[pk_col1_attribute],
                 primary_key="pk_col2",
@@ -193,15 +189,15 @@ class TestDBObjectConfig:
             ConfigKeyError,
             match="Foreign key is missing from attributes: table_name",
         ):
-            DBObjectConfig(
+            TableSchema(
                 name="table_name",
                 attributes=[pk_col1_attribute],
                 primary_key="pk_col1",
                 foreign_keys=[
-                    DBForeignKey(
+                    ForeignKeySchema(
                         name="pk_col2",
-                        foreign_object_name="table_two",
-                        foreign_attribute_name="pk_one_col",
+                        foreign_table_name="table_two",
+                        foreign_column_name="pk_one_col",
                     )
                 ],
             )
@@ -210,39 +206,39 @@ class TestDBObjectConfig:
             ConfigKeyError,
             match="Foreign key references its own object: table_name",
         ):
-            DBObjectConfig(
+            TableSchema(
                 name="table_name",
                 attributes=[pk_col1_attribute],
                 primary_key="pk_col1",
                 foreign_keys=[
-                    DBForeignKey(
+                    ForeignKeySchema(
                         name="pk_col1",
-                        foreign_object_name="table_name",
-                        foreign_attribute_name="pk_one_col",
+                        foreign_table_name="table_name",
+                        foreign_column_name="pk_one_col",
                     )
                 ],
             )
 
 
 @pytest.mark.fast
-class TestDBConfig:
-    """Testing for DBConfig"""
+class TestDatabaseSchema:
+    """Testing for DatabaseSchema"""
 
     def test_equality(
         self,
-        pk_col1_attribute: DBAttributeConfig,
-        pk_col2_attribute: DBAttributeConfig,
+        pk_col1_attribute: ColumnSchema,
+        pk_col2_attribute: ColumnSchema,
     ) -> None:
-        """Testing for DBConfig.__eq__"""
-        obj1 = DBConfig(
+        """Testing for DatabaseSchema.__eq__"""
+        obj1 = DatabaseSchema(
             [
-                DBObjectConfig(
+                TableSchema(
                     name="table1",
                     attributes=[pk_col1_attribute],
                     primary_key="pk_col1",
                     foreign_keys=[],
                 ),
-                DBObjectConfig(
+                TableSchema(
                     name="table2",
                     attributes=[pk_col2_attribute],
                     primary_key="pk_col2",
@@ -250,15 +246,15 @@ class TestDBConfig:
                 ),
             ]
         )
-        obj2 = DBConfig(
+        obj2 = DatabaseSchema(
             [
-                DBObjectConfig(
+                TableSchema(
                     name="table2",
                     attributes=[pk_col2_attribute],
                     primary_key="pk_col2",
                     foreign_keys=[],
                 ),
-                DBObjectConfig(
+                TableSchema(
                     name="table1",
                     attributes=[pk_col1_attribute],
                     primary_key="pk_col1",
@@ -270,12 +266,12 @@ class TestDBConfig:
         assert obj1.is_equivalent(obj2)
 
     def test_db_object_config_list_success(
-        self, pk_col1_attribute: DBAttributeConfig, pk_col2_attribute: DBAttributeConfig
+        self, pk_col1_attribute: ColumnSchema, pk_col2_attribute: ColumnSchema
     ) -> None:
-        """Successful tests for DBConfig()"""
-        obj1 = DBConfig(
+        """Successful tests for DatabaseSchema()"""
+        obj1 = DatabaseSchema(
             [
-                DBObjectConfig(
+                TableSchema(
                     name="table",
                     attributes=[pk_col1_attribute],
                     primary_key="pk_col1",
@@ -283,51 +279,55 @@ class TestDBConfig:
                 )
             ]
         )
-        assert isinstance(obj1, DBConfig)
+        assert isinstance(obj1, DatabaseSchema)
 
-        obj2 = DBConfig(
+        obj2 = DatabaseSchema(
             [
-                DBObjectConfig(
+                TableSchema(
                     name="table",
                     attributes=[pk_col1_attribute],
                     primary_key="pk_col1",
                     foreign_keys=[],
                 ),
-                DBObjectConfig(
+                TableSchema(
                     name="table2",
                     attributes=[pk_col2_attribute],
                     primary_key="pk_col2",
                     foreign_keys=[
-                        DBForeignKey(
+                        ForeignKeySchema(
                             name="pk_col2",
-                            foreign_object_name="table",
-                            foreign_attribute_name="pk_col1",
+                            foreign_table_name="table",
+                            foreign_column_name="pk_col1",
                         )
                     ],
                 ),
             ]
         )
-        assert isinstance(obj2, DBConfig)
+        assert isinstance(obj2, DatabaseSchema)
 
     def test_db_object_config_list_exceptions(
-        self, pk_col1_attribute: DBAttributeConfig, pk_col2_attribute: DBAttributeConfig
+        self, pk_col1_attribute: ColumnSchema, pk_col2_attribute: ColumnSchema
     ) -> None:
-        """Tests for DBConfig() that raise exceptions"""
+        """Tests for DatabaseSchema() that raise exceptions"""
 
         with pytest.raises(
-            ConfigForeignKeyMissingObjectError, match="Foreign key 'DBForeignKey"
+            ConfigForeignKeyMissingObjectError,
+            match=(
+                "Foreign key 'pk_col2' in object 'table2' references "
+                "object 'table' which does not exist in config."
+            ),
         ):
-            DBConfig(
+            DatabaseSchema(
                 [
-                    DBObjectConfig(
+                    TableSchema(
                         name="table2",
                         attributes=[pk_col2_attribute],
                         primary_key="pk_col2",
                         foreign_keys=[
-                            DBForeignKey(
+                            ForeignKeySchema(
                                 name="pk_col2",
-                                foreign_object_name="table",
-                                foreign_attribute_name="pk_col1",
+                                foreign_table_name="table",
+                                foreign_column_name="pk_col1",
                             )
                         ],
                     )
@@ -336,25 +336,28 @@ class TestDBConfig:
 
         with pytest.raises(
             ConfigForeignKeyMissingAttributeError,
-            match="Foreign key 'DBForeignKey",
+            match=(
+                "Foreign key 'pk_col2' in object 'table2' references attribute "
+                "'pk_col3' which does not exist in object'table'"
+            ),
         ):
-            DBConfig(
+            DatabaseSchema(
                 [
-                    DBObjectConfig(
+                    TableSchema(
                         name="table",
                         attributes=[pk_col1_attribute],
                         primary_key="pk_col1",
                         foreign_keys=[],
                     ),
-                    DBObjectConfig(
+                    TableSchema(
                         name="table2",
                         attributes=[pk_col2_attribute],
                         primary_key="pk_col2",
                         foreign_keys=[
-                            DBForeignKey(
+                            ForeignKeySchema(
                                 name="pk_col2",
-                                foreign_object_name="table",
-                                foreign_attribute_name="pk_col3",
+                                foreign_table_name="table",
+                                foreign_column_name="pk_col3",
                             )
                         ],
                     ),

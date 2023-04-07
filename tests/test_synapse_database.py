@@ -8,7 +8,7 @@ from schematic_db.rdb.synapse_database import (
     SynapseDatabase,
     SynapseDatabaseDropTableError,
 )
-from schematic_db.db_config.db_config import DBObjectConfig
+from schematic_db.db_schema.db_schema import TableSchema
 
 
 @pytest.fixture(name="synapse_database")
@@ -25,9 +25,9 @@ def fixture_synapse_no_extra_tables(synapse_database: SynapseDatabase) -> Genera
 @pytest.fixture(name="synapse_with_empty_tables")
 def fixture_synapse_with_empty_tables(  # pylint: disable=too-many-arguments
     synapse_database: SynapseDatabase,
-    table_one_config: DBObjectConfig,
-    table_two_config: DBObjectConfig,
-    table_three_config: DBObjectConfig,
+    table_one_config: TableSchema,
+    table_two_config: TableSchema,
+    table_three_config: TableSchema,
     table_one_columns: list[sc.Column],
     table_two_columns: list[sc.Column],
     table_three_columns: list[sc.Column],
@@ -135,8 +135,8 @@ class TestSynapseDatabase:
     def test_annotate_table(  # pylint: disable=too-many-arguments
         self,
         synapse_database: SynapseDatabase,
-        table_one_config: DBObjectConfig,
-        table_three_config: DBObjectConfig,
+        table_one_config: TableSchema,
+        table_three_config: TableSchema,
         table_one_columns: list[sc.Column],
         table_three_columns: list[sc.Column],
     ) -> None:
@@ -209,7 +209,7 @@ class TestSynapseDatabase:
     def test_delete_table_rows(
         self,
         synapse_with_filled_tables: SynapseDatabase,
-        table_three_config: DBObjectConfig,
+        table_three_config: TableSchema,
     ) -> None:
         """Testing for SynapseDatabase.delete_table_rows()"""
         obj = synapse_with_filled_tables

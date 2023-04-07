@@ -3,7 +3,7 @@ from typing import Any, Generator
 import pytest
 import pandas as pd
 import synapseclient as sc  # type: ignore
-from schematic_db.db_config.db_config import DBObjectConfig
+from schematic_db.db_schema.db_schema import TableSchema
 from schematic_db.synapse.synapse import Synapse, SynapseConfig
 
 
@@ -138,7 +138,7 @@ class TestSynapseGetters:
         assert synapse_with_test_table_one.get_table_names() == ["test_table_one"]
 
     def test_get_column_table_names(
-        self, synapse_with_test_table_one: Synapse, table_one_config: DBObjectConfig
+        self, synapse_with_test_table_one: Synapse, table_one_config: TableSchema
     ) -> None:
         """Testing for Synapse.get_table_column_names()"""
         assert sorted(
@@ -247,7 +247,7 @@ class TestSynapseModifyRows:
     def test_delete_table_rows(
         self,
         synapse_with_filled_table_one: Synapse,
-        table_one_config: DBObjectConfig,
+        table_one_config: TableSchema,
     ) -> None:
         """Testing for Synapse.delete_table_rows()"""
         obj = synapse_with_filled_table_one

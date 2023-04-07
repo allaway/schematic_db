@@ -5,10 +5,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional, TypeVar
 
-from sqlalchemy import ForeignKey
 
-
-class DBDatatype(Enum):
+class ColumnDatatype(Enum):
     """A generic datatype that should be supported by all database types."""
 
     TEXT = "text"
@@ -19,17 +17,17 @@ class DBDatatype(Enum):
 
 
 # mypy types so that a class can refer to its own type
-X = TypeVar("X", bound="DBAttributeConfig")
-Y = TypeVar("Y", bound="DBObjectConfig")
-T = TypeVar("T", bound="DBConfig")
+X = TypeVar("X", bound="ColumnSchema")
+Y = TypeVar("Y", bound="TableSchema")
+T = TypeVar("T", bound="DatabaseSchema")
 
 
 @dataclass
-class DBAttributeConfig:
-    """A config for a table attribute(column)."""
+class ColumnSchema:
+    """A schema for a table column (attribute)."""
 
     name: str
-    datatype: DBDatatype
+    datatype: ColumnDatatype
     required: bool = False
     index: bool = False
 
@@ -37,10 +35,10 @@ class DBAttributeConfig:
         """Use instead of == when determining if schema's are equivalent
 
         Args:
-            other (DBAttributeConfig): Another DBAttributeConfig to compare to self
+            other (ColumnSchema): Another ColumnSchema to compare to self
 
         Returns:
-            bool: True if both DBAttributeConfigs are equivalent
+            bool: True if both ColumnSchemas are equivalent
         """
 
         return all(
@@ -53,23 +51,23 @@ class DBAttributeConfig:
 
 
 @dataclass
-class DBForeignKey:
-    """A foreign key in a database object attribute."""
+class ForeignKeySchema:
+    """A foreign key in a database schema."""
 
     name: str
-    foreign_object_name: str
-    foreign_attribute_name: str
+    foreign_table_name: str
+    foreign_column_name: str
 
-    def get_attribute_dict(self) -> dict[str, str]:
+    def get_column_dict(self) -> dict[str, str]:
         """Returns the foreign key in dict form
 
         Returns:
-            dict[str, str]: A dictionary of the foreign key attributes
+            dict[str, str]: A dictionary of the foreign key columns
         """
         return {
             "name": self.name,
-            "foreign_object_name": self.foreign_object_name,
-            "foreign_attribute_name": self.foreign_attribute_name,
+            "foreign_table_name": self.foreign_table_name,
+            "foreign_column_name": self.foreign_column_name,
         }
 
 
@@ -103,13 +101,13 @@ class ConfigKeyError(Exception):
 
 
 @dataclass
-class DBObjectConfig:
-    """A config for a generic database object."""
+class TableSchema:
+    """A schema for a database table."""
 
     name: str
-    attributes: list[DBAttributeConfig]
+    attributes: list[ColumnSchema]
     primary_key: str
-    foreign_keys: list[DBForeignKey]
+    foreign_keys: list[ForeignKeySchema]
 
     def __post_init__(self) -> None:
         self.attributes.sort(key=lambda x: x.name)
@@ -126,7 +124,7 @@ class DBObjectConfig:
         """
         Use instead of == when determining if schema's are equivalent
         Args:
-            other (DBObjectConfig): Another instance of DBObjectConfig
+            other (TableSchema): Another instance of TableSchema
 
         Returns:
             bool
@@ -148,11 +146,11 @@ class DBObjectConfig:
             ]
         )
 
-    def get_sorted_attributes(self) -> list[DBAttributeConfig]:
+    def get_sorted_attributes(self) -> list[ColumnSchema]:
         """Gets the configs attributes sorted by name
 
         Returns:
-            list[DBAttributeConfig]: Sorted list of attributes
+            list[ColumnSchema]: Sorted list of attributes
         """
         return sorted(self.attributes, key=lambda x: x.name)
 
@@ -170,7 +168,7 @@ class DBObjectConfig:
         Returns:
             list[str]: A list of object names
         """
-        return [key.foreign_object_name for key in self.foreign_keys]
+        return [key.foreign_table_name for key in self.foreign_keys]
 
     def get_foreign_key_names(self) -> list[str]:
         """Returns a list of names of the foreign keys
@@ -180,25 +178,25 @@ class DBObjectConfig:
         """
         return [key.name for key in self.foreign_keys]
 
-    def get_foreign_key_by_name(self, name: str) -> DBForeignKey:
+    def get_foreign_key_by_name(self, name: str) -> ForeignKeySchema:
         """Returns foreign key
 
         Args:
             name (str): name of the foreign key
 
         Returns:
-            DBForeignKey: The foreign key asked for
+            ForeignKeySchema: The foreign key asked for
         """
         return [key for key in self.foreign_keys if key.name == name][0]
 
-    def get_attribute_by_name(self, name: str) -> DBAttributeConfig:
+    def get_attribute_by_name(self, name: str) -> ColumnSchema:
         """Returns the attribute
 
         Args:
             name (str): name of the attribute
 
         Returns:
-            DBAttributeConfig: The DBAttributeConfig asked for
+            ColumnSchema: The ColumnSchema asked for
         """
         return [att for att in self.attributes if att.name == name][0]
 
@@ -218,14 +216,14 @@ class DBObjectConfig:
         for key in self.foreign_keys:
             self._check_foreign_key(key)
 
-    def _check_foreign_key(self, key: ForeignKey) -> None:
+    def _check_foreign_key(self, key: ForeignKeySchema) -> None:
         if key.name not in self.get_attribute_names():
             raise ConfigKeyError(
-                "Foreign key is missing from attributes", self.name, key
+                "Foreign key is missing from attributes", self.name, key.name
             )
-        if key.foreign_object_name == self.name:
+        if key.foreign_table_name == self.name:
             raise ConfigKeyError(
-                "Foreign key references its own object", self.name, key
+                "Foreign key references its own object", self.name, key.name
             )
 
 
@@ -243,7 +241,7 @@ class ConfigForeignKeyMissingObjectError(Exception):
 
     def __str__(self) -> str:
         msg = (
-            f"Foreign key '{self.foreign_key}' in object '{self.object_name}' references object"
+            f"Foreign key '{self.foreign_key}' in object '{self.object_name}' references object "
             f"'{self.foreign_object_name}' which does not exist in config."
         )
         return msg
@@ -268,7 +266,7 @@ class ConfigForeignKeyMissingAttributeError(Exception):
 
     def __str__(self) -> str:
         msg = (
-            f"Foreign key '{self.foreign_key}' in object '{self.object_name}' references"
+            f"Foreign key '{self.foreign_key}' in object '{self.object_name}' references "
             f"attribute '{self.foreign_object_attribute}' which does not exist in object"
             f"'{self.foreign_object_name}'"
         )
@@ -276,10 +274,10 @@ class ConfigForeignKeyMissingAttributeError(Exception):
 
 
 @dataclass
-class DBConfig:
+class DatabaseSchema:
     """A group of configs for generic database tables."""
 
-    configs: list[DBObjectConfig]
+    configs: list[TableSchema]
 
     def __post_init__(self) -> None:
         for config in self.configs:
@@ -293,7 +291,7 @@ class DBConfig:
         """
         Use instead of == when determining if schema's are equivalent
         Args:
-            other (DBConfig): Another instance of DBConfig
+            other (DatabaseSchema): Another instance of DatabaseSchema
 
         Returns:
             bool
@@ -306,11 +304,11 @@ class DBConfig:
             )
         )
 
-    def get_sorted_configs(self) -> list[DBObjectConfig]:
+    def get_sorted_configs(self) -> list[TableSchema]:
         """Gets the the configs sorted by name
 
         Returns:
-            list[DBObjectConfig]: The list of sorted configs
+            list[TableSchema]: The list of sorted configs
         """
         return sorted(self.configs, key=lambda x: x.name)
 
@@ -348,40 +346,40 @@ class DBConfig:
         """
         return [config.name for config in self.configs]
 
-    def get_config_by_name(self, name: str) -> DBObjectConfig:
+    def get_config_by_name(self, name: str) -> TableSchema:
         """Returns the config
 
         Args:
             name (str): name of the config
 
         Returns:
-            DBObjectConfig: The DBObjectConfig asked for
+            TableSchema: The TableSchema asked for
         """
         return [config for config in self.configs if config.name == name][0]
 
-    def _check_foreign_keys(self, config: DBObjectConfig) -> None:
+    def _check_foreign_keys(self, config: TableSchema) -> None:
         for key in config.foreign_keys:
             self._check_foreign_key_object(config, key)
             self._check_foreign_key_attribute(config, key)
 
     def _check_foreign_key_object(
-        self, config: DBObjectConfig, key: ForeignKey
+        self, config: TableSchema, key: ForeignKeySchema
     ) -> None:
-        if key.foreign_object_name not in self.get_config_names():
+        if key.foreign_table_name not in self.get_config_names():
             raise ConfigForeignKeyMissingObjectError(
-                foreign_key=key,
+                foreign_key=key.name,
                 object_name=config.name,
-                foreign_object_name=key.foreign_object_name,
+                foreign_object_name=key.foreign_table_name,
             )
 
     def _check_foreign_key_attribute(
-        self, config: DBObjectConfig, key: ForeignKey
+        self, config: TableSchema, key: ForeignKeySchema
     ) -> None:
-        foreign_config = self.get_config_by_name(key.foreign_object_name)
-        if key.foreign_attribute_name not in foreign_config.get_attribute_names():
+        foreign_config = self.get_config_by_name(key.foreign_table_name)
+        if key.foreign_column_name not in foreign_config.get_attribute_names():
             raise ConfigForeignKeyMissingAttributeError(
-                foreign_key=key,
+                foreign_key=key.name,
                 object_name=config.name,
-                foreign_object_name=key.foreign_object_name,
-                foreign_object_attribute=key.foreign_attribute_name,
+                foreign_object_name=key.foreign_table_name,
+                foreign_object_attribute=key.foreign_column_name,
             )
