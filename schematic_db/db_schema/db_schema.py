@@ -71,33 +71,33 @@ class ForeignKeySchema:
         }
 
 
-class ConfigAttributeError(Exception):
-    """ConfigAttributeError"""
+class TableColumnError(Exception):
+    """TableColumnError"""
 
-    def __init__(self, message: str, object_name: str) -> None:
+    def __init__(self, message: str, table_name: str) -> None:
         self.message = message
-        self.object_name = object_name
+        self.table_name = table_name
         super().__init__(self.message)
 
     def __str__(self) -> str:
-        return f"{self.message}: {self.object_name}"
+        return f"{self.message}: {self.table_name}"
 
 
-class ConfigKeyError(Exception):
-    """ConfigKeyError"""
+class TableKeyError(Exception):
+    """TableKeyError"""
 
     def __init__(
-        self, message: str, object_name: str, key: Optional[str] = None
+        self, message: str, table_name: str, key: Optional[str] = None
     ) -> None:
         self.message = message
-        self.object_name = object_name
+        self.table_name = table_name
         self.key = key
         super().__init__(self.message)
 
     def __str__(self) -> str:
         if self.key is None:
-            return f"{self.message}: {self.object_name}"
-        return f"{self.message}: {self.object_name}; {self.key}"
+            return f"{self.message}: {self.table_name}"
+        return f"{self.message}: {self.table_name}; {self.key}"
 
 
 @dataclass
@@ -112,7 +112,7 @@ class TableSchema:
     def __post_init__(self) -> None:
         self.columns.sort(key=lambda x: x.name)
         self.foreign_keys.sort(key=lambda x: x.name)
-        self._check_attributes()
+        self._check_columns()
         self._check_primary_key()
         self._check_foreign_keys()
 
@@ -200,15 +200,15 @@ class TableSchema:
         """
         return [column for column in self.columns if column.name == name][0]
 
-    def _check_attributes(self) -> None:
+    def _check_columns(self) -> None:
         if len(self.columns) == 0:
-            raise ConfigAttributeError("There are no columns", self.name)
+            raise TableColumnError("There are no columns", self.name)
         if len(self.get_column_names()) != len(set(self.get_column_names())):
-            raise ConfigAttributeError("There are duplicate columns", self.name)
+            raise TableColumnError("There are duplicate columns", self.name)
 
     def _check_primary_key(self) -> None:
         if self.primary_key not in self.get_column_names():
-            raise ConfigKeyError(
+            raise TableKeyError(
                 "Primary key is missing from columns", self.name, self.primary_key
             )
 
@@ -218,11 +218,11 @@ class TableSchema:
 
     def _check_foreign_key(self, key: ForeignKeySchema) -> None:
         if key.name not in self.get_column_names():
-            raise ConfigKeyError(
+            raise TableKeyError(
                 "Foreign key is missing from columns", self.name, key.name
             )
         if key.foreign_table_name == self.name:
-            raise ConfigKeyError(
+            raise TableKeyError(
                 "Foreign key references its own table", self.name, key.name
             )
 

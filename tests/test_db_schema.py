@@ -9,9 +9,9 @@ from schematic_db.db_schema.db_schema import (
     ColumnSchema,
     ColumnDatatype,
     ForeignKeySchema,
-    ConfigAttributeError,
+    TableColumnError,
     ConfigForeignKeyMissingObjectError,
-    ConfigKeyError,
+    TableKeyError,
     ConfigForeignKeyMissingAttributeError,
 )
 
@@ -165,7 +165,7 @@ class TestTableSchema:
         """Tests for TableSchema() that raise exceptions"""
         # test columns
         with pytest.raises(
-            ConfigAttributeError, match="There are no columns: table_name"
+            TableColumnError, match="There are no columns: table_name"
         ):
             TableSchema(
                 name="table_name",
@@ -175,7 +175,7 @@ class TestTableSchema:
             )
 
         with pytest.raises(
-            ConfigKeyError,
+            TableKeyError,
             match="Primary key is missing from columns: table_name; pk_col2",
         ):
             TableSchema(
@@ -186,7 +186,7 @@ class TestTableSchema:
             )
         # test foreign_keys
         with pytest.raises(
-            ConfigKeyError,
+            TableKeyError,
             match="Foreign key is missing from columns: table_name",
         ):
             TableSchema(
@@ -203,7 +203,7 @@ class TestTableSchema:
             )
 
         with pytest.raises(
-            ConfigKeyError,
+            TableKeyError,
             match="Foreign key references its own table: table_name",
         ):
             TableSchema(
