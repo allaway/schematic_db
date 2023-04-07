@@ -106,7 +106,6 @@ class TestTableSchema:
 
         # obj1 and 2 are the same
         assert obj1 == obj2
-        assert obj1.is_equivalent(obj2)
 
         # obj1 and 3 are the same except the index
         assert obj1 != obj3
@@ -261,7 +260,6 @@ class TestDatabaseSchema:
             ]
         )
         assert obj1 == obj2
-        assert obj1.is_equivalent(obj2)
 
     def test_db_object_config_list_success(
         self, pk_col1_attribute: ColumnSchema, pk_col2_attribute: ColumnSchema

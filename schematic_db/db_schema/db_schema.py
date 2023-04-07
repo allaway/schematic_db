@@ -31,6 +31,7 @@ class ColumnSchema:
     required: bool = False
     index: bool = False
 
+    '''
     def is_equivalent(self, other: X) -> bool:
         """Use instead of == when determining if schema's are equivalent
 
@@ -48,6 +49,7 @@ class ColumnSchema:
                 self.required == other.required,
             ]
         )
+    '''
 
 
 @dataclass
@@ -119,32 +121,6 @@ class TableSchema:
     def __eq__(self, other: Any) -> bool:
         """Overrides the default implementation"""
         return self.get_sorted_columns() == other.get_sorted_columns()
-
-    def is_equivalent(self, other: Y) -> bool:
-        """
-        Use instead of == when determining if schema's are equivalent
-        Args:
-            other (TableSchema): Another instance of TableSchema
-
-        Returns:
-            bool
-        """
-        columns_equivalent = all(
-            x.is_equivalent(y)
-            for x, y in zip(
-                self.get_sorted_columns(),
-                other.get_sorted_columns(),
-            )
-        )
-
-        return all(
-            [
-                columns_equivalent,
-                self.name == other.name,
-                self.primary_key == other.primary_key,
-                self.foreign_keys == other.foreign_keys,
-            ]
-        )
 
     def get_sorted_columns(self) -> list[ColumnSchema]:
         """Gets the tables columns sorted by name
@@ -286,23 +262,6 @@ class DatabaseSchema:
     def __eq__(self, other: Any) -> bool:
         """Overrides the default implementation"""
         return self.get_sorted_table_schemas() == other.get_sorted_table_schemas()
-
-    def is_equivalent(self, other: T) -> bool:
-        """
-        Use instead of == when determining if schema's are equivalent
-        Args:
-            other (DatabaseSchema): Another instance of DatabaseSchema
-
-        Returns:
-            bool
-        """
-        return all(
-            x.is_equivalent(y)
-            for x, y in zip(
-                self.get_sorted_table_schemas(),
-                other.get_sorted_table_schemas(),
-            )
-        )
 
     def get_sorted_table_schemas(self) -> list[TableSchema]:
         """Gets the table schemas sorted by name

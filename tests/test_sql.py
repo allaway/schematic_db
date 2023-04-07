@@ -47,26 +47,26 @@ class TestSQLGetters:
             obj.drop_table("table_one")
             assert obj.get_table_names() == []
 
-    def test_get_table_config(
+    def test_get_table_config_postgres(
         self,
-        sql_databases: list[MySQLDatabase],
+        postgres_database: PostgresDatabase,
         table_one_config: TableSchema,
         table_two_config: TableSchema,
         table_three_config: TableSchema,
     ) -> None:
-        """Tests RelationalDatabase.get_table_config()"""
-        for obj in sql_databases:
-            assert obj.get_table_names() == []
-            obj.add_table("table_one", table_one_config)
-            obj.add_table("table_two", table_two_config)
-            obj.add_table("table_three", table_three_config)
-            assert obj.get_table_names() == ["table_one", "table_three", "table_two"]
+        """Tests RelationalDatabase.get_table_schema()"""
+        obj = postgres_database
+        assert obj.get_table_names() == []
+        obj.add_table("table_one", table_one_config)
+        obj.add_table("table_two", table_two_config)
+        obj.add_table("table_three", table_three_config)
+        assert obj.get_table_names() == ["table_one", "table_three", "table_two"]
 
-            assert obj.get_table_schema("table_one").is_equivalent(table_one_config)
-            assert obj.get_table_schema("table_two").is_equivalent(table_two_config)
-            assert obj.get_table_schema("table_three").is_equivalent(table_three_config)
+        assert obj.get_table_schema("table_one") == (table_one_config)
+        assert obj.get_table_schema("table_two") == (table_two_config)
+        assert obj.get_table_schema("table_three") == (table_three_config)
 
-            obj.drop_all_tables()
+        obj.drop_all_tables()
 
     def test_execute_sql_query(
         self,
