@@ -1,9 +1,10 @@
 """DB schema
 These are a set of classes for defining a database table in a dialect agnostic way.
 """
-from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional, TypeVar
+from pydantic.dataclasses import dataclass
+from pydantic import validator
 
 
 class ColumnDatatype(Enum):
@@ -22,7 +23,7 @@ Y = TypeVar("Y", bound="TableSchema")
 T = TypeVar("T", bound="DatabaseSchema")
 
 
-@dataclass
+@dataclass()
 class ColumnSchema:
     """A schema for a table column (attribute)."""
 
@@ -31,34 +32,50 @@ class ColumnSchema:
     required: bool = False
     index: bool = False
 
-    '''
-    def is_equivalent(self, other: X) -> bool:
-        """Use instead of == when determining if schema's are equivalent
+    @validator("name")
+    @classmethod
+    def validate_string_is_not_empty(cls, value: str) -> str:
+        """Check if string  is not empty(has at least one char)
 
         Args:
-            other (ColumnSchema): Another ColumnSchema to compare to self
+            value (str): A string
+
+        Raises:
+            ValueError: If the value is zero characters long
 
         Returns:
-            bool: True if both ColumnSchemas are equivalent
+            (str): The input value
         """
-
-        return all(
-            [
-                self.name == other.name,
-                self.datatype == other.datatype,
-                self.required == other.required,
-            ]
-        )
-    '''
+        if len(value) == 0:
+            raise ValueError(f"{value} is an empty string")
+        return value
 
 
-@dataclass
+@dataclass()
 class ForeignKeySchema:
     """A foreign key in a database schema."""
 
     name: str
     foreign_table_name: str
     foreign_column_name: str
+
+    @validator("name", "foreign_table_name", "foreign_column_name")
+    @classmethod
+    def validate_string_is_not_empty(cls, value: str) -> str:
+        """Check if string  is not empty(has at least one char)
+
+        Args:
+            value (str): A string
+
+        Raises:
+            ValueError: If the value is zero characters long
+
+        Returns:
+            (str): The input value
+        """
+        if len(value) == 0:
+            raise ValueError(f"{value} is an empty string")
+        return value
 
     def get_column_dict(self) -> dict[str, str]:
         """Returns the foreign key in dict form
@@ -110,6 +127,24 @@ class TableSchema:
     columns: list[ColumnSchema]
     primary_key: str
     foreign_keys: list[ForeignKeySchema]
+
+    @validator("name", "primary_key")
+    @classmethod
+    def validate_string_is_not_empty(cls, value: str) -> str:
+        """Check if string  is not empty(has at least one char)
+
+        Args:
+            value (str): A string
+
+        Raises:
+            ValueError: If the value is zero characters long
+
+        Returns:
+            (str): The input value
+        """
+        if len(value) == 0:
+            raise ValueError(f"{value} is an empty string")
+        return value
 
     def __post_init__(self) -> None:
         self.columns.sort(key=lambda x: x.name)
