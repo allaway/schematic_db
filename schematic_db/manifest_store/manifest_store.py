@@ -1,6 +1,10 @@
 """The ManifestStore class interacts with the Schematic API download manifests."""
+# pylint: disable=duplicate-code
 
-from dataclasses import dataclass
+import re
+from pydantic.dataclasses import dataclass
+from pydantic import validator
+import validators
 import pandas as pd
 from schematic_db.api_utils.api_utils import get_project_manifests, get_manifest
 from schematic_db.schema_graph.schema_graph import SchemaGraph
@@ -31,7 +35,7 @@ class ManifestMissingPrimaryKeyError(Exception):
         )
 
 
-@dataclass
+@dataclass()
 class ManifestStoreConfig:
     """
     A config for a ManifestStore.
@@ -47,6 +51,40 @@ class ManifestStoreConfig:
     synapse_project_id: str
     synapse_asset_view_id: str
     synapse_input_token: str
+
+    @validator("schema_url")
+    @classmethod
+    def validate_url(cls, value: str) -> str:
+        """Validates that the value is a valid URL"""
+        valid_url = validators.url(value)
+        if not valid_url:
+            raise ValueError(f"{value} is a valid url")
+        return value
+
+    @validator("schema_url")
+    @classmethod
+    def validate_is_jsonld(cls, value: str) -> str:
+        """Validates that the value is a jsonld file"""
+        is_jsonld = value.endswith(".jsonld")
+        if not is_jsonld:
+            raise ValueError(f"{value} does end with '.jsonld'")
+        return value
+
+    @validator("synapse_project_id", "synapse_asset_view_id")
+    @classmethod
+    def validate_synapse_id(cls, value: str) -> str:
+        """Check if string is a valid synapse id"""
+        if not re.search("^syn[0-9]+", value):
+            raise ValueError(f"{value} is not a valid Synapse id")
+        return value
+
+    @validator("synapse_input_token")
+    @classmethod
+    def validate_string_is_not_empty(cls, value: str) -> str:
+        """Check if string  is not empty(has at least one char)"""
+        if len(value) == 0:
+            raise ValueError(f"{value} is an empty string")
+        return value
 
 
 class ManifestStore:
