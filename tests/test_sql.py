@@ -39,12 +39,12 @@ class TestSQLGetters:
     """Testing for RelationalDatabase getters"""
 
     def test_get_table_names(
-        self, sql_databases: list[SQLAlchemyDatabase], table_one_config: TableSchema
+        self, sql_databases: list[SQLAlchemyDatabase], table_one_schema: TableSchema
     ) -> None:
         """Tests RelationalDatabase.get_table_names()"""
         for obj in sql_databases:
             assert obj.get_table_names() == []
-            obj.add_table("table_one", table_one_config)
+            obj.add_table("table_one", table_one_schema)
             assert obj.get_table_names() == ["table_one"]
             obj.drop_table("table_one")
             assert obj.get_table_names() == []
@@ -52,33 +52,33 @@ class TestSQLGetters:
     def test_get_table_config_postgres(
         self,
         postgres_database: PostgresDatabase,
-        table_one_config: TableSchema,
-        table_two_config: TableSchema,
-        table_three_config: TableSchema,
+        table_one_schema: TableSchema,
+        table_two_schema: TableSchema,
+        table_three_schema: TableSchema,
     ) -> None:
         """Tests RelationalDatabase.get_table_schema()"""
         obj = postgres_database
         assert obj.get_table_names() == []
-        obj.add_table("table_one", table_one_config)
-        obj.add_table("table_two", table_two_config)
-        obj.add_table("table_three", table_three_config)
+        obj.add_table("table_one", table_one_schema)
+        obj.add_table("table_two", table_two_schema)
+        obj.add_table("table_three", table_three_schema)
         assert obj.get_table_names() == ["table_one", "table_three", "table_two"]
 
-        assert obj.get_table_schema("table_one") == (table_one_config)
-        assert obj.get_table_schema("table_two") == (table_two_config)
-        assert obj.get_table_schema("table_three") == (table_three_config)
+        assert obj.get_table_schema("table_one") == (table_one_schema)
+        assert obj.get_table_schema("table_two") == (table_two_schema)
+        assert obj.get_table_schema("table_three") == (table_three_schema)
 
         obj.drop_all_tables()
 
     def test_execute_sql_query(
         self,
         sql_databases: list[SQLAlchemyDatabase],
-        table_one_config: TableSchema,
+        table_one_schema: TableSchema,
     ) -> None:
         """Tests RelationalDatabase.execute_sql_query()"""
         for obj in sql_databases:
             assert obj.get_table_names() == []
-            obj.add_table("table_one", table_one_config)
+            obj.add_table("table_one", table_one_schema)
             assert obj.get_table_names() == ["table_one"]
             result = obj.execute_sql_query("SELECT * FROM table_one;")
             assert isinstance(result, pd.DataFrame)
@@ -87,15 +87,15 @@ class TestSQLGetters:
     def test_query_table(
         self,
         sql_databases: list[SQLAlchemyDatabase],
-        table_one_config: TableSchema,
+        table_one_schema: TableSchema,
     ) -> None:
         """Tests RelationalDatabase.execute_sql_query()"""
         for obj in sql_databases:
-            obj.add_table("table_one", table_one_config)
+            obj.add_table("table_one", table_one_schema)
             result1 = obj.query_table("table_one")
             assert isinstance(result1, pd.DataFrame)
 
-            obj.add_table("Table_one", table_one_config)
+            obj.add_table("Table_one", table_one_schema)
             result2 = obj.query_table("Table_one")
             assert isinstance(result2, pd.DataFrame)
 
@@ -109,18 +109,18 @@ class TestSQLUpdateTables:
     def test_add_drop_table(
         self,
         sql_databases: list[SQLAlchemyDatabase],
-        table_one_config: TableSchema,
-        table_two_config: TableSchema,
-        table_three_config: TableSchema,
+        table_one_schema: TableSchema,
+        table_two_schema: TableSchema,
+        table_three_schema: TableSchema,
     ) -> None:
         """Testing for MySQLDatabase.add_table() and and MySQLDatabase.drop_table()"""
         for obj in sql_databases:
             assert obj.get_table_names() == []
-            obj.add_table("table_one", table_one_config)
+            obj.add_table("table_one", table_one_schema)
             assert obj.get_table_names() == ["table_one"]
-            obj.add_table("table_two", table_two_config)
+            obj.add_table("table_two", table_two_schema)
             assert obj.get_table_names() == ["table_one", "table_two"]
-            obj.add_table("table_three", table_three_config)
+            obj.add_table("table_three", table_three_schema)
             assert obj.get_table_names() == ["table_one", "table_three", "table_two"]
             obj.drop_table("table_three")
             assert obj.get_table_names() == ["table_one", "table_two"]
@@ -132,16 +132,16 @@ class TestSQLUpdateTables:
     def test_drop_all_tables(
         self,
         sql_databases: list[SQLAlchemyDatabase],
-        table_one_config: TableSchema,
-        table_two_config: TableSchema,
-        table_three_config: TableSchema,
+        table_one_schema: TableSchema,
+        table_two_schema: TableSchema,
+        table_three_schema: TableSchema,
     ) -> None:
         """Testing for MySQLDatabase.drop_all_tables()"""
         for obj in sql_databases:
             assert obj.get_table_names() == []
-            obj.add_table("table_one", table_one_config)
-            obj.add_table("table_two", table_two_config)
-            obj.add_table("table_three", table_three_config)
+            obj.add_table("table_one", table_one_schema)
+            obj.add_table("table_two", table_two_schema)
+            obj.add_table("table_three", table_three_schema)
             assert obj.get_table_names() == ["table_one", "table_three", "table_two"]
             obj.drop_all_tables()
             assert obj.get_table_names() == []
@@ -155,7 +155,7 @@ class TestSQLUpdateRows:
         self,
         sql_databases: list[SQLAlchemyDatabase],
         table_one: pd.DataFrame,
-        table_one_config: TableSchema,
+        table_one_schema: TableSchema,
     ) -> None:
         """
         Testing for RelationalDatabase.upsert_table_rows()
@@ -163,7 +163,7 @@ class TestSQLUpdateRows:
         """
         for obj in sql_databases:
             assert obj.get_table_names() == []
-            obj.add_table("table_one", table_one_config)
+            obj.add_table("table_one", table_one_schema)
             assert obj.get_table_names() == ["table_one"]
 
             obj.upsert_table_rows("table_one", table_one)
@@ -186,7 +186,7 @@ class TestSQLUpdateRows:
         self,
         sql_databases: list[SQLAlchemyDatabase],
         table_one: pd.DataFrame,
-        table_one_config: TableSchema,
+        table_one_schema: TableSchema,
     ) -> None:
         """
         Testing for RelationalDatabase.upsert_table_rows()
@@ -194,7 +194,7 @@ class TestSQLUpdateRows:
         """
         for obj in sql_databases:
             assert obj.get_table_names() == []
-            obj.add_table("table_one", table_one_config)
+            obj.add_table("table_one", table_one_schema)
             assert obj.get_table_names() == ["table_one"]
 
             obj.upsert_table_rows("table_one", table_one)
@@ -214,7 +214,7 @@ class TestSQLUpdateRows:
         self,
         sql_databases: list[SQLAlchemyDatabase],
         table_two: pd.DataFrame,
-        table_two_config: TableSchema,
+        table_two_schema: TableSchema,
     ) -> None:
         """
         Testing for RelationalDatabase.upsert_table_rows()
@@ -222,7 +222,7 @@ class TestSQLUpdateRows:
         """
         for obj in sql_databases:
             assert obj.get_table_names() == []
-            obj.add_table("table_two", table_two_config)
+            obj.add_table("table_two", table_two_schema)
             assert obj.get_table_names() == ["table_two"]
 
             obj.upsert_table_rows("table_two", table_two)
@@ -264,7 +264,7 @@ class TestSQLUpdateRows:
     def test_upsert_table_rows4(
         self,
         sql_databases: list[SQLAlchemyDatabase],
-        table_two_config: TableSchema,
+        table_two_schema: TableSchema,
     ) -> None:
         """
         Testing for RelationalDatabase.upsert_table_rows()
@@ -272,7 +272,7 @@ class TestSQLUpdateRows:
         """
         for obj in sql_databases:
             with pytest.raises(UpsertDatabaseError):
-                obj.add_table("table_two", table_two_config)
+                obj.add_table("table_two", table_two_schema)
                 obj.upsert_table_rows(
                     "table_two", pd.DataFrame({"pk_two_col": [pd.NA]})
                 )
@@ -281,13 +281,13 @@ class TestSQLUpdateRows:
     def test_delete_table_rows1(
         self,
         sql_databases: list[SQLAlchemyDatabase],
-        table_one_config: TableSchema,
+        table_one_schema: TableSchema,
         table_one: pd.DataFrame,
     ) -> None:
         """Testing for RelationalDatabase.delete_table_rows()"""
         for obj in sql_databases:
             assert obj.get_table_names() == []
-            obj.add_table("table_one", table_one_config)
+            obj.add_table("table_one", table_one_schema)
             assert obj.get_table_names() == ["table_one"]
             obj.upsert_table_rows("table_one", table_one)
             result1 = obj.query_table("table_one")

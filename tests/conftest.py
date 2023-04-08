@@ -285,12 +285,12 @@ def table_one() -> Generator:
     yield dataframe
 
 
-@pytest.fixture(scope="session", name="table_one_config")
-def fixture_table_one_config() -> Generator:
+@pytest.fixture(scope="session", name="table_one_schema")
+def fixture_table_one_schema() -> Generator:
     """
     Yields a TableSchema object with one primary and no foreign keys
     """
-    table_config = TableSchema(
+    schema = TableSchema(
         name="table_one",
         columns=[
             ColumnSchema(
@@ -321,7 +321,7 @@ def fixture_table_one_config() -> Generator:
         primary_key="pk_one_col",
         foreign_keys=[],
     )
-    yield table_config
+    yield schema
 
 
 @pytest.fixture(name="table_one_columns", scope="session")
@@ -374,12 +374,12 @@ def table_two_b() -> Generator:
     yield dataframe
 
 
-@pytest.fixture(scope="session", name="table_two_config")
-def fixture_table_two_config() -> Generator:
+@pytest.fixture(scope="session", name="table_two_schema")
+def fixture_table_two_schema() -> Generator:
     """
     Yields a TableSchema object with one primary and no foreign keys
     """
-    table_config = TableSchema(
+    schema = TableSchema(
         name="table_two",
         columns=[
             ColumnSchema(
@@ -392,15 +392,15 @@ def fixture_table_two_config() -> Generator:
         primary_key="pk_two_col",
         foreign_keys=[],
     )
-    yield table_config
+    yield schema
 
 
-@pytest.fixture(scope="session", name="table_two_config_combined")
-def fixture_table_two_config_combined() -> Generator:
+@pytest.fixture(scope="session", name="table_two_schema_combined")
+def fixture_table_two_schema_combined() -> Generator:
     """
     Yields a TableSchema object with one primary and no foreign keys
     """
-    table_config = TableSchema(
+    schema = TableSchema(
         name="table_two",
         columns=[
             ColumnSchema(
@@ -413,7 +413,7 @@ def fixture_table_two_config_combined() -> Generator:
         primary_key="pk_two_col",
         foreign_keys=[],
     )
-    yield table_config
+    yield schema
 
 
 @pytest.fixture(scope="session")
@@ -432,12 +432,12 @@ def table_three() -> Generator:
     yield dataframe
 
 
-@pytest.fixture(scope="session", name="table_three_config")
-def fixture_table_three_config() -> Generator:
+@pytest.fixture(scope="session", name="table_three_schema")
+def fixture_table_three_schema() -> Generator:
     """
     Yields a TableSchema object with two keys that are both primary and foreign
     """
-    table_config = TableSchema(
+    schema = TableSchema(
         name="table_three",
         columns=[
             ColumnSchema(
@@ -467,7 +467,7 @@ def fixture_table_three_config() -> Generator:
             ),
         ],
     )
-    yield table_config
+    yield schema
 
 
 @pytest.fixture(name="table_three_columns", scope="session")
@@ -497,11 +497,11 @@ def table_123_unormalized() -> Generator:
     yield dataframe
 
 
-@pytest.fixture(scope="session", name="table_configs")
-def fixture_table_configs(
-    table_one_config: TableSchema,
-    table_two_config: TableSchema,
-    table_three_config: TableSchema,
+@pytest.fixture(scope="session", name="table_schemas")
+def fixture_table_schemas(
+    table_one_schema: TableSchema,
+    table_two_schema: TableSchema,
+    table_three_schema: TableSchema,
 ) -> Generator:
     """Yields a TableSchemaList"""
-    yield DatabaseSchema([table_one_config, table_two_config, table_three_config])
+    yield DatabaseSchema([table_one_schema, table_two_schema, table_three_schema])
