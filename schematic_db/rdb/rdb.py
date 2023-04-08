@@ -4,6 +4,18 @@ import pandas as pd
 from schematic_db.db_schema.db_schema import TableSchema
 
 
+class UpsertDatabaseError(Exception):
+    """Raised when a database class catches an error doing an upsert"""
+
+    def __init__(self, table_name: str) -> None:
+        self.message = "Error upserting table"
+        self.table_name = table_name
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return f"{self.message}; " f"Table Name: {self.table_name}"
+
+
 class RelationalDatabase(ABC):
     """An interface for relational database types"""
 

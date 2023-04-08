@@ -15,12 +15,14 @@ postgres:
   host: "localhost"
 
 """
-from typing import Generator, Any
+from typing import Generator
 import pytest
 import pandas as pd
 from schematic_db.db_schema.db_schema import TableSchema
 from schematic_db.rdb.mysql import MySQLDatabase
 from schematic_db.rdb.postgres import PostgresDatabase
+from schematic_db.rdb.sql_alchemy_database import SQLAlchemyDatabase
+from schematic_db.rdb.rdb import UpsertDatabaseError
 
 
 @pytest.fixture(name="sql_databases", scope="module")
@@ -37,7 +39,7 @@ class TestSQLGetters:
     """Testing for RelationalDatabase getters"""
 
     def test_get_table_names(
-        self, sql_databases: list[MySQLDatabase], table_one_config: TableSchema
+        self, sql_databases: list[SQLAlchemyDatabase], table_one_config: TableSchema
     ) -> None:
         """Tests RelationalDatabase.get_table_names()"""
         for obj in sql_databases:
@@ -70,7 +72,7 @@ class TestSQLGetters:
 
     def test_execute_sql_query(
         self,
-        sql_databases: list[MySQLDatabase],
+        sql_databases: list[SQLAlchemyDatabase],
         table_one_config: TableSchema,
     ) -> None:
         """Tests RelationalDatabase.execute_sql_query()"""
@@ -84,7 +86,7 @@ class TestSQLGetters:
 
     def test_query_table(
         self,
-        sql_databases: list[MySQLDatabase],
+        sql_databases: list[SQLAlchemyDatabase],
         table_one_config: TableSchema,
     ) -> None:
         """Tests RelationalDatabase.execute_sql_query()"""
@@ -106,7 +108,7 @@ class TestSQLUpdateTables:
 
     def test_add_drop_table(
         self,
-        sql_databases: list[MySQLDatabase],
+        sql_databases: list[SQLAlchemyDatabase],
         table_one_config: TableSchema,
         table_two_config: TableSchema,
         table_three_config: TableSchema,
@@ -129,7 +131,7 @@ class TestSQLUpdateTables:
 
     def test_drop_all_tables(
         self,
-        sql_databases: list[MySQLDatabase],
+        sql_databases: list[SQLAlchemyDatabase],
         table_one_config: TableSchema,
         table_two_config: TableSchema,
         table_three_config: TableSchema,
@@ -151,7 +153,7 @@ class TestSQLUpdateRows:
 
     def test_upsert_table_rows1(
         self,
-        sql_databases: Any,
+        sql_databases: list[SQLAlchemyDatabase],
         table_one: pd.DataFrame,
         table_one_config: TableSchema,
     ) -> None:
@@ -182,7 +184,7 @@ class TestSQLUpdateRows:
 
     def test_upsert_table_rows2(
         self,
-        sql_databases: Any,
+        sql_databases: list[SQLAlchemyDatabase],
         table_one: pd.DataFrame,
         table_one_config: TableSchema,
     ) -> None:
@@ -210,7 +212,7 @@ class TestSQLUpdateRows:
 
     def test_upsert_table_rows3(
         self,
-        sql_databases: Any,
+        sql_databases: list[SQLAlchemyDatabase],
         table_two: pd.DataFrame,
         table_two_config: TableSchema,
     ) -> None:
@@ -259,9 +261,26 @@ class TestSQLUpdateRows:
             obj.drop_table("table_two")
             assert obj.get_table_names() == []
 
+    def test_upsert_table_rows4(
+        self,
+        sql_databases: list[SQLAlchemyDatabase],
+        table_two_config: TableSchema,
+    ) -> None:
+        """
+        Testing for RelationalDatabase.upsert_table_rows()
+        Expecting errors
+        """
+        for obj in sql_databases:
+            with pytest.raises(UpsertDatabaseError):
+                obj.add_table("table_two", table_two_config)
+                obj.upsert_table_rows(
+                    "table_two", pd.DataFrame({"pk_two_col": [pd.NA]})
+                )
+            obj.drop_table("table_two")
+
     def test_delete_table_rows1(
         self,
-        sql_databases: Any,
+        sql_databases: list[SQLAlchemyDatabase],
         table_one_config: TableSchema,
         table_one: pd.DataFrame,
     ) -> None:

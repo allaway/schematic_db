@@ -2,6 +2,7 @@
 from typing import Any
 from dataclasses import dataclass
 import pandas as pd
+import numpy as np
 import sqlalchemy as sa
 import sqlalchemy_utils.functions
 from sqlalchemy.inspection import inspect
@@ -11,7 +12,7 @@ from schematic_db.db_schema.db_schema import (
     ColumnSchema,
     ForeignKeySchema,
 )
-from .rdb import RelationalDatabase
+from .rdb import RelationalDatabase, UpsertDatabaseError
 
 
 class DataframeKeyError(Exception):
@@ -283,4 +284,22 @@ class SQLAlchemyDatabase(
         return datatypes[column_schema.datatype]
 
     def upsert_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
-        """No default implementation"""
+        """Inserts and/or updates the rows of the table
+
+        Args:
+            table_name (str): _The name of the table to be upserted
+            data (pd.DataFrame): The rows to be upserted
+        """
+        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
+        data = data.replace({np.nan: None})
+        rows = data.to_dict("records")
+        for row in rows:
+            try:
+                self._upsert_table_row(row, table, table_name)
+            except (sa.exc.OperationalError, sa.exc.IntegrityError) as exc:
+                raise UpsertDatabaseError(table_name) from exc
+
+    def _upsert_table_row(
+        self, row: dict[str, Any], table: sa.table, table_name
+    ) -> None:
+        pass

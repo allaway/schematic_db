@@ -129,23 +129,29 @@ class ManifestStore:
             asset_view=self.synapse_asset_view_id,
         )
 
-    def get_manifests(self, name: str) -> list[pd.DataFrame]:
-        """Gets the manifests associated with a component
+    def get_dataset_ids(self, name: str) -> list[str]:
+        """Gets the dataset ids for a table(component)
 
         Args:
-            name (str): The name of a component in the schema
+            name (str): The name of the table
 
         Returns:
-            list[pd.DataFrame]: A list of manifests in dataframe form for the component
+            list[str]: The dataset ids for the table
         """
-        dataset_ids = self.manifest_metadata.get_dataset_ids_for_component(name)
-        manifests = [
-            get_manifest(
-                self.synapse_input_token,
-                dataset_id,
-                self.synapse_asset_view_id,
-            )
-            for dataset_id in dataset_ids
-        ]
+        return self.manifest_metadata.get_dataset_ids_for_component(name)
 
-        return manifests
+    def get_manifest(self, dataset_id: str) -> pd.DataFrame:
+        """Gets the manifest associated with the dataset id
+
+        Args:
+            dataset_id (str): The synapse id of the dataset
+
+        Returns:
+            pd.DataFrame: The manifest in dataframe form
+        """
+        manifest = get_manifest(
+            self.synapse_input_token,
+            dataset_id,
+            self.synapse_asset_view_id,
+        )
+        return manifest
