@@ -1,10 +1,13 @@
 """Functions that interact with the schematic API"""
+# pylint: disable=duplicate-code
 
 from typing import Any
-from dataclasses import dataclass
 from os import getenv
 from datetime import datetime
+import re
 import pytz
+from pydantic.dataclasses import dataclass
+from pydantic import validator
 import requests
 import pandas
 
@@ -57,7 +60,7 @@ def create_schematic_api_response(
     Returns:
         requests.Response: The response from the API
     """
-    api_url = getenv("API_URL", "https://schematic.api.sagebionetworks.org/v1/")
+    api_url = getenv("API_URL", "https://schematic-dev.api.sagebionetworks.org/v1")
     endpoint_url = f"{api_url}/{endpoint_path}"
     start_time = datetime.now(pytz.timezone("US/Pacific"))
     response = requests.get(endpoint_url, params=params, timeout=timeout)
@@ -142,9 +145,9 @@ def get_graph_by_edge_type(schema_url: str, relationship: str) -> list[tuple[str
     return response.json()
 
 
-@dataclass
-class ManifestSynapseConfig:
-    """A config for a manifest in Synapse."""
+@dataclass()
+class ManifestMetadata:
+    """Metadata for a manifest in Synapse."""
 
     dataset_id: str
     dataset_name: str
@@ -152,10 +155,97 @@ class ManifestSynapseConfig:
     manifest_name: str
     component_name: str
 
+    @validator("dataset_id", "manifest_id")
+    @classmethod
+    def validate_synapse_id(cls, value: str) -> str:
+        """Check if string is a valid synapse id
+
+        Args:
+            value (str): A string
+
+        Raises:
+            ValueError: If the value isn't a valid Synapse id
+
+        Returns:
+            (str): The input value
+        """
+        if not re.search("^syn[0-9]+", value):
+            raise ValueError(f"{value} is not a valid Synapse id")
+        return value
+
+    @validator("dataset_name", "manifest_name", "component_name")
+    @classmethod
+    def validate_string_is_not_empty(cls, value: str) -> str:
+        """Check if string  is nto empty(has at least one char)
+
+        Args:
+            value (str): A string
+
+        Raises:
+            ValueError: If the value is zero characters long
+
+        Returns:
+            (str): The input value
+        """
+        if len(value) == 0:
+            raise ValueError(f"{value} is an empty string")
+        return value
+
+
+class ManifestMetadataList:
+    """A list of Manifest Metadata"""
+
+    def __init__(self, response_list: list[list[list[str]]]) -> None:
+        metadata_list = []
+        for item in response_list:
+            try:
+                metadata = ManifestMetadata(
+                    dataset_id=item[0][0],
+                    dataset_name=item[0][1],
+                    manifest_id=item[1][0],
+                    manifest_name=item[1][1],
+                    component_name=item[2][0],
+                )
+            except ValueError:
+                pass
+            else:
+                metadata_list.append(metadata)
+        self.metadata_list = metadata_list
+
+    def get_dataset_ids_for_component(self, component_name: str) -> list[str]:
+        """Gets the dataset ids from the manifest metadata matching the component name
+
+        Args:
+            component_name (str): The name of the component to get the manifest datasets ids for
+
+        Returns:
+            list[str]: A list of synapse ids for the manifest datasets
+        """
+        return [
+            metadata.dataset_id
+            for metadata in self.metadata_list
+            if metadata.component_name == component_name
+        ]
+
+    def get_manifest_ids_for_component(self, component_name: str) -> list[str]:
+        """Gets the manifest ids from the manifest metadata matching the component name
+
+        Args:
+            component_name (str): The name of the component to get the manifest ids for
+
+        Returns:
+            list[str]: A list of synapse ids for the manifests
+        """
+        return [
+            metadata.manifest_id
+            for metadata in self.metadata_list
+            if metadata.component_name == component_name
+        ]
+
 
 def get_project_manifests(
     input_token: str, project_id: str, asset_view: str
-) -> list[ManifestSynapseConfig]:
+) -> ManifestMetadataList:
     """Gets all metadata manifest files across all datasets in a specified project.
 
     Args:
@@ -166,7 +256,7 @@ def get_project_manifests(
             data assets for a given project.(i.e. master_fileview in config.yml)
 
     Returns:
-        list[ManifestSynapseConfig]: A list of manifests in Synapse
+        ManifestMetadataList: A list of manifests in Synapse
     """
     params = {
         "input_token": input_token,
@@ -176,17 +266,7 @@ def get_project_manifests(
     response = create_schematic_api_response(
         "storage/project/manifests", params, timeout=60
     )
-    manifests = [
-        ManifestSynapseConfig(
-            dataset_id=item[0][0],
-            dataset_name=item[0][1],
-            manifest_id=item[1][0],
-            manifest_name=item[1][1],
-            component_name=item[2][0],
-        )
-        for item in response.json()
-    ]
-    return manifests
+    return ManifestMetadataList(response.json())
 
 
 def get_manifest(

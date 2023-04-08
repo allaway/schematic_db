@@ -1,8 +1,7 @@
 """Testing for ManifestStore."""
 import pytest
 from schematic_db.manifest_store.manifest_store import ManifestStore
-
-from schematic_db.api_utils.api_utils import ManifestSynapseConfig
+from schematic_db.api_utils.api_utils import ManifestMetadata
 
 
 @pytest.mark.schematic
@@ -12,8 +11,8 @@ class TestSchema:
     def test_init(self, manifest_store: ManifestStore) -> None:
         """Testing for Schema.__init__"""
         obj = manifest_store
-        for item in obj.manifest_configs:
-            assert isinstance(item, ManifestSynapseConfig)
+        for item in obj.manifest_metadata.metadata_list:
+            assert isinstance(item, ManifestMetadata)
 
     def test_get_manifests(self, manifest_store: ManifestStore) -> None:
         """Testing for Schema.get_manifests()"""

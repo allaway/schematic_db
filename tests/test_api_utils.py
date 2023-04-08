@@ -63,12 +63,12 @@ class TestAPIUtils:
         test_synapse_asset_view_id: str,
     ) -> None:
         "Testing for get_project_manifests"
-        manifests = get_project_manifests(
+        manifest_metadata = get_project_manifests(
             input_token=secrets_dict["synapse"]["auth_token"],
             project_id=test_synapse_project_id,
             asset_view=test_synapse_asset_view_id,
         )
-        assert len(manifests) == 5
+        assert len(manifest_metadata.metadata_list) == 5
 
     def test_get_manifest(
         self, secrets_dict: dict, test_synapse_asset_view_id: str
