@@ -1,13 +1,14 @@
 """Testing for Schema."""
 from typing import Generator
 import pytest
+from pydantic import ValidationError
 from schematic_db.db_schema.db_schema import (
     DatabaseSchema,
     ForeignKeySchema,
     ColumnSchema,
     ColumnDatatype,
 )
-from schematic_db.schema.schema import Schema, DatabaseConfig
+from schematic_db.schema.schema import Schema, DatabaseConfig, SchemaConfig
 from schematic_db.schema.database_config import DatabaseObjectConfig
 
 
@@ -73,6 +74,24 @@ def fixture_database_object_config() -> Generator:
     }
     obj = DatabaseObjectConfig(**data)  # type: ignore
     yield obj
+
+
+@pytest.mark.fast
+class TestSchemaConfig:
+    """Testing for SchemaConfig"""
+
+    def test_url_validator(self) -> None:
+        """Testing for validators"""
+        with pytest.raises(ValidationError):
+            SchemaConfig(schema_url="xxx.jsonld")
+
+    def test_jsonld_validator(self) -> None:
+        """Testing for validators"""
+        with pytest.raises(ValidationError):
+            SchemaConfig(
+                schema_url="https://raw.githubusercontent.com/Sage-Bionetworks/"
+                "Schematic-DB-Test-Schemas/main/test_schema.csv"
+            )
 
 
 @pytest.mark.fast
