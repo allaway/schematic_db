@@ -35,7 +35,7 @@ class ColumnSchema:
     @validator("name")
     @classmethod
     def validate_string_is_not_empty(cls, value: str) -> str:
-        """Check if string  is not empty(has at least one char)
+        """Check if string is not empty(has at least one char)
 
         Args:
             value (str): A string
@@ -73,6 +73,7 @@ class ForeignKeySchema:
         Returns:
             (str): The input value
         """
+
         if len(value) == 0:
             raise ValueError(f"{value} is an empty string")
         return value
@@ -114,8 +115,6 @@ class TableKeyError(Exception):
         super().__init__(self.message)
 
     def __str__(self) -> str:
-        if self.key is None:
-            return f"{self.message}: {self.table_name}"
         return f"{self.message}: {self.table_name}; {self.key}"
 
 
