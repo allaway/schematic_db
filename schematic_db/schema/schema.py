@@ -130,7 +130,7 @@ class Schema:
 
     def update_database_schema(self) -> None:
         """Updates the DatabaseSchema table."""
-        table_names = self.schema_graph.create_sorted_object_name_list()
+        table_names = self.schema_graph.create_sorted_table_name_list()
         table_schemas = [
             schema
             for schema in [self.create_table_schema(name) for name in table_names]
