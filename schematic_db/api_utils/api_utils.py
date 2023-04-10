@@ -176,7 +176,7 @@ class ManifestMetadata:
     @validator("dataset_name", "manifest_name", "component_name")
     @classmethod
     def validate_string_is_not_empty(cls, value: str) -> str:
-        """Check if string  is nto empty(has at least one char)
+        """Check if string  is not empty(has at least one char)
 
         Args:
             value (str): A string

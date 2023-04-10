@@ -119,7 +119,7 @@ class ManifestStore:
         Returns:
             list[str]: A list of objects names
         """
-        return self.schema_graph.create_sorted_object_name_list()
+        return self.schema_graph.create_sorted_table_name_list()
 
     def update_manifest_metadata(self) -> None:
         """Updates the current objects manifest_configs."""

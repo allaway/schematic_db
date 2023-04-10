@@ -64,21 +64,22 @@ class RDBUpdater:
             self.upsert_table_with_dataset_id(table_name, dataset_id)
 
     def upsert_table_with_dataset_id(self, table_name: str, dataset_id: str) -> None:
-        """Updates a table int he database with a manifest
+        """
+        Updates a table in the database with a manifest
 
         Args:
             table_name (str): The name of the table
             dataset_id (str): The id of the dataset
         """
-        config = self.rdb.get_table_config(table_name)
+        table_schema = self.rdb.get_table_schema(table_name)
         manifest_table = self.manifest_store.get_manifest(dataset_id)
 
         # normalize table
-        table_columns = set(config.get_attribute_names())
+        table_columns = set(table_schema.get_column_names())
         manifest_columns = set(manifest_table.columns)
         columns = list(table_columns.intersection(manifest_columns))
         manifest_table = manifest_table[columns]
-        manifest_table = manifest_table.drop_duplicates(subset=config.primary_key)
+        manifest_table = manifest_table.drop_duplicates(subset=table_schema.primary_key)
         manifest_table.reset_index(inplace=True, drop=True)
 
         try:
