@@ -138,14 +138,14 @@ def find_class_specific_properties(schema_url: str, schema_class: str) -> list[s
 
 
 def get_property_label_from_display_name(
-    schema_url: str, display_name: str, strict_came_case: bool = True
+    schema_url: str, display_name: str, strict_camel_case: bool = True
 ) -> str:
     """Converts a given display name string into a proper property label string
 
     Args:
         schema_url (str): Data Model URL
         display_name (str): The display name to be converted
-        strict_came_case (bool, optional): If true the more strict way of converting
+        strict_camel_case (bool, optional): If true the more strict way of converting
             to camel case is used. Defaults to True.
 
     Returns:
@@ -154,7 +154,7 @@ def get_property_label_from_display_name(
     params = {
         "schema_url": schema_url,
         "display_name": display_name,
-        "strict_came_case": strict_came_case,
+        "strict_camel_case": strict_camel_case,
     }
     response = create_schematic_api_response(
         "explorer/get_property_label_from_display_name", params
