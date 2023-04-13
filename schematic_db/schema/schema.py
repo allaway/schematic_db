@@ -270,7 +270,6 @@ class Schema:
             )
         except (SchematicAPIError, SchematicAPITimeoutError) as exc:
             raise ColumnSchematicError(column_name, table_name) from exc
-
         # Try to get type from validation rules
         type_validation_rules = [
             rule for rule in all_validation_rules if rule in datatypes
