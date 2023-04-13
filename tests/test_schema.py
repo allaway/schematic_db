@@ -237,7 +237,6 @@ class TestSchema:
         ):
             obj.is_column_required("NOT_A_COLUMN", "Patients")
 
-
     def test_get_column_datatype(self, test_schema1: Schema) -> None:
         """Testing for Schema.get_column_datatype"""
         obj = test_schema1
