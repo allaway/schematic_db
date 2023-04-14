@@ -222,7 +222,7 @@ class Schema:
         return ColumnSchema(
             name=column_name,
             datatype=self._get_column_datatype(column_name, table_name),
-            required=is_node_required(self.schema_url, column_name),
+            required=self._is_column_required(column_name, table_name),
             index=False,
         )
 
