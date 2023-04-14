@@ -84,7 +84,8 @@ def create_column_schemas(
     """Creates a list of column schemas from a sqlalchemy table schema
 
     Args:
-        table_schema (sa.sql.schema.Table):A sqlalchemy table schema
+        table_schema (sa.sql.schema.Table): A sqlalchemy table schema
+        indices (list[str]): A list of columns in the schema to be indexed
 
     Returns:
         list[ColumnSchema]: A list of column schemas
@@ -287,8 +288,11 @@ class SQLAlchemyDatabase(
         """Inserts and/or updates the rows of the table
 
         Args:
-            table_name (str): _The name of the table to be upserted
+            table_name (str): The name of the table to be upserted
             data (pd.DataFrame): The rows to be upserted
+
+        Raises:
+            UpsertDatabaseError: Raised when a SQLAlchemy error caught
         """
         table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
         data = data.replace({np.nan: None})

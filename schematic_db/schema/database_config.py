@@ -105,10 +105,11 @@ class DatabaseConfig:
         return None if obj is None else obj.columns
 
     def get_column(self, table_name: str, column_name: str) -> Optional[ColumnSchema]:
-        """Gets the columns for an table
+        """Gets a column for a table
 
         Args:
-            table_name (str): The name of the table
+            table_name (str): The name of the table to get the column for
+            column_name (str): The name of the column to get
 
         Returns:
             Optional[list[ColumnSchema]]: The list of columns

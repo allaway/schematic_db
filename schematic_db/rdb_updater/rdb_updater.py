@@ -64,12 +64,14 @@ class RDBUpdater:
             self.upsert_table_with_dataset_id(table_name, dataset_id)
 
     def upsert_table_with_dataset_id(self, table_name: str, dataset_id: str) -> None:
-        """
-        Updates a table in the database with a manifest
+        """Updates a table in the database with a manifest
 
         Args:
             table_name (str): The name of the table
             dataset_id (str): The id of the dataset
+
+        Raises:
+            UpsertError: Raised when there is an UpsertDatabaseError caught
         """
         table_schema = self.rdb.get_table_schema(table_name)
         manifest_table = self.manifest_store.get_manifest(dataset_id)

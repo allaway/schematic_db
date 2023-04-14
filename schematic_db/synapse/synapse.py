@@ -130,7 +130,6 @@ class Synapse:  # pylint: disable=too-many-public-methods
 
         Args:
             synapse_id (str): The Synapse id of the table to delete
-            table_config (TableSchema): The config for the table
             include_row_data (bool): Include row_id and row_etag. Defaults to False.
 
         Returns:
@@ -207,9 +206,10 @@ class Synapse:  # pylint: disable=too-many-public-methods
         """
         Replaces synapse table with table made in table.
         The synapse id is preserved.
+
         Args:
             table_name (str): The name of the table to be replaced
-            data (pd.DataFrame): A dataframe of the table to replace to old table with
+            table (pd.DataFrame): A dataframe of the table to replace to old table with
         """
         if table_name not in self.get_table_names():
             self.build_table(table_name, table)
@@ -241,10 +241,15 @@ class Synapse:  # pylint: disable=too-many-public-methods
 
     def delete_table_rows(self, synapse_id: str, data: pd.DataFrame) -> None:
         """Deletes rows from the given table
+
         Args:
             synapse_id (str): The Synapse id of the table the rows will be deleted from
             data (pd.DataFrame): A pandas.DataFrame. Columns must include "ROW_ID",
              and "ROW_VERSION"
+
+        Raises:
+            SynapseDeleteRowsError: If "ROW_ID" not in the columns of the data
+            SynapseDeleteRowsError: If "ROW_VERSION" not in the columns of the data
         """
         columns = list(data.columns)
         if "ROW_ID" not in columns:
