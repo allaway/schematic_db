@@ -10,6 +10,11 @@ class SynapseTableNameError(Exception):
     """SynapseTableNameError"""
 
     def __init__(self, message: str, table_name: str) -> None:
+        """
+        Args:
+            message (str): A message describing the error
+            table_name (str): The name of the table
+        """
         self.message = message
         self.table_name = table_name
         super().__init__(self.message)
@@ -22,6 +27,12 @@ class SynapseDeleteRowsError(Exception):
     """SynapseDeleteRowsError"""
 
     def __init__(self, message: str, table_id: str, columns: list[str]) -> None:
+        """
+        Args:
+            message (str): A message describing the error
+            table_id (str): The synapse id of the table
+            columns (list[str]): A list of columns in the synapse table
+        """
         self.message = message
         self.table_id = table_id
         self.columns = columns
@@ -71,6 +82,11 @@ class Synapse:  # pylint: disable=too-many-public-methods
         return [table["name"] for table in tables]
 
     def _get_tables(self) -> list[sc.Table]:
+        """Gets the list of Synapse table entities for the project
+
+        Returns:
+            list[sc.Table]: A list of all Synapse table entities
+        """
         project = self.syn.get(self.project_id)
         return list(self.syn.getChildren(project, includeTypes=["table"]))
 

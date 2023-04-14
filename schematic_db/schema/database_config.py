@@ -123,6 +123,14 @@ class DatabaseConfig:
         return columns[0]
 
     def _get_table_by_name(self, table_name: str) -> Optional[DatabaseObjectConfig]:
+        """Gets the config for the table if it exists
+
+        Args:
+            table_name (str): The name fo the table
+
+        Returns:
+            Optional[DatabaseObjectConfig]: The config for the table if it exists
+        """
         tables = [obj for obj in self.tables if obj.name == table_name]
         if len(tables) == 0:
             return None
