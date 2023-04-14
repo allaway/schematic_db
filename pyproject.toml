@@ -43,3 +43,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.interrogate]
 ignore-init-module = true
 ignore-magic = true
+fail-under = 90
