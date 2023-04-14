@@ -130,7 +130,7 @@ class Schema:
         self.schema_url = config.schema_url
         self.use_display_names_as_labels = use_display_names_as_labels
         self.schema_graph = SchemaGraph(config.schema_url)
-        self.update_database_schema()
+        self.database_schema: Optional[DatabaseSchema] = None
 
     def get_database_schema(self) -> DatabaseSchema:
         """Gets the current database schema
@@ -138,6 +138,10 @@ class Schema:
         Returns:
             DatabaseSchema: the current database schema
         """
+        # When first initialized, database schema is None
+        if self.database_schema is None:
+            self.update_database_schema()
+        assert self.database_schema is not None
         return self.database_schema
 
     def update_database_schema(self) -> None:
