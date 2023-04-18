@@ -6,6 +6,7 @@ import numpy as np
 import sqlalchemy as sa
 import sqlalchemy_utils.functions
 from sqlalchemy.inspection import inspect
+from sqlalchemy import exc
 from schematic_db.db_schema.db_schema import (
     TableSchema,
     ColumnDatatype,
@@ -344,8 +345,8 @@ class SQLAlchemyDatabase(
         for row in rows:
             try:
                 self._upsert_table_row(row, table, table_name)
-            except (sa.exc.OperationalError, sa.exc.IntegrityError) as exc:
-                raise UpsertDatabaseError(table_name) from exc
+            except exc.SQLAlchemyError as exception:
+                raise UpsertDatabaseError(table_name) from exception
 
     def _upsert_table_row(
         self, row: dict[str, Any], table: sa.table, table_name: str
