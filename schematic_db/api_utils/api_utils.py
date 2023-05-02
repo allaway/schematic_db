@@ -263,7 +263,7 @@ class ManifestMetadata:
         ]
         return {key: attribute_dict[key] for key in attribute_names}
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Prints object as dict"""
         return json.dumps(self.to_dict(), indent=4)
 
@@ -293,7 +293,7 @@ class ManifestMetadataList:
                 metadata_list.append(metadata)
         self.metadata_list = metadata_list
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Prints each metadata object as dict"""
         return json.dumps(
             [metadata.to_dict() for metadata in self.metadata_list], indent=4
