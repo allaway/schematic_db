@@ -43,15 +43,19 @@ class UpsertError(Exception):
 class ManifestPrimaryKeyError(Exception):
     """Raised when a manifest is missing its primary key"""
 
-    def __init__(self, table_name: str, primary_key: str, columns: list[str]) -> None:
+    def __init__(
+        self, table_name: str, dataset_id: str, primary_key: str, columns: list[str]
+    ) -> None:
         """
         Args:
-            table_name (str): The name of the table the upsert occurred in
-            primary_key (str): The dataset id of the manifest that was being upserted
+            table_name (str): The name of the table for which the manifest was downloaded
+            dataset_id (str): The dataset id of the manifest
+            primary_key (str): The primary key of the table
             columns (list[str]): The columns in the manifest
         """
         self.message = "Manifest is missing its primary key"
         self.table_name = table_name
+        self.dataset_id = dataset_id
         self.primary_key = primary_key
         self.columns = columns
         super().__init__(self.message)
@@ -60,6 +64,7 @@ class ManifestPrimaryKeyError(Exception):
         return (
             f"{self.message}; "
             f"Table Name: {self.table_name}; "
+            f"Dataset ID: {self.dataset_id}; "
             f"Primary Key: {self.primary_key}; "
             f"Columns: [{','.join(self.columns)}]"
         )
@@ -120,7 +125,10 @@ class RDBUpdater:
 
         if table_schema.primary_key not in list(manifest_table.columns):
             raise ManifestPrimaryKeyError(
-                table_name, table_schema.primary_key, list(manifest_table.columns)
+                table_name,
+                dataset_id,
+                table_schema.primary_key,
+                list(manifest_table.columns),
             )
 
         normalized_table = self._normalize_table(manifest_table, table_schema)
