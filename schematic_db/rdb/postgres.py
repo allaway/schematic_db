@@ -26,19 +26,21 @@ class PostgresDatabase(SQLAlchemyDatabase):
         """
         super().__init__(config, verbose, "postgresql")
 
-    def _upsert_table_row(
-        self, row: dict[str, Any], table: sa.table, table_name: str
+    def _upsert_table_rows(
+        self, rows: list[dict[str, Any]], table: sa.table, table_name: str, primary_key: str
     ) -> None:
-        """Upserts a row into a Postgres table
+        """Upserts a pandas dataframe into a Postgres table
 
         Args:
-            row (dict[str, Any]): A row of a dataframe to be upserted
+            rows (list[dict[str, Any]]): A list of rows of a dataframe to be upserted
             table (sa.table):  A synapse table entity to be upserted into
             table_name (str): The name of the table to be upserted into
+            primary_key (str): The name fo the primary key of the table being upserted into
         """
-        statement = sa_postgres.insert(table).values(row)
+        statement = sa_postgres.insert(table).values(rows)
+        update_columns = {col.name: col for col in statement.excluded if col.name != primary_key}
         statement = statement.on_conflict_do_update(
-            constraint=f"{table_name}_pkey", set_=row
+            constraint=f"{table_name}_pkey", set_=update_columns
         )
         with self.engine.connect().execution_options(autocommit=True) as conn:
             conn.execute(statement)

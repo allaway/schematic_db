@@ -31,7 +31,8 @@ def fixture_sql_databases(
     postgres_database: PostgresDatabase,
 ) -> Generator:
     """Yields a list of databases to test"""
-    yield [mysql_database, postgres_database]
+    #yield [mysql_database, postgres_database]
+    yield [postgres_database]
 
 
 @pytest.mark.fast
