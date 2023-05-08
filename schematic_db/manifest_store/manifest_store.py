@@ -132,7 +132,7 @@ class ManifestStore:
     def update_manifest_metadata(self) -> None:
         """Updates the current objects manifest_configs."""
         self.manifest_metadata = get_project_manifests(
-            input_token=self.synapse_input_token,
+            access_token=self.synapse_input_token,
             project_id=self.synapse_project_id,
             asset_view=self.synapse_asset_view_id,
         )

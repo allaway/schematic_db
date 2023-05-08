@@ -136,7 +136,7 @@ def filter_params(params: dict[str, Any]) -> dict[str, Any]:
     Returns:
         dict[str, Any]: A dictionary of parameters with any secrets removed
     """
-    secret_params = ["input_token"]
+    secret_params = ["access_token"]
     for param in secret_params:
         params.pop(param, None)
     return params
@@ -304,12 +304,12 @@ class ManifestMetadataList:
 
 
 def get_project_manifests(
-    input_token: str, project_id: str, asset_view: str
+    access_token: str, project_id: str, asset_view: str
 ) -> ManifestMetadataList:
     """Gets all metadata manifest files across all datasets in a specified project.
 
     Args:
-        input_token (str): access token
+        access_token (str): access token
         project_id (str): Project ID
         asset_view (str): ID of view listing all project data assets. For example,
             for Synapse this would be the Synapse ID of the fileview listing all
@@ -319,7 +319,7 @@ def get_project_manifests(
         ManifestMetadataList: A list of manifests in Synapse
     """
     params = {
-        "input_token": input_token,
+        "access_token": access_token,
         "project_id": project_id,
         "asset_view": asset_view,
     }
@@ -330,12 +330,12 @@ def get_project_manifests(
 
 
 def get_manifest(
-    input_token: str, dataset_id: str, asset_view: str
+    access_token: str, dataset_id: str, asset_view: str
 ) -> pandas.DataFrame:
     """Downloads a manifest as a pd.dataframe
 
     Args:
-        input_token (str): Access token
+        access_token (str): Access token
         dataset_id (str): The id of the dataset the manifest part of
         asset_view (str): The id of the view listing all project data assets. For example,
             for Synapse this would be the Synapse ID of the fileview listing all
@@ -345,7 +345,7 @@ def get_manifest(
         pd.DataFrame: The manifest in dataframe form
     """
     params = {
-        "input_token": input_token,
+        "access_token": access_token,
         "dataset_id": dataset_id,
         "asset_view": asset_view,
         "as_json": True,
