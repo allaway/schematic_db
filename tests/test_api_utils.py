@@ -163,7 +163,7 @@ class TestAPIUtilHelpers:
             create_schematic_api_response(
                 endpoint_path="manifest/download",
                 params={
-                    "input_token": secrets_dict["synapse"]["auth_token"],
+                    "access_token": secrets_dict["synapse"]["auth_token"],
                     "dataset_id": "syn47996410",
                     "asset_view": test_synapse_asset_view_id,
                     "as_json": True,
@@ -174,9 +174,11 @@ class TestAPIUtilHelpers:
     def test_filter_params(self) -> None:
         """Testing for filter_params"""
         assert not filter_params({})
-        assert not filter_params({"input_token": "xxx"})
+        assert not filter_params({"access_token": "xxx"})
         assert filter_params({"attribute": 1}) == {"attribute": 1}
-        assert filter_params({"attribute": 1, "input_token": "xxx"}) == {"attribute": 1}
+        assert filter_params({"attribute": 1, "access_token": "xxx"}) == {
+            "attribute": 1
+        }
 
 
 @pytest.mark.schematic
@@ -219,7 +221,7 @@ class TestAPIUtils:
     ) -> None:
         "Testing for get_project_manifests"
         manifest_metadata = get_project_manifests(
-            input_token=secrets_dict["synapse"]["auth_token"],
+            access_token=secrets_dict["synapse"]["auth_token"],
             project_id=test_synapse_project_id,
             asset_view=test_synapse_asset_view_id,
         )
