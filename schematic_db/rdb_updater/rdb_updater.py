@@ -4,18 +4,33 @@ import pandas as pd
 from schematic_db.rdb.rdb import RelationalDatabase, UpsertDatabaseError
 from schematic_db.manifest_store.manifest_store import ManifestStore
 from schematic_db.db_schema.db_schema import TableSchema
+from schematic_db.api_utils.api_utils import ManifestMetadataList
 
 
 class NoManifestWarning(Warning):
     """Raised when trying to update a database table there are no manifests"""
 
-    def __init__(self, message: str) -> None:
-        """
+    def __init__(
+        self, table_name: str, manifest_metadata_list: ManifestMetadataList
+    ) -> None:
+        """_summary_
+
         Args:
-            message (str): A messages describing the warning
+            table_name (str): The name of the table there were no manifests for
+            manifest_metadata_list (ManifestMetadataList): A list of metadata
+             for all found manifests
         """
-        self.message = message
+        self.message = "There were no manifests found for table"
+        self.table_name = table_name
+        self.manifest_metadata_list = manifest_metadata_list
         super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return (
+            f"{self.message}; "
+            f"Table Name: {self.table_name}; "
+            f"Manifests: {self.manifest_metadata_list}"
+        )
 
 
 class UpsertError(Exception):
@@ -102,8 +117,9 @@ class RDBUpdater:
 
         # If there are no manifests a warning is raised and breaks out of function.
         if len(dataset_ids) == 0:
-            msg = f"There were no manifests found for table: {table_name}"
-            warnings.warn(NoManifestWarning(msg))
+            warnings.warn(
+                NoManifestWarning(table_name, self.manifest_store.manifest_metadata)
+            )
             return
 
         for dataset_id in dataset_ids:
