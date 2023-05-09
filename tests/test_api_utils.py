@@ -12,7 +12,7 @@ from schematic_db.api_utils.api_utils import (
     get_property_label_from_display_name,
     get_graph_by_edge_type,
     get_project_manifests,
-    get_manifest,
+    download_manifest,
     is_node_required,
     get_node_validation_rules,
     SchematicAPIError,
@@ -164,8 +164,7 @@ class TestAPIUtilHelpers:
                 endpoint_path="manifest/download",
                 params={
                     "access_token": secrets_dict["synapse"]["auth_token"],
-                    "dataset_id": "syn47996410",
-                    "asset_view": test_synapse_asset_view_id,
+                    "manifest_id": "syn47996491",
                     "as_json": True,
                 },
                 timeout=1,
@@ -227,14 +226,11 @@ class TestAPIUtils:
         )
         assert len(manifest_metadata.metadata_list) == 5
 
-    def test_get_manifest(
-        self, secrets_dict: dict, test_synapse_asset_view_id: str
-    ) -> None:
-        "Testing for get_manifest"
-        manifest = get_manifest(
+    def test_download_manifest(self, secrets_dict: dict) -> None:
+        "Testing for download_manifest"
+        manifest = download_manifest(
             secrets_dict["synapse"]["auth_token"],
-            "syn47996410",
-            test_synapse_asset_view_id,
+            "syn47996491",
         )
         assert isinstance(manifest, pd.DataFrame)
 
