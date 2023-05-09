@@ -132,7 +132,6 @@ class TestAPIUtilHelpers:
         self,
         test_schema_json_url: str,
         secrets_dict: dict,
-        test_synapse_asset_view_id: str,
     ) -> None:
         """Testing for create_schematic_api_response"""
         response = create_schematic_api_response(
