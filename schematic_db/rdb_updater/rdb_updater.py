@@ -1,7 +1,9 @@
 """RDBUpdater"""
 import warnings
+import pandas as pd
 from schematic_db.rdb.rdb import RelationalDatabase, UpsertDatabaseError
 from schematic_db.manifest_store.manifest_store import ManifestStore
+from schematic_db.db_schema.db_schema import TableSchema
 from schematic_db.api_utils.api_utils import ManifestMetadataList
 
 
@@ -53,6 +55,36 @@ class UpsertError(Exception):
         )
 
 
+class ManifestPrimaryKeyError(Exception):
+    """Raised when a manifest is missing its primary key"""
+
+    def __init__(
+        self, table_name: str, dataset_id: str, primary_key: str, columns: list[str]
+    ) -> None:
+        """
+        Args:
+            table_name (str): The name of the table for which the manifest was downloaded
+            dataset_id (str): The dataset id of the manifest
+            primary_key (str): The primary key of the table
+            columns (list[str]): The columns in the manifest
+        """
+        self.message = "Manifest is missing its primary key"
+        self.table_name = table_name
+        self.dataset_id = dataset_id
+        self.primary_key = primary_key
+        self.columns = columns
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return (
+            f"{self.message}; "
+            f"Table Name: {self.table_name}; "
+            f"Dataset ID: {self.dataset_id}; "
+            f"Primary Key: {self.primary_key}; "
+            f"Columns: [{','.join(self.columns)}]"
+        )
+
+
 class RDBUpdater:
     """An for updating a database."""
 
@@ -101,20 +133,45 @@ class RDBUpdater:
             dataset_id (str): The id of the dataset
 
         Raises:
+            ManifestPrimaryKeyError: Raised when the manifest table is missing its primary key
             UpsertError: Raised when there is an UpsertDatabaseError caught
         """
         table_schema = self.rdb.get_table_schema(table_name)
-        manifest_table = self.manifest_store.get_manifest(dataset_id)
+        manifest_table: pd.DataFrame = self.manifest_store.get_manifest(dataset_id)
 
-        # normalize table
-        table_columns = set(table_schema.get_column_names())
-        manifest_columns = set(manifest_table.columns)
-        columns = list(table_columns.intersection(manifest_columns))
-        manifest_table = manifest_table[columns]
-        manifest_table = manifest_table.drop_duplicates(subset=table_schema.primary_key)
-        manifest_table.reset_index(inplace=True, drop=True)
+        if table_schema.primary_key not in list(manifest_table.columns):
+            raise ManifestPrimaryKeyError(
+                table_name,
+                dataset_id,
+                table_schema.primary_key,
+                list(manifest_table.columns),
+            )
+
+        normalized_table = self._normalize_table(manifest_table, table_schema)
 
         try:
-            self.rdb.upsert_table_rows(table_name, manifest_table)
+            self.rdb.upsert_table_rows(table_name, normalized_table)
         except UpsertDatabaseError as exc:
             raise UpsertError(table_name, dataset_id) from exc
+
+    def _normalize_table(
+        self, table: pd.DataFrame, table_schema: TableSchema
+    ) -> pd.DataFrame:
+        """
+        Gets the table ready for upsert by selecting only needed columns and removing
+         duplicate entries
+
+        Args:
+            table (pd.DataFrame): The table to normalize
+            table_schema (TableSchema):The schema of the table
+
+        Returns:
+            pd.DataFrame: A normalized table
+        """
+        table_columns = set(table_schema.get_column_names())
+        manifest_columns = set(table.columns)
+        columns = list(table_columns.intersection(manifest_columns))
+        table = table[columns]
+        table = table.drop_duplicates(subset=table_schema.primary_key)
+        table.reset_index(inplace=True, drop=True)
+        return table
