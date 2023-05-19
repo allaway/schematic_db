@@ -110,7 +110,6 @@ def fixture_rdb_queryer_postgres(
         query_store.delete_table(table_name)
 
 
-@pytest.mark.schematic
 class TestIntegration:
     """Integration tests"""
 

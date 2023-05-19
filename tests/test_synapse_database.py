@@ -61,7 +61,6 @@ def fixture_synapse_with_filled_tables(
     yield obj
 
 
-@pytest.mark.synapse
 class TestSynapseDatabase:
     """Testing for SynapseDatabase"""
 
