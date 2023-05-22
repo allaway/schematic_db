@@ -209,17 +209,17 @@ class SynapseDatabase(RelationalDatabase):
         self._drop_table(table_id)
 
     def _drop_all_table_dependencies(
-        self, table_name: str, db_config: DatabaseSchema
+        self, table_name: str, db_schema: DatabaseSchema
     ) -> None:
         """Drops all tables that depend on the input table
 
         Args:
             table_name (str): The name of the table whose dependent table will be dropped
-            db_config (DatabaseSchema): The configuration fo the database
+            db_schema (DatabaseSchema): The configuration of the database
         """
-        reverse_dependencies = db_config.get_reverse_dependencies(table_name)
+        reverse_dependencies = db_schema.get_reverse_dependencies(table_name)
         for rd_table_name in reverse_dependencies:
-            self._drop_table_and_dependencies(rd_table_name, db_config)
+            self._drop_table_and_dependencies(rd_table_name, db_schema)
 
     def delete_all_tables(self) -> None:
         """Deletes all tables in the project"""
