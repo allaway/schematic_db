@@ -88,11 +88,9 @@ class TestMockSynapseDatabase:
         with patch.object(
             Synapse, "get_synapse_id_from_table_name", return_value="syn1"
         ) as mock_method1:
-
             with patch.object(
                 Synapse, "query_table", return_value=pd.DataFrame()
             ) as mock_method2:
-
                 obj.query_table("table_one")
                 mock_method1.assert_called_once_with("table_one")
                 mock_method2.assert_called_once_with("syn1")
@@ -105,11 +103,9 @@ class TestMockSynapseDatabase:
         with patch.object(
             SynapseDatabase, "get_database_schema", return_value=database_schema
         ):
-
             with patch.object(
                 SynapseDatabase, "_drop_table_and_dependencies"
             ) as mock_method:
-
                 obj.drop_all_tables()
                 assert mock_method.call_args_list == [
                     call("table_one", database_schema),
@@ -124,11 +120,9 @@ class TestMockSynapseDatabase:
         with patch.object(
             SynapseDatabase, "get_database_schema", return_value="table_schema"
         ):
-
             with patch.object(
                 SynapseDatabase, "_drop_table_and_dependencies"
             ) as mock_method:
-
                 mock_synapse_database.drop_table_and_dependencies("table_one")
                 mock_method.assert_called_once_with("table_one", "table_schema")
 
@@ -140,13 +134,13 @@ class TestMockSynapseDatabase:
         with patch.object(
             SynapseDatabase, "_drop_all_table_dependencies"
         ) as mock_method1:
-
             with patch.object(
                 Synapse, "get_synapse_id_from_table_name", return_value="syn1"
             ) as mock_method2:
-
                 with patch.object(SynapseDatabase, "_drop_table") as mock_method3:
-                    mock_synapse_database._drop_table_and_dependencies("table_one", database_schema)
+                    mock_synapse_database._drop_table_and_dependencies(
+                        "table_one", database_schema
+                    )
                     mock_method1.assert_called_once_with("table_one", database_schema)
                     mock_method2.assert_called_once_with("table_one")
                     mock_method3.assert_called_once_with("syn1")
@@ -161,12 +155,12 @@ class TestMockSynapseDatabase:
             "get_reverse_dependencies",
             return_value=["table_one", "table_two"],
         ) as mock_method1:
-
             with patch.object(
                 SynapseDatabase, "_drop_table_and_dependencies"
             ) as mock_method2:
-
-                mock_synapse_database._drop_all_table_dependencies("table_one", database_schema)
+                mock_synapse_database._drop_all_table_dependencies(
+                    "table_one", database_schema
+                )
                 mock_method1.assert_called_once_with("table_one")
                 assert mock_method2.call_args_list == [
                     call("table_one", database_schema),
