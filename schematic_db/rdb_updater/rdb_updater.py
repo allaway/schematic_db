@@ -230,7 +230,8 @@ class RDBUpdater:
              Defaults to "upsert".
 
         Raises:
-            UpsertError: Raised when there is an UpsertDatabaseError caught
+            UpdateError: Raised when there is an UpsertDatabaseError or InsertDatabaseError caught
+            ValueError: Raised when method is not one of ['insert', 'upsert']
         """
         logging.info(
             f"Updating manifest; table name: {table_name}; manifest id: {manifest_id}"
@@ -238,8 +239,12 @@ class RDBUpdater:
         try:
             if method == "upsert":
                 self.rdb.upsert_table_rows(table_name, table)
-            else:
+            elif method == "insert":
                 self.rdb.insert_table_rows(table_name, table)
+            else:
+                raise ValueError(
+                    f"Parameter method must be one of ['insert', 'upsert'] not {method}"
+                )
         except (UpsertDatabaseError, InsertDatabaseError) as exc:
             raise UpdateError(table_name, manifest_id) from exc
         logging.info("Finished updating manifest")
