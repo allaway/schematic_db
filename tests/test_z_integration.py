@@ -119,7 +119,7 @@ class TestIntegration1:
         rdb_updater_mysql: RDBUpdater,
         rdb_queryer_mysql: RDBQueryer,
         data_directory: str,
-        test_schema_table_names: list[str]
+        test_schema_table_names: list[str],
     ) -> None:
         """Creates the test database in MySQL"""
         rdb_builder = rdb_builder_mysql
