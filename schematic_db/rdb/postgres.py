@@ -3,7 +3,7 @@ from typing import Any
 import numpy
 import pandas
 import sqlalchemy
-import sqlalchemy.dialects.postgresql as sa_postgres
+import sqlalchemy.dialects.postgresql as sqlalchemy_postgres
 from sqlalchemy.inspection import inspect
 from sqlalchemy import exc
 from .sql_alchemy_database import SQLAlchemyDatabase, SQLConfig
@@ -65,14 +65,14 @@ class PostgresDatabase(SQLAlchemyDatabase):
             table_name (str): The name of the table to be upserted into
             primary_key (str): The name fo the primary key of the table being upserted into
         """
-        statement = sa_postgres.insert(table).values(rows)
+        statement = sqlalchemy_postgres.insert(table).values(rows)
         update_columns = {
             col.name: col for col in statement.excluded if col.name != primary_key
         }
         statement = statement.on_conflict_do_update(
             constraint=f"{table_name}_pkey", set_=update_columns
         )
-        with self.engine.connect().execution_options(autocommit=True) as conn:
+        with self.engine.begin() as conn:
             conn.execute(statement)
 
     def query_table(self, table_name: str) -> pandas.DataFrame:

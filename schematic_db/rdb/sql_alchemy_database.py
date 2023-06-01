@@ -173,7 +173,7 @@ class SQLAlchemyDatabase(
     def drop_all_tables(self) -> None:
         """Drops all tables in the schema"""
         metadata = self._get_current_metadata()
-        metadata.drop_all()
+        metadata.drop_all(self.engine)
 
     def execute_sql_query(self, query: str) -> pandas.DataFrame:
         """Executes a sql query returning a table
@@ -184,7 +184,7 @@ class SQLAlchemyDatabase(
         Returns:
             pandas.DataFrame: The query result in pandas.Dataframe form
         """
-        result = self._execute_sql_statement(query).fetchall()
+        result = self._execute_sql_statement(sqlalchemy.text(query)).fetchall()
         table = pandas.DataFrame(result)
         return table
 
@@ -223,7 +223,7 @@ class SQLAlchemyDatabase(
         rows = data.to_dict("records")
         statement = sqlalchemy.insert(table).values(rows)
         try:
-            with self.engine.connect().execution_options(autocommit=True) as conn:
+            with self.engine.begin() as conn:
                 conn.execute(statement)
         except exc.SQLAlchemyError as exception:
             raise InsertDatabaseError(table_name) from exception
@@ -286,18 +286,17 @@ class SQLAlchemyDatabase(
         query = f"SELECT * FROM `{table_name}`"
         return self.execute_sql_query(query)
 
-    def _execute_sql_statement(self, statement: str) -> Any:
+    def _execute_sql_statement(self, statement: sqlalchemy.text) -> Any:
         """Executes a sql statement
 
         Args:
-            statement (str): A sql statement in string form
+            statement (sqlalchemy.text): A sql statement in sqlalchemy.text form
 
         Returns:
-            Any: The result, idf any, from the sql statement
+            Any: The result, if any, from the sql statement
         """
-        with self.engine.connect().execution_options(autocommit=True) as conn:
-            result = conn.execute(statement)
-        return result
+        with self.engine.begin() as conn:
+            return conn.execute(statement)
 
     def _create_columns(self, table_schema: TableSchema) -> list[sqlalchemy.Column]:
         """Creates a list SQLAlchemy columns for a table
@@ -409,6 +408,6 @@ class SQLAlchemyDatabase(
         Returns:
             sqlalchemy.schema.MetaData: The current database metadata
         """
-        metadata = sqlalchemy.schema.MetaData(self.engine)
-        metadata.reflect()
+        metadata = sqlalchemy.schema.MetaData()
+        metadata.reflect(self.engine)
         return metadata

@@ -66,7 +66,7 @@ class MySQLDatabase(SQLAlchemyDatabase):
             table_name (str): The name of the table to be upserted into (unused)
         """
         statement = insert(table).values(row).on_duplicate_key_update(**row)
-        with self.engine.connect().execution_options(autocommit=True) as conn:
+        with self.engine.begin() as conn:
             conn.execute(statement)
 
     def _get_datatype(
