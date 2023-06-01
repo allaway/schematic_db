@@ -94,10 +94,18 @@ def create_column_schemas(
     datatypes = {
         sa.String: ColumnDatatype.TEXT,
         sa.VARCHAR: ColumnDatatype.TEXT,
+        sa.dialects.mysql.types.VARCHAR: ColumnDatatype.TEXT,
         sa.Date: ColumnDatatype.DATE,
+        sa.DATE: ColumnDatatype.DATE,
         sa.Integer: ColumnDatatype.INT,
+        sa.INTEGER: ColumnDatatype.INT,
+        sa.dialects.mysql.types.INTEGER: ColumnDatatype.INT,
         sa.Float: ColumnDatatype.FLOAT,
+        sa.FLOAT: ColumnDatatype.FLOAT,
+        sa.dialects.mysql.types.FLOAT: ColumnDatatype.FLOAT,
+        sa.dialects.postgresql.base.DOUBLE_PRECISION: ColumnDatatype.FLOAT,
         sa.Boolean: ColumnDatatype.BOOLEAN,
+        sa.BOOLEAN: ColumnDatatype.BOOLEAN,
     }
     columns = table_schema.c
     return [
@@ -149,7 +157,7 @@ class SQLAlchemyDatabase(
         self.db_type_string = db_type_string
 
         self.create_database()
-        self.metadata = sa.MetaData()
+        self.metadata = sa.schema.MetaData(self.engine)
 
     def drop_database(self) -> None:
         """Drops the database from the server"""
@@ -166,10 +174,10 @@ class SQLAlchemyDatabase(
 
     def drop_all_tables(self) -> None:
         """Drops all tables in the schema"""
-        metadata = sa.schema.MetaData(self.engine)
-        metadata.reflect()
+        metadata = self._get_current_metadata()
         metadata.drop_all()
-        self.metadata.clear()
+        metadata.clear()
+        self.metadata = metadata
 
     def execute_sql_query(self, query: str) -> pd.DataFrame:
         """Executes a sql query returning a table
@@ -193,7 +201,8 @@ class SQLAlchemyDatabase(
         Returns:
             TableSchema: A schema for the table
         """
-        table_schema = self.metadata.tables[table_name]
+        metadata = self._get_current_metadata()
+        table_schema = metadata.tables[table_name]
         primary_key = inspect(table_schema).primary_key.columns.values()[0].name
         indices = self._get_column_indices(table_name)
         return TableSchema(
@@ -213,7 +222,8 @@ class SQLAlchemyDatabase(
         Raises:
             InsertDatabaseError: Raised when a SQLAlchemy error caught
         """
-        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
+        metadata = self._get_current_metadata()
+        table = sa.Table(table_name, metadata, autoload_with=self.engine)
         data = data.replace({np.nan: None})
         rows = data.to_dict("records")
         statement = sa.insert(table).values(rows)
@@ -229,9 +239,11 @@ class SQLAlchemyDatabase(
         Args:
             table_name (str): The name of the table to be dropped
         """
-        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
+        metadata = self._get_current_metadata()
+        table = sa.Table(table_name, metadata, autoload_with=self.engine)
         table.drop(self.engine)
-        self.metadata.clear()
+        metadata.clear()
+        self.metadata = metadata
 
     def delete_table_rows(self, table_name: str, data: pd.DataFrame) -> None:
         """Deletes rows from a table
@@ -241,7 +253,8 @@ class SQLAlchemyDatabase(
             data (pd.DataFrame): A pandas dataframe, rows will eb deleted from the table
              in the database where the primary keys match this dataframe.
         """
-        table = sa.Table(table_name, self.metadata, autoload_with=self.engine)
+        metadata = self._get_current_metadata()
+        table = sa.Table(table_name, metadata, autoload_with=self.engine)
         i = sa.inspect(table)
         pkey_column = list(column for column in i.columns if column.primary_key)[0]
         values = data[pkey_column.name].values.tolist()
@@ -264,9 +277,11 @@ class SQLAlchemyDatabase(
             table_name (str): The name of the table
             table_schema (TableSchema): The schema for the table to be added
         """
+        metadata = self._get_current_metadata()
         columns = self._create_columns(table_schema)
-        sa.Table(table_name, self.metadata, *columns)
-        self.metadata.create_all(self.engine)
+        sa.Table(table_name, metadata, *columns)
+        metadata.create_all(self.engine)
+        self.metadata = metadata
 
     def query_table(self, table_name: str) -> pd.DataFrame:
         """Queries a whole table
@@ -384,3 +399,13 @@ class SQLAlchemyDatabase(
             ColumnDatatype.BOOLEAN: sa.Boolean,
         }
         return datatypes[column_schema.datatype]
+
+    def _get_current_metadata(self) -> sa.schema.MetaData:
+        """Gets the current database metadata
+
+        Returns:
+            sa.schema.MetaData: The current database metadata
+        """
+        metadata = sa.schema.MetaData(self.engine)
+        metadata.reflect()
+        return metadata
