@@ -15,8 +15,8 @@ from schematic_db.db_schema.db_schema import (
     ForeignKeySchema,
 )
 
-from schematic_db.manifest_store.manifest_store import (
-    ManifestStore,
+from schematic_db.manifest_store.api_manifest_store import (
+    APIManifestStore,
     ManifestStoreConfig,
 )
 
@@ -223,7 +223,7 @@ def fixture_manifest_store(
     test_schema_json_url: str,
 ) -> Generator:
     """Yields a ManifestStore object"""
-    yield ManifestStore(
+    yield APIManifestStore(
         ManifestStoreConfig(
             test_schema_json_url,
             test_synapse_project_id,
