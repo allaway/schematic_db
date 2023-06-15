@@ -2,7 +2,10 @@
 import pytest
 from pydantic import ValidationError
 from schematic_db.manifest_store.api_manifest_store import APIManifestStore
-from schematic_db.manifest_store.manifest_metadata_list import  ManifestMetadata, ManifestMetadataList
+from schematic_db.manifest_store.manifest_metadata_list import (
+    ManifestMetadata,
+    ManifestMetadataList,
+)
 
 
 @pytest.mark.fast
@@ -83,7 +86,7 @@ class TestManifestMetadataList:
                     "manifest_id": "syn2",
                     "manifest_name": "x",
                     "component_name": "x",
-                }
+                },
             ]
         )
         assert len(mml.metadata_list) == 1
@@ -105,7 +108,7 @@ class TestManifestMetadataList:
                     "manifest_id": "syn4",
                     "manifest_name": "x",
                     "component_name": "x",
-                }
+                },
             ]
         )
         print(mml)
@@ -127,7 +130,7 @@ class TestManifestMetadataList:
                     "manifest_id": "syn4",
                     "manifest_name": "x",
                     "component_name": "component2",
-                }
+                },
             ]
         )
         assert mml.get_dataset_ids_for_component("component1") == ["syn1"]
@@ -150,11 +153,12 @@ class TestManifestMetadataList:
                     "manifest_id": "syn4",
                     "manifest_name": "x",
                     "component_name": "component2",
-                }
+                },
             ]
         )
         assert mml.get_manifest_ids_for_component("component1") == ["syn2"]
         assert mml.get_manifest_ids_for_component("component2") == ["syn4"]
+
 
 class TestSchema:
     """Testing for ManifestStore"""

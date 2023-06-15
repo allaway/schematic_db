@@ -197,6 +197,7 @@ def get_graph_by_edge_type(schema_url: str, relationship: str) -> list[tuple[str
     response = create_schematic_api_response("schemas/get/graph_by_edge_type", params)
     return response.json()
 
+
 def get_project_manifests(
     access_token: str, project_id: str, asset_view: str
 ) -> ManifestMetadataList:
@@ -224,11 +225,11 @@ def get_project_manifests(
     for item in response.json():
         metadata_list.append(
             {
-                "dataset_id":item[0][0],
-                "dataset_name":item[0][1],
-                "manifest_id":item[1][0],
-                "manifest_name":item[1][1],
-                "component_name":item[2][0],
+                "dataset_id": item[0][0],
+                "dataset_name": item[0][1],
+                "manifest_id": item[1][0],
+                "manifest_name": item[1][1],
+                "component_name": item[2][0],
             }
         )
     return ManifestMetadataList(metadata_list)

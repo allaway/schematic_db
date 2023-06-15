@@ -16,6 +16,7 @@ from schematic_db.api_utils.api_utils import (
     SchematicAPITimeoutError,
 )
 
+
 class TestAPIUtilHelpers:
     """Testing for API util helpers"""
 

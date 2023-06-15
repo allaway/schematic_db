@@ -5,6 +5,7 @@ import re
 from pydantic.dataclasses import dataclass
 from pydantic import validator
 
+
 @dataclass()
 class ManifestMetadata:
     """Metadata for a manifest in Synapse."""
