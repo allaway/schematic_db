@@ -68,7 +68,7 @@ def fixture_synapse_with_filled_table_one(
 @pytest.fixture(name="mock_synapse_config")
 def fixture_mock_synapse_config() -> Generator:
     """Yields a SynapseConfig with no real data"""
-    yield SynapseConfig(username="", auth_token="", project_id="")
+    yield SynapseConfig(auth_token="", project_id="")
 
 
 @pytest.mark.fast

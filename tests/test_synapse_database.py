@@ -23,7 +23,7 @@ def fixture_mock_synapse_database() -> Generator:
     with patch.object(sc, "Synapse", return_value=Mock()):
         with patch.object(sc.Synapse, "login", return_value=None):
             obj = SynapseDatabase(
-                SynapseConfig(username="x", auth_token="y", project_id="syn1")
+                SynapseConfig(auth_token="y", project_id="syn1")
             )
             yield obj
 

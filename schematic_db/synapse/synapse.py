@@ -45,8 +45,6 @@ class SynapseDeleteRowsError(Exception):
 @dataclass
 class SynapseConfig:
     """A config for a Synapse Project."""
-
-    username: str
     auth_token: str
     project_id: str
 
@@ -62,12 +60,11 @@ class Synapse:  # pylint: disable=too-many-public-methods
         Args:
             config (SynapseConfig): A SynapseConfig object
         """
-        username = config.username
         auth_token = config.auth_token
         project_id = config.project_id
 
         syn = synapseclient.Synapse()
-        syn.login(username, authToken=auth_token)
+        syn.login(authToken=auth_token)
 
         self.syn = syn
         self.project_id = project_id

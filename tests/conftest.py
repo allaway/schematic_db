@@ -119,7 +119,6 @@ def fixture_synapse_config(secrets_dict: dict[str, Any]) -> Generator:
     """
     yield SynapseConfig(
         project_id=secrets_dict["synapse"]["project_id"],
-        username=secrets_dict["synapse"]["username"],
         auth_token=secrets_dict["synapse"]["auth_token"],
     )
 
@@ -241,7 +240,6 @@ def fixture_synapse_test_query_store(secrets_dict: dict) -> Generator:
     obj = SynapseQueryStore(
         SynapseConfig(
             project_id="syn34178981",
-            username=secrets_dict["synapse"]["username"],
             auth_token=secrets_dict["synapse"]["auth_token"],
         )
     )
