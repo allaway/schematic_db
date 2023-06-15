@@ -45,30 +45,30 @@ def fixture_rdb_builder_synapse(
 
 @pytest.fixture(scope="class", name="rdb_updater_mysql")
 def fixture_rdb_updater_mysql(
-    mysql_database: MySQLDatabase, manifest_store: APIManifestStore
+    mysql_database: MySQLDatabase, api_manifest_store: APIManifestStore
 ) -> Generator:
     """Yields a RDBUpdater with a mysql database and test schema"""
-    obj = RDBUpdater(rdb=mysql_database, manifest_store=manifest_store)
+    obj = RDBUpdater(rdb=mysql_database, manifest_store=api_manifest_store)
     yield obj
     obj.rdb.drop_all_tables()
 
 
 @pytest.fixture(scope="class", name="rdb_updater_postgres")
 def fixture_rdb_updater_postgres(
-    postgres_database: PostgresDatabase, manifest_store: APIManifestStore
+    postgres_database: PostgresDatabase, api_manifest_store: APIManifestStore
 ) -> Generator:
     """Yields a RDBUpdater with a mysql database and test schema"""
-    obj = RDBUpdater(rdb=postgres_database, manifest_store=manifest_store)
+    obj = RDBUpdater(rdb=postgres_database, manifest_store=api_manifest_store)
     yield obj
     obj.rdb.drop_all_tables()
 
 
 @pytest.fixture(scope="class", name="rdb_updater_synapse")
 def fixture_rdb_updater_synapse(
-    synapse_database: SynapseDatabase, manifest_store: APIManifestStore
+    synapse_database: SynapseDatabase, api_manifest_store: APIManifestStore
 ) -> Generator:
     """Yields a RDBUpdater with a synapse database and test schema"""
-    obj = RDBUpdater(rdb=synapse_database, manifest_store=manifest_store)
+    obj = RDBUpdater(rdb=synapse_database, manifest_store=api_manifest_store)
     yield obj
     synapse_database.delete_all_tables()
 

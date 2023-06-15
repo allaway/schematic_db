@@ -1,7 +1,8 @@
 """Testing for ManifestStore."""
+from typing import Any
 import pytest
 from pydantic import ValidationError
-from schematic_db.manifest_store.api_manifest_store import APIManifestStore
+from schematic_db.manifest_store.manifest_store import ManifestStore
 from schematic_db.manifest_store.manifest_metadata_list import (
     ManifestMetadata,
     ManifestMetadataList,
@@ -160,23 +161,26 @@ class TestManifestMetadataList:
         assert mml.get_manifest_ids_for_component("component2") == ["syn4"]
 
 
-class TestSchema:
+@pytest.mark.parametrize(
+    "manifest_store", ["api_manifest_store", "synapse_manifest_store"]
+)
+class TestManifestStore:
     """Testing for ManifestStore"""
 
-    def test_init(self, manifest_store: APIManifestStore) -> None:
+    def test_init(self, request: Any, manifest_store: str) -> None:
         """Testing for Schema.__init__"""
-        obj = manifest_store
+        obj: ManifestStore = request.getfixturevalue(manifest_store)
         for item in obj.get_manifest_metadata().metadata_list:
             assert isinstance(item, ManifestMetadata)
 
-    def test_get_manifest_ids(self, manifest_store: APIManifestStore) -> None:
+    def test_get_manifest_ids(self, request: Any, manifest_store: str) -> None:
         """Testing for Schema.get_get_manifest_ids"""
-        obj = manifest_store
+        obj: ManifestStore = request.getfixturevalue(manifest_store)
         assert obj.get_manifest_ids("Patient") == ["syn47996020", "syn47996172"]
 
-    def test_download_manifest(self, manifest_store: APIManifestStore) -> None:
+    def test_download_manifest(self, request: Any, manifest_store: str) -> None:
         """Testing for Schema.download_manifest"""
-        obj = manifest_store
+        obj: ManifestStore = request.getfixturevalue(manifest_store)
         manifest = obj.download_manifest("syn47996020")
         assert sorted(list(manifest.columns)) == sorted(
             [

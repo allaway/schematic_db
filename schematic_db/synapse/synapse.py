@@ -1,5 +1,4 @@
 """Synapse"""
-from dataclasses import dataclass
 from typing import Any
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 import synapseclient  # type: ignore
@@ -42,26 +41,19 @@ class SynapseDeleteRowsError(Exception):
         return f"{self.message}; table_id:{self.table_id}; columns: {', '.join(self.columns)}"
 
 
-@dataclass
-class SynapseConfig:
-    """A config for a Synapse Project."""
-    auth_token: str
-    project_id: str
-
-
 class Synapse:  # pylint: disable=too-many-public-methods
     """
     The Synapse class handles interactions with a project in Synapse.
     """
 
-    def __init__(self, config: SynapseConfig) -> None:
+    def __init__(self, auth_token: str, project_id: str) -> None:
         """Init
 
         Args:
-            config (SynapseConfig): A SynapseConfig object
+            auth_token (str): A Synapse auth_token
+            project_id (str): A Synapse id for a project
         """
-        auth_token = config.auth_token
-        project_id = config.project_id
+        self.project_id = project_id
 
         syn = synapseclient.Synapse()
         syn.login(authToken=auth_token)

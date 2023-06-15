@@ -2,10 +2,6 @@
 # pylint: disable=duplicate-code
 
 from typing import Optional
-import re
-from pydantic.dataclasses import dataclass
-from pydantic import validator
-import validators
 import pandas
 from schematic_db.api_utils.api_utils import (
     get_project_manifests,
@@ -13,7 +9,7 @@ from schematic_db.api_utils.api_utils import (
     ManifestMetadataList,
 )
 from schematic_db.schema_graph.schema_graph import SchemaGraph
-from .manifest_store import ManifestStore
+from .manifest_store import ManifestStore, ManifestStoreConfig
 
 
 class ManifestMissingPrimaryKeyError(Exception):
@@ -49,67 +45,12 @@ class ManifestMissingPrimaryKeyError(Exception):
         )
 
 
-@dataclass()
-class ManifestStoreConfig:
-    """
-    A config for a ManifestStore.
-    Properties:
-        schema_url (str): A url to the jsonld schema file
-        synapse_project_id (str): The synapse id to the project where the manifests are stored.
-        synapse_asset_view_id (str): The synapse id to the asset view that tracks the manifests.
-        synapse_input_token (str): A synapse token with download permissions for both the
-         synapse_project_id and synapse_asset_view_id
-    """
-
-    schema_url: str
-    synapse_project_id: str
-    synapse_asset_view_id: str
-    synapse_input_token: str
-
-    @validator("schema_url")
-    @classmethod
-    def validate_url(cls, value: str) -> str:
-        """Validates that the value is a valid URL"""
-        valid_url = validators.url(value)
-        if not valid_url:
-            raise ValueError(f"{value} is a valid url")
-        return value
-
-    @validator("schema_url")
-    @classmethod
-    def validate_is_jsonld(cls, value: str) -> str:
-        """Validates that the value is a jsonld file"""
-        is_jsonld = value.endswith(".jsonld")
-        if not is_jsonld:
-            raise ValueError(f"{value} does end with '.jsonld'")
-        return value
-
-    @validator("synapse_project_id", "synapse_asset_view_id")
-    @classmethod
-    def validate_synapse_id(cls, value: str) -> str:
-        """Check if string is a valid synapse id"""
-        if not re.search("^syn[0-9]+", value):
-            raise ValueError(f"{value} is not a valid Synapse id")
-        return value
-
-    @validator("synapse_input_token")
-    @classmethod
-    def validate_string_is_not_empty(cls, value: str) -> str:
-        """Check if string  is not empty(has at least one char)"""
-        if len(value) == 0:
-            raise ValueError(f"{value} is an empty string")
-        return value
-
-
 class APIManifestStore(ManifestStore):
     """
     The APIManifestStore class interacts with the Schematic API download manifests.
     """
 
-    def __init__(
-        self,
-        config: ManifestStoreConfig,
-    ) -> None:
+    def __init__(self, config: ManifestStoreConfig) -> None:
         """
         The Schema class handles interactions with the schematic API.
         The main responsibilities are creating the database schema, and retrieving manifests.
@@ -117,10 +58,9 @@ class APIManifestStore(ManifestStore):
         Args:
             config (SchemaConfig): A config describing the basic inputs for the schema object
         """
-        self.schema_url = config.schema_url
         self.synapse_project_id = config.synapse_project_id
         self.synapse_asset_view_id = config.synapse_asset_view_id
-        self.synapse_input_token = config.synapse_input_token
+        self.synapse_auth_token = config.synapse_auth_token
         self.schema_graph = SchemaGraph(config.schema_url)
         self.manifest_metadata: Optional[ManifestMetadataList] = None
 
@@ -144,7 +84,7 @@ class APIManifestStore(ManifestStore):
         # When first initialized, manifest metadata is None
         if self.manifest_metadata is None:
             self.manifest_metadata = get_project_manifests(
-                access_token=self.synapse_input_token,
+                access_token=self.synapse_auth_token,
                 project_id=self.synapse_project_id,
                 asset_view=self.synapse_asset_view_id,
             )
@@ -171,5 +111,5 @@ class APIManifestStore(ManifestStore):
         Returns:
             pandas.DataFrame: The manifest in dataframe form
         """
-        manifest = download_manifest(self.synapse_input_token, manifest_id)
+        manifest = download_manifest(self.synapse_auth_token, manifest_id)
         return manifest
