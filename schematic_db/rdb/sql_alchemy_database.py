@@ -89,8 +89,8 @@ def create_column_schemas(
     Args:
         table_schema (sqlalchemy.sql.schema.Table): A sqlalchemy table schema
         indexed_columns (list[str]): A list of columns in the schema to be indexed
-        column_datatypes(dict[Any, ColumnDatatype]): A dictionary whose keys are a sql column datatype,
-          and values are a ColumnDatatype
+        column_datatypes(dict[Any, ColumnDatatype]): A dictionary whose keys
+          are a sql column datatype, and values are a ColumnDatatype
 
     Returns:
         list[ColumnSchema]: A list of column schemas
