@@ -168,7 +168,7 @@ class SQLAlchemyDatabase(
         if not db_exists:
             sqlalchemy_utils.functions.create_database(url)
         engine = sqlalchemy.create_engine(
-            url, encoding="utf-8", echo=self.verbose, pool_pre_ping=True
+            url, echo=self.verbose, pool_pre_ping=True
         )
         self.engine = engine
 
