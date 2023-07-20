@@ -1,5 +1,5 @@
 """SQLAlchemy"""
-from typing import Any, Union
+from typing import Any
 from dataclasses import dataclass
 import pandas
 import numpy
@@ -275,7 +275,12 @@ class SQLAlchemyDatabase(
         """
         metadata = self._get_current_metadata()
         columns = self._create_columns(table_schema)
-        sqlalchemy.Table(table_name, metadata, *columns)
+        sqlalchemy.Table(
+            table_name,
+            metadata,
+            *columns,
+            sqlalchemy.PrimaryKeyConstraint(table_schema.primary_key),
+        )
         metadata.create_all(self.engine)
 
     def query_table(self, table_name: str) -> pandas.DataFrame:
@@ -304,25 +309,18 @@ class SQLAlchemyDatabase(
 
     def _create_columns(
         self, table_schema: TableSchema
-    ) -> list[Union[sqlalchemy.Column[Any], sqlalchemy.PrimaryKeyConstraint]]:
+    ) -> list[sqlalchemy.Column[Any]]:
         """Creates a list SQLAlchemy columns for a table
 
         Args:
             table_schema (TableSchema): The schema of the table to create columns for
 
         Returns:
-            list[
-                Union[
-                    sqlalchemy.Column[Any],
-                    sqlalchemy.PrimaryKeyConstraint
-                ]
-            ]:
-              A list SQLAlchemy columns or PrimaryKeyConstraints
+            list[sqlalchemy.Column[Any]]: A list SQLAlchemy columns
         """
-        columns: list[
-            Union[sqlalchemy.Column[Any], sqlalchemy.PrimaryKeyConstraint]
-        ] = [self._create_column(att, table_schema) for att in table_schema.columns]
-        columns.append(sqlalchemy.PrimaryKeyConstraint(table_schema.primary_key))
+        columns = [
+            self._create_column(att, table_schema) for att in table_schema.columns
+        ]
         return columns
 
     def _create_column(
