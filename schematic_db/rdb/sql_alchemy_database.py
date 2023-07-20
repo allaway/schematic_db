@@ -1,5 +1,5 @@
 """SQLAlchemy"""
-from typing import Any
+from typing import Any, Union
 from dataclasses import dataclass
 import pandas
 import numpy
@@ -30,7 +30,7 @@ class DataframeKeyError(Exception):
 
 def create_foreign_key_column(
     name: str,
-    datatype: str,
+    datatype: Any,
     foreign_table_name: str,
     foreign_table_column: str,
 ) -> sqlalchemy.Column:
@@ -38,14 +38,14 @@ def create_foreign_key_column(
 
     Args:
         name (str): The name of the column
-        datatype (str): The SQL datatype of the column
+        datatype (Any): The SQL datatype of the column
         foreign_table_name (str): The name of the table the foreign key is referencing
         foreign_table_column (str): The name of the column the foreign key is referencing
 
     Returns:
         sqlalchemy.Column: A sqlalchemy.column
     """
-    col = sqlalchemy.Column(
+    col: sqlalchemy.Column = sqlalchemy.Column(
         name,
         datatype,
         sqlalchemy.ForeignKey(
@@ -81,15 +81,15 @@ def create_foreign_key_configs(
 
 def create_column_schemas(
     table_schema: sqlalchemy.sql.schema.Table,
-    indices: list[str],
+    indexed_columns: list[str],
     column_datatypes: dict[Any, ColumnDatatype],
 ) -> list[ColumnSchema]:
     """Creates a list of column schemas from a sqlalchemy table schema
 
     Args:
         table_schema (sqlalchemy.sql.schema.Table): A sqlalchemy table schema
-        indices (list[str]): A list of columns in the schema to be indexed
-        column_datatypes(dict[str, Any]): A dictionary whose keys are sql column datatype,
+        indexed_columns (list[str]): A list of columns in the schema to be indexed
+        column_datatypes(dict[Any, ColumnDatatype]): A dictionary whose keys are a sql column datatype,
           and values are a ColumnDatatype
 
     Returns:
@@ -101,7 +101,7 @@ def create_column_schemas(
             name=column.name,
             datatype=column_datatypes[type(column.type)],
             required=not column.nullable,
-            index=column.name in indices,
+            index=column.name in indexed_columns,
         )
         for column in columns
     ]
@@ -167,9 +167,7 @@ class SQLAlchemyDatabase(
         db_exists = sqlalchemy_utils.functions.database_exists(url)
         if not db_exists:
             sqlalchemy_utils.functions.create_database(url)
-        engine = sqlalchemy.create_engine(
-            url, echo=self.verbose, pool_pre_ping=True
-        )
+        engine = sqlalchemy.create_engine(url, echo=self.verbose, pool_pre_ping=True)
         self.engine = engine
 
     def drop_all_tables(self) -> None:
@@ -202,12 +200,14 @@ class SQLAlchemyDatabase(
         metadata = self._get_current_metadata()
         table_schema = metadata.tables[table_name]
         primary_key = inspect(table_schema).primary_key.columns.values()[0].name
-        indices = self._get_column_indices(table_name)
+        indexed_columns = self._get_index_columns(table_name)
         return TableSchema(
             name=table_name,
             primary_key=primary_key,
             foreign_keys=create_foreign_key_configs(table_schema),
-            columns=create_column_schemas(table_schema, indices, self.column_datatypes),
+            columns=create_column_schemas(
+                table_schema, indexed_columns, self.column_datatypes
+            ),
         )
 
     # def _get_column_type_dict(self)
@@ -290,11 +290,11 @@ class SQLAlchemyDatabase(
         query = f"SELECT * FROM `{table_name}`"
         return self.execute_sql_query(query)
 
-    def _execute_sql_statement(self, statement: sqlalchemy.text) -> Any:
+    def _execute_sql_statement(self, statement: Any) -> Any:
         """Executes a sql statement
 
         Args:
-            statement (sqlalchemy.text): A sql statement in sqlalchemy.text form
+            statement (Any): A sql statement in sqlalchemy.text form
 
         Returns:
             Any: The result, if any, from the sql statement
@@ -302,18 +302,26 @@ class SQLAlchemyDatabase(
         with self.engine.begin() as conn:
             return conn.execute(statement)
 
-    def _create_columns(self, table_schema: TableSchema) -> list[sqlalchemy.Column]:
+    def _create_columns(
+        self, table_schema: TableSchema
+    ) -> list[Union[sqlalchemy.Column[Any], sqlalchemy.PrimaryKeyConstraint]]:
         """Creates a list SQLAlchemy columns for a table
 
         Args:
             table_schema (TableSchema): The schema of the table to create columns for
 
         Returns:
-            list[sqlalchemy.Column]: A list SQLAlchemy columns
+            list[
+                Union[
+                    sqlalchemy.Column[Any],
+                    sqlalchemy.PrimaryKeyConstraint
+                ]
+            ]:
+              A list SQLAlchemy columns or PrimaryKeyConstraints
         """
-        columns = [
-            self._create_column(att, table_schema) for att in table_schema.columns
-        ]
+        columns: list[
+            Union[sqlalchemy.Column[Any], sqlalchemy.PrimaryKeyConstraint]
+        ] = [self._create_column(att, table_schema) for att in table_schema.columns]
         columns.append(sqlalchemy.PrimaryKeyConstraint(table_schema.primary_key))
         return columns
 
@@ -355,8 +363,8 @@ class SQLAlchemyDatabase(
             unique=column_schema.name == table_schema.primary_key,
         )
 
-    def _get_column_indices(self, table_name: str) -> list[str]:
-        """Gets the tables current column indices
+    def _get_index_columns(self, table_name: str) -> list[str]:
+        """Gets the names of all currently index columns
 
         Args:
             table_name (str): The name of the table
@@ -365,7 +373,12 @@ class SQLAlchemyDatabase(
             list[str]: A list of column names that are currently indexed
         """
         indices = inspect(self.engine).get_indexes(table_name)
-        return [idx["column_names"][0] for idx in indices]
+        indexed_columns: list[str] = [
+            col
+            for col in [idx["column_names"][0] for idx in indices]
+            if col is not None
+        ]
+        return indexed_columns
 
     def _get_datatype(
         self,
