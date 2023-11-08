@@ -13,7 +13,7 @@ Schematic DB's is published to [PyPI](https://pypi.org/project/schematic-db/) wh
 Note that Schematic DB has 3 extra packages [mysql, postgres, synapse]. These serve as the database backend for Schematic DB. You will need one of these to run this package and can be installed like:
 
 ```bash
-pip install schematic_db[synapse]
+pip install 'schematic_db[synapse]'
 ```
 
 If using Schematic DB as part of a package you will want setup the `pyproject.toml` like `schematic-db = {version = "x.y.z", extras = ["synapse"]}`
